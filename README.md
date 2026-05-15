@@ -1,9 +1,5 @@
 # AMS Cache - WordPress Cache Plugin
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-
-![WordPress Cache Plugin](./inc/assets/images/banner-772x250.png)
-
 AMS Cache is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly. The core of AMS Cache is driven by Shieldon [Simple Cache](https://github.com/terrylinooo/simple-cache), a PSR-16 simple cache library.
 
 
