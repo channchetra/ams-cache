@@ -19,10 +19,20 @@ use function chmod;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
+use function function_exists;
+use function gzcompress;
+use function gzuncompress;
+use function in_array;
+use function is_array;
 use function is_file;
+use function max;
+use function min;
 use function rtrim;
 use function serialize;
 use function str_replace;
+use function strlen;
+use function strpos;
+use function substr;
 use function unlink;
 use function unserialize;
 
@@ -42,6 +52,27 @@ class File extends CacheProvider
     protected $storage = '/tmp/simple-cache';
 
     /**
+     * Compress payload before storing.
+     *
+     * @var bool
+     */
+    protected $compress = false;
+
+    /**
+     * Minimum payload bytes before compression.
+     *
+     * @var int
+     */
+    protected $compressThreshold = 4096;
+
+    /**
+     * Compression level.
+     *
+     * @var int
+     */
+    protected $compressLevel = 1;
+
+    /**
      * Constructor.
      *
      * @param array $setting The settings.
@@ -52,6 +83,20 @@ class File extends CacheProvider
     {
         if (isset($setting['storage'])) {
             $this->storage = rtrim($setting['storage'], '/');
+        }
+
+        if (isset($setting['compress'])) {
+            $this->compress = !in_array($setting['compress'], [false, 0, '0', 'no', 'off'], true) &&
+                function_exists('gzcompress') &&
+                function_exists('gzuncompress');
+        }
+
+        if (isset($setting['compress_threshold'])) {
+            $this->compressThreshold = max(0, (int) $setting['compress_threshold']);
+        }
+
+        if (isset($setting['compress_level'])) {
+            $this->compressLevel = max(1, min(9, (int) $setting['compress_level']));
         }
 
         $this->assertDirectoryWritable($this->storage);
@@ -72,9 +117,27 @@ class File extends CacheProvider
             return [];
         }
 
-        $data = unserialize(file_get_contents($filePath));
+        $content = file_get_contents($filePath);
 
-        return $data;
+        if (empty($content)) {
+            return [];
+        }
+
+        if (strpos($content, 'scgz:') === 0) {
+            if (!function_exists('gzuncompress')) {
+                return [];
+            }
+
+            $content = gzuncompress(substr($content, 5));
+
+            if (false === $content) {
+                return [];
+            }
+        }
+
+        $data = unserialize($content);
+
+        return is_array($data) ? $data : [];
     }
 
     /**
@@ -96,8 +159,17 @@ class File extends CacheProvider
         ];
 
         $filePath = $this->getFilePath($key);
+        $payload = serialize($contents);
+
+        if ($this->compress && strlen($payload) >= $this->compressThreshold) {
+            $compressed = gzcompress($payload, $this->compressLevel);
+
+            if (false !== $compressed) {
+                $payload = 'scgz:' . $compressed;
+            }
+        }
         
-        if (file_put_contents($filePath, serialize($contents))) {
+        if (file_put_contents($filePath, $payload)) {
             chmod($filePath, 0640);
             return true;
         }

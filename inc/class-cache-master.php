@@ -5,7 +5,7 @@
  * @author Terry Lin
  * @link https://terryl.in/
  *
- * @package Cache Master
+ * @package AMS Cache
  * @since 1.0.0
  * @version 1.5.0
  */
@@ -76,13 +76,17 @@ class Cache_Master {
 			return;
 		}
 
+		if ( ! scm_is_cacheable_request_uri( $uri ) ) {
+			return;
+		}
+
 		if ( $this->is_ignore() ) {
 			return;
 		}
 
 		$uri = $this->get_request_uri();
 
-		$this->cache_key = md5( $uri );
+		$this->cache_key = scm_get_cache_key( $uri );
 
 		add_action( 'plugins_loaded', array( $this, 'ob_start' ), 5 );
 		add_action( 'shutdown', array( $this, 'ob_stop' ), 0 );
@@ -128,6 +132,11 @@ class Cache_Master {
 		$is_archive  = false;
 
 		if ( is_front_page() || is_home() ) {
+			if ( ! scm_is_homepage_uri( $this->get_request_uri() ) ) {
+				$this->is_cache = false;
+				return;
+			}
+
 			$this->is_cache  = true;
 			$this->data_type = 'homepage';
 			
@@ -143,9 +152,21 @@ class Cache_Master {
 			$is_archive  = is_archive();
 
 			if ( $is_singular ) {
-				$types = array(
-					'post',
-					'page',
+				$types = array_merge(
+					array(
+						'post',
+						'page',
+					),
+					array_keys(
+						get_post_types(
+							array(
+								'public'   => true,
+								'_builtin' => false,
+							),
+							'names',
+							'and'
+						)
+					)
 				);
 	
 				foreach( $types as $type ) {
@@ -166,6 +187,26 @@ class Cache_Master {
 	
 				foreach( $archives as $type => $wp_function ) {
 					if ( isset( $post_archives[ $type ] ) && $wp_function() ) {
+						$this->is_cache  = true;
+						$this->data_type = $type;
+						return;
+					}
+				}
+
+				$custom_post_type_archives = get_post_types(
+					array(
+						'public'      => true,
+						'has_archive' => true,
+						'_builtin'    => false,
+					),
+					'objects',
+					'and'
+				);
+
+				foreach ( $custom_post_type_archives as $post_type ) {
+					$type = 'archive_' . $post_type->name;
+
+					if ( isset( $post_archives[ $type ] ) && is_post_type_archive( $post_type->name ) ) {
 						$this->is_cache  = true;
 						$this->data_type = $type;
 						return;
@@ -264,6 +305,20 @@ class Cache_Master {
 			);
 		}
 
+		if ( $this->is_cache ) {
+			$before_optimization = $content;
+			$content             = scm_optimize_html( $content );
+			$optimization_report = scm_build_page_optimization_report(
+				$before_optimization,
+				$content,
+				scm_get_page_optimization_settings(),
+				$this->get_request_uri(),
+				$this->data_type
+			);
+
+			scm_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
+		}
+
 		$cache_content = $content;
 		$debug_message = $this->debug_message( 'ob_stop' );
 
@@ -277,6 +332,7 @@ class Cache_Master {
 			}
 
 			$this->driver->set( $this->cache_key, $cache_content, $ttl );
+			scm_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
 			$this->log( $this->data_type, $this->cache_key, $cache_content );
 		}
 
@@ -352,19 +408,19 @@ class Cache_Master {
 
 		if ( $is_widget ) {
 			$custom_css .= '
-				.cache-master-plugin-widget {
+				.ams-cache-plugin-widget {
 					
 				}
-				.cache-master-plugin-widget .scm-table {
+				.ams-cache-plugin-widget .scm-table {
 					display: table;                       
 					padding: 5px;
 					width: 100%;
 				}
-				.cache-master-plugin-widget .scm-tr {
+				.ams-cache-plugin-widget .scm-tr {
 					display: table-row;
 					clear: both;
 				}
-				.cache-master-plugin-widget .scm-td {
+				.ams-cache-plugin-widget .scm-td {
 					font-size: 14px;
 					padding: 3px 10px;
 					display: table-cell;         
@@ -373,7 +429,7 @@ class Cache_Master {
 
 			if ( 'text' === $display_widget ) {
 				$custom_css .= '
-					.cache-master-plugin-widget .scm-img  {
+					.ams-cache-plugin-widget .scm-img  {
 						display: none;
 					}
 				';
@@ -381,13 +437,13 @@ class Cache_Master {
 
 			if ( 'icon' === $display_widget ) {
 				$custom_css .= '
-					.cache-master-plugin-widget .scm-text  {
+					.ams-cache-plugin-widget .scm-text  {
 						display: none;
 					}
-					.cache-master-plugin-widget .scm-tr .scm-td:first-child {
+					.ams-cache-plugin-widget .scm-tr .scm-td:first-child {
 						width: 15%;
 					}
-					.cache-master-plugin-widget .scm-tr .scm-td:last-child {
+					.ams-cache-plugin-widget .scm-tr .scm-td:last-child {
 						width: 85%;
 					}
 				';
@@ -396,7 +452,7 @@ class Cache_Master {
 
 		if ( $is_footer ) {
 			$custom_css .= '
-				.cache-master-benchmark-report {
+				.ams-cache-benchmark-report {
 					clear: both;
 					display: block;
 					width: 100%;
@@ -404,22 +460,22 @@ class Cache_Master {
 					font-size: 12px;
 					margin: 10px 0;
 				}
-				.cache-master-benchmark-report .scm-td {
+				.ams-cache-benchmark-report .scm-td {
 					font-size: 13px;
 					display: inline-block;
 					position: relative;        
 				}
-				.cache-master-benchmark-report .scm-value {
+				.ams-cache-benchmark-report .scm-value {
 					display: inline-block;
 					margin-right: 5px;
 					vertical-align: middle;
 					font-weight: 600;
 				}
-				.cache-master-benchmark-report .scm-img {
+				.ams-cache-benchmark-report .scm-img {
 					width: 22px;
 					height: 22px;
 				}
-				.cache-master-benchmark-report .scm-td svg {
+				.ams-cache-benchmark-report .scm-td svg {
 					width: 14px;
 					height: 14px;
 					position: relative;
@@ -429,7 +485,7 @@ class Cache_Master {
 
 			if ( 'text' === $display_footer ) {
 				$custom_css .= '
-					.cache-master-benchmark-report .scm-img  {
+					.ams-cache-benchmark-report .scm-img  {
 						display: none;
 					}
 				';
@@ -437,10 +493,10 @@ class Cache_Master {
 
 			if ( 'icon' === $display_footer ) {
 				$custom_css .= '
-					.cache-master-benchmark-report .scm-text  {
+					.ams-cache-benchmark-report .scm-text  {
 						display: none;
 					}
-					.cache-master-benchmark-report .scm-value {
+					.ams-cache-benchmark-report .scm-value {
 						padding-left: 2px;
 					}
 				';
@@ -481,11 +537,11 @@ class Cache_Master {
 		switch ( $position ) {
 			case 'ob_start':
 				$this->msg();
-				$this->msg( '....... ' . __( 'After', 'cache-master' ) . ' .......', 2 );
-				$this->msg( sprintf( __( 'Now: %s', 'cache-master' ), $date ) );
-				$this->msg( sprintf( __( 'Memory usage: %s MB', 'cache-master' ), $memory_usage ) );
-				$this->msg( sprintf( __( 'SQL queries: %s', 'cache-master' ), $sql_queries ) );
-				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'cache-master' ), $timer_stop ) );
+				$this->msg( '....... ' . __( 'After', 'ams-cache' ) . ' .......', 2 );
+				$this->msg( sprintf( __( 'Now: %s', 'ams-cache' ), $date ) );
+				$this->msg( sprintf( __( 'Memory usage: %s MB', 'ams-cache' ), $memory_usage ) );
+				$this->msg( sprintf( __( 'SQL queries: %s', 'ams-cache' ), $sql_queries ) );
+				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'ams-cache' ), $timer_stop ) );
 				$this->msg();
 				$this->msg( '//-->' );
 				break;
@@ -499,19 +555,19 @@ class Cache_Master {
 
 				$this->msg();
 				$this->msg( '<!--', 2 );
-				$this->msg( __( 'This page is cached by Cache Master plugin.', 'cache-master' ), 2 );
-				$this->msg( '....... ' . __( 'Before', 'cache-master' ) . ' .......', 2 );
-				$this->msg( sprintf( __( 'Time to cache: %s', 'cache-master' ), $date ) );
+				$this->msg( __( 'This page is cached by AMS Cache plugin.', 'ams-cache' ), 2 );
+				$this->msg( '....... ' . __( 'Before', 'ams-cache' ) . ' .......', 2 );
+				$this->msg( sprintf( __( 'Time to cache: %s', 'ams-cache' ), $date ) );
 
 				if ( $ttl_mechanism === 'disable' ) {
-					$this->msg( __( 'TTL mechanism: disabled', 'cache-master' ) );
+					$this->msg( __( 'TTL mechanism: disabled', 'ams-cache' ) );
 				} else {
-					$this->msg( sprintf( __( 'Expires at: %s', 'cache-master' ), $date_expires ) );
+					$this->msg( sprintf( __( 'Expires at: %s', 'ams-cache' ), $date_expires ) );
 				}
 
-				$this->msg( sprintf( __( 'Memory usage: %s MB', 'cache-master' ), $memory_usage ) );
-				$this->msg( sprintf( __( 'SQL queries: %s', 'cache-master' ), $sql_queries ) );
-				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'cache-master' ), $timer_stop ) );
+				$this->msg( sprintf( __( 'Memory usage: %s MB', 'ams-cache' ), $memory_usage ) );
+				$this->msg( sprintf( __( 'SQL queries: %s', 'ams-cache' ), $sql_queries ) );
+				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'ams-cache' ), $timer_stop ) );
 				break;
 		}
 
@@ -546,7 +602,7 @@ class Cache_Master {
 
 	/**
 	 * Create a clean output buffering for Cahce Master.
-	 * This method makes Cache Master become the first level of output 
+	 * This method makes AMS Cache become the first level of output 
 	 * buffering.
 	 *
 	 * @return void
@@ -561,7 +617,7 @@ class Cache_Master {
 
 	/**
 	 * Same as WordPress function wp_ob_end_flush_all, but leave the 
-	 * Cache Master level for the final output buffering.
+	 * AMS Cache level for the final output buffering.
 	 *
 	 * @return string
 	 */
@@ -616,11 +672,10 @@ class Cache_Master {
 	 */
 	private function is_cache_visible() {
 		if ( is_user_logged_in() ) {
-			if ( 'yes' !== get_option( 'scm_option_visibility_login_user' ) ) {
-				return false;
-			}
+			return false;
 		}
-		return true;
+
+		return ! scm_request_has_auth_cookie();
 	}
 
 	/**
@@ -634,12 +689,28 @@ class Cache_Master {
 	 */
 	private function log( $type, $key, $data )
 	{
-		if ( 'enable' === get_option( 'scm_option_statistics_status' ) ) {
-			$size = $this->get_string_bytes( $data );
-			$file = scm_get_stats_dir( $type ) . '/' . $key . '.json';
+		$dir = scm_get_stats_dir( $type );
 
-			file_put_contents( $file, $size );
+		if ( ! is_dir( $dir ) ) {
+			wp_mkdir_p( $dir );
 		}
+
+		$size = $this->get_string_bytes( $data );
+		$file = $dir . '/' . $key . '.json';
+
+		scm_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->driver );
+
+		file_put_contents(
+			$file,
+			wp_json_encode(
+				array(
+					'size' => $size,
+					'uri'  => $this->get_request_uri(),
+				)
+			)
+		);
+
+		scm_enforce_cache_entry_limit( $this->driver );
 	}
 
 	/**
@@ -664,7 +735,9 @@ class Cache_Master {
 	private function get_request_uri()
 	{
 		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-			$path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+			$path = scm_normalize_cache_uri( $_SERVER['REQUEST_URI'] );
+		} else {
+			$path = '/';
 		}
 
 		return $path;
@@ -678,33 +751,33 @@ class Cache_Master {
 	private function footer_html() {
 		
 		$html = '
-			<div class="cache-master-benchmark-report" style="display: none">
+			<div class="ams-cache-benchmark-report" style="display: none">
 				<div class="scm-td">
-					<span class="scm-img scm-img-1" title="' . esc_attr( __( 'Cache status powered by Cache Master plugin', 'cache-master' ) ) . '">' . scm_get_svg_icon( 'status' ) . '</span>
-					<span class="scm-text">' .  __( 'Cache status', 'cache-master' ) . ': </span>
+					<span class="scm-img scm-img-1" title="' . esc_attr( __( 'Cache status powered by AMS Cache plugin', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'status' ) . '</span>
+					<span class="scm-text">' .  __( 'Cache status', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-cache-status">-</span>
 					</span>
 				</div>
 				<div class="scm-td">
-					<span class="scm-img scm-img-2" title="' . esc_attr( __( 'Memory usage', 'cache-master' ) ) . '">' . scm_get_svg_icon( 'memory' ) . '</span>
-					<span class="scm-text">' .  __( 'Memory usage', 'cache-master' ) . ': </span>
+					<span class="scm-img scm-img-2" title="' . esc_attr( __( 'Memory usage', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'memory' ) . '</span>
+					<span class="scm-text">' .  __( 'Memory usage', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-memory-usage">-</span> MB
 					</span>
 				</div>
 				<div class="scm-td">
-					<span class="scm-img scm-img-3" title="' . esc_attr( __( 'SQL queries', 'cache-master' ) ) . '">' . scm_get_svg_icon( 'database' ) . '</span>
-					<span class="scm-text">' .  __( 'SQL queries', 'cache-master' ) . ': </span>
+					<span class="scm-img scm-img-3" title="' . esc_attr( __( 'SQL queries', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'database' ) . '</span>
+					<span class="scm-text">' .  __( 'SQL queries', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-sql-queries">-</span>
 					</span>
 				</div>
 				<div class="scm-td">
-					<span class="scm-img scm-img-4" title="' . esc_attr( __( 'Page generation time', 'cache-master' ) ) . '">' . scm_get_svg_icon( 'speed' ) . '</span>
-					<span class="scm-text">' .  __( 'Page generation time', 'cache-master' ) . ': </span>
+					<span class="scm-img scm-img-4" title="' . esc_attr( __( 'Page generation time', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'speed' ) . '</span>
+					<span class="scm-text">' .  __( 'Page generation time', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
-						<span class="scm-field-page-generation-time">-</span> (' .  __( 'sec', 'cache-master' ) . ')
+						<span class="scm-field-page-generation-time">-</span> (' .  __( 'sec', 'ams-cache' ) . ')
 					</span>
 				</div>
 			</div>';

@@ -18,9 +18,19 @@ use Redis as RedisServer;
 use Exception;
 use function array_keys;
 use function extension_loaded;
+use function function_exists;
 use function unserialize;
 use function serialize;
 use function is_bool;
+use function is_array;
+use function gzcompress;
+use function gzuncompress;
+use function in_array;
+use function strlen;
+use function strpos;
+use function substr;
+use function max;
+use function min;
 
 /**
  * A cache driver class provided by Redis database.
@@ -37,6 +47,27 @@ class Redis extends CacheProvider
     protected $redis = null;
 
     /**
+     * Compress payload before storing.
+     *
+     * @var bool
+     */
+    protected $compress = true;
+
+    /**
+     * Minimum payload bytes before compression.
+     *
+     * @var int
+     */
+    protected $compressThreshold = 1024;
+
+    /**
+     * Compression level.
+     *
+     * @var int
+     */
+    protected $compressLevel = 6;
+
+    /**
      * Constructor.
      *
      * @param array $setting The settings.
@@ -50,6 +81,10 @@ class Redis extends CacheProvider
             'port' => 6379,
             'user' => null,
             'pass' => null,
+            'database' => null,
+            'compress' => true,
+            'compress_threshold' => 1024,
+            'compress_level' => 6,
 
             // If the UNIX socket is set, host, port, user and pass will be ignored.
             'unix_socket' => '',
@@ -60,6 +95,12 @@ class Redis extends CacheProvider
                 $config[$key] = $setting[$key];
             }
         }
+
+        $this->compress = !in_array($config['compress'], [false, 0, '0', 'no', 'off'], true) &&
+            function_exists('gzcompress') &&
+            function_exists('gzuncompress');
+        $this->compressThreshold = (int) $config['compress_threshold'];
+        $this->compressLevel = max(1, min(9, (int) $config['compress_level']));
 
         $this->connect($config);
     }
@@ -86,6 +127,10 @@ class Redis extends CacheProvider
                 } else {
                     $this->redis->connect($config['host'], $config['port']);
                     $this->auth($config);
+                }
+
+                if ($config['database'] !== null && $config['database'] !== '') {
+                    $this->redis->select((int) $config['database']);
                 }
 
             // @codeCoverageIgnoreStart
@@ -149,9 +194,22 @@ class Redis extends CacheProvider
         if (empty($content)) {
             return [];
         }
+
+        if (strpos($content, 'scgz:') === 0) {
+            if (!function_exists('gzuncompress')) {
+                return [];
+            }
+
+            $content = gzuncompress(substr($content, 5));
+
+            if (false === $content) {
+                return [];
+            }
+        }
+
         $data = unserialize($content);
 
-        return $data;
+        return is_array($data) ? $data : [];
     }
 
     /**
@@ -176,9 +234,19 @@ class Redis extends CacheProvider
             $ttl = null;
         }
 
+        $payload = serialize($contents);
+
+        if ($this->compress && strlen($payload) >= $this->compressThreshold) {
+            $compressed = gzcompress($payload, $this->compressLevel);
+
+            if (false !== $compressed) {
+                $payload = 'scgz:' . $compressed;
+            }
+        }
+
         $result = $this->redis->set(
             $this->getKeyName($key),
-            serialize($contents),
+            $payload,
             $ttl
         );
 

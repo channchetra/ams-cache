@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Uninstall option.
+ * AMS Cache - Uninstall option.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -18,18 +18,18 @@ $option_benchmark_widget = get_option( 'scm_option_benchmark_widget', 'no' );
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_widget" id="cache-master-benchmark-widget-option-yes" value="yes" 
+		<input type="radio" name="scm_option_benchmark_widget" id="ams-cache-benchmark-widget-option-yes" value="yes" 
 			<?php checked( $option_benchmark_widget, 'yes' ); ?>>
-		<label for="cache-master-benchmark-widget-option-yes">
-			<?php _e( 'Yes', 'cache-master' ); ?><br />
+		<label for="ams-cache-benchmark-widget-option-yes">
+			<?php _e( 'Yes', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_widget" id="cache-master-benchmark-widget-option-no" value="no" 
+		<input type="radio" name="scm_option_benchmark_widget" id="ams-cache-benchmark-widget-option-no" value="no" 
 			<?php checked( $option_benchmark_widget, 'no' ); ?>>
-		<label for="cache-master-benchmark-widget-option-no">
-			<?php _e( 'No', 'cache-master' ); ?>
+		<label for="ams-cache-benchmark-widget-option-no">
+			<?php _e( 'No', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Register a widget that can display the benchmark information.', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Register a widget that can display the benchmark information.', 'ams-cache' ); ?></em></p>

@@ -1,8 +1,8 @@
 <?php
 /**
- * Cache Master helper functions.
+ * AMS Cache helper functions.
  *
- * @package   Cache Master
+ * @package   AMS Cache
  * @author    Terry Lin <terrylinooo>
  * @license   GPLv3 (or later)
  * @link      https://terryl.in
@@ -35,7 +35,7 @@ function scm_run_expert_mode( $args ) {
 	$plugin_dir        = rtrim( $args['plugin_dir'], '/' );
 	$plugin_upload_dir = rtrim( $args['plugin_upload_dir'], '/' );
 
-	// Make sure that Cache Master exists.
+	// Make sure that AMS Cache exists.
 	if ( ! file_exists( $plugin_dir . '/cache-master.php' ) ) {
 		return;
 	}
@@ -63,8 +63,10 @@ function scm_run_expert_mode( $args ) {
 	$request_path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
 
 	$driver_type          = $config['cache_driver']                      ?? 'file';
+	$cache_key_prefix     = $config['cache_key_prefix']                  ?? '';
 	$is_woocommerce       = $config['woocommerce']['enable']             ?? false;
 	$advanced_settings    = $config['driver_advanced_settings']          ?? array();
+	$advanced_conn_type   = $config['driver_connection_type']            ?? 'tcp';
 	$debug_comment        = $config['html_debug_comment']                ?? true;
 	$is_exclusion         = $config['exclusion']['enable']               ?? false;
 	$excluded_list        = $config['exclusion']['excluded_list']        ?? array();
@@ -110,15 +112,21 @@ function scm_run_expert_mode( $args ) {
 		}
 	}
 
-	// The cache key.
-	$key = md5( $request_path );
-
 	// Start "reading-cache" procedure.
 	if ( strpos( $request_path, $site_path ) === 0 ) {
 
 		// Composer autoloader.
 		include_once( $plugin_dir . '/vendor/autoload.php' );
 		include_once( $plugin_dir . '/inc/helpers.php' );
+
+		if ( ! scm_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
+			return;
+		}
+
+		$request_path = scm_normalize_cache_uri( $request_path );
+
+		// The cache key.
+		$key = md5( $cache_key_prefix . '|' . $request_path );
 
 		switch ( $driver_type )  {
 			case 'mysql':
@@ -142,8 +150,9 @@ function scm_run_expert_mode( $args ) {
 
 			case 'redis':
 				$setting = array(
-					'host' => '127.0.0.1',
-					'port' =>  6379,
+					'host'     => '127.0.0.1',
+					'port'     => 6379,
+					'database' => 0,
 				);
 
 				break;
@@ -162,13 +171,7 @@ function scm_run_expert_mode( $args ) {
 		}
 
 		if ( ! empty( $advanced_settings ) ) {
-			$setting = $advanced_settings;
-	
-			foreach ( $setting as $k => $v ) {
-				if ( is_numeric( $v ) ) {
-					$setting[ $k ] = (int) $v;
-				}
-			}
+			$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_conn_type ) );
 		}
 
 		$driver = new \Shieldon\SimpleCache\Cache( $driver_type, $setting );

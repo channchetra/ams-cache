@@ -1,14 +1,16 @@
 <?php
 /**
- * Plugin Name: Cache Master
- * Plugin URI:  https://github.com/terrylinooo/cache-master
+ * Plugin Name: AMS Cache
+ * Plugin URI:  https://ams.com.kh/
  * Description: A WordPress cache plugin.
- * Version:     2.1.3
- * Author:      Terry Lin
- * Author URI:  https://terryl.in/
+ * Version:     2.7.2
+ * Requires at least: 5.8
+ * Requires PHP: 7.1
+ * Author:      Chetra Chann
+ * Author URI:  https://ams.com.kh/
  * License:     GPL 3.0
  * License URI: http://www.gnu.org/licenses/gpl-3.0.txt
- * Text Domain: cache-master
+ * Text Domain: ams-cache
  * Domain Path: /languages
  */
 
@@ -17,8 +19,8 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
- * Cache Master plugin uses "scm" as the prefix on its functions.
- * Cache Master plugin uses "SCM" as the prefix on its constants.
+ * AMS Cache plugin uses "scm" as the prefix on its functions.
+ * AMS Cache plugin uses "SCM" as the prefix on its constants.
  */
 
 if ( ! defined( 'SCM_INC' ) ) {
@@ -26,7 +28,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 }
 
 /**
- * CONSTANTS - SCM stands for Shieldon Cache Master ^_^
+ * CONSTANTS - SCM stands for Shieldon AMS Cache ^_^
  *
  * SCM_PLUGIN_NAME          : Plugin's name.
  * SCM_PLUGIN_DIR           : The absolute path of the SCM plugin directory.
@@ -38,10 +40,10 @@ if ( ! defined( 'SCM_INC' ) ) {
  *
  * Expected values:
  *
- * SCM_PLUGIN_DIR           : {absolute_path}/wp-content/plugins/cache-master/
- * SCM_PLUGIN_URL           : {protocal}://{domain_name}/wp-content/plugins/cache-master/
- * SCM_PLUGIN_PATH          : {absolute_path}/wp-content/plugins/cache-master/cache-master.php
- * SCM_PLUGIN_LANGUAGE_PACK : cache-master/languages
+ * SCM_PLUGIN_DIR           : {absolute_path}/wp-content/plugins/ams-cache/
+ * SCM_PLUGIN_URL           : {protocal}://{domain_name}/wp-content/plugins/ams-cache/
+ * SCM_PLUGIN_PATH          : {absolute_path}/wp-content/plugins/ams-cache/cache-master.php
+ * SCM_PLUGIN_LANGUAGE_PACK : ams-cache/languages
  */
 
 define( 'SCM_PLUGIN_NAME', plugin_basename( __FILE__ ) );
@@ -49,9 +51,9 @@ define( 'SCM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SCM_PLUGIN_PATH', __FILE__ );
 define( 'SCM_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-define( 'SCM_PLUGIN_VERSION', '2.2.0' );
+define( 'SCM_PLUGIN_VERSION', '2.7.2' );
 define( 'SCM_CORE_VERSION', '1.3.4' );
-define( 'SCM_PLUGIN_TEXT_DOMAIN', 'cache-master' );
+define( 'SCM_PLUGIN_TEXT_DOMAIN', 'ams-cache' );
 
 /**
  * Start to run SCM plugin cores.
@@ -93,7 +95,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 	} else {
 
-		// No need to load Cache Master's files when AJAX calls.
+		// No need to load AMS Cache's files when AJAX calls.
 		if ( ! wp_doing_ajax() ) {
 
 			require_once SCM_PLUGIN_DIR . 'inc/helpers.php';
@@ -126,6 +128,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			} else {
 
 				require_once SCM_PLUGIN_DIR . 'inc/autoload.php';
+				require_once SCM_PLUGIN_DIR . 'inc/admin/admin-bar.php';
+
 				$cm = new Cache_Master();
 				$cm->init();
 			}
@@ -138,8 +142,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 }
 
 /**
- * Cache Master is open sourced at:
- * https://github.com/terrylinooo/cache-master
+ * AMS Cache is open sourced at:
+ * https://ams.com.kh/
  *
  * If you have found any bug or have any suggestion, please let me know.
  */

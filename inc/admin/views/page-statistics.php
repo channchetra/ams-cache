@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Stats
+ * AMS Cache - Stats
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -17,12 +17,26 @@ function scm_get_stats( $type ) {
 
 	$nums = 0;
 	$size = 0;
+	$seen = array();
 
 	if ( is_dir( $dir ) ) {
 		foreach ( new DirectoryIterator( $dir ) as $file ) {
 			if ( $file->isFile() && $file->getExtension() === 'json' ) {
+				$stats = scm_read_stats_file( $file->getPathname() );
+
+				if ( 'homepage' === $type && ! empty( $stats['uri'] ) && ! scm_is_homepage_uri( $stats['uri'] ) ) {
+					continue;
+				}
+
+				$identity = empty( $stats['uri'] ) ? $file->getFilename() : scm_normalize_cache_uri( $stats['uri'] );
+
+				if ( isset( $seen[ $identity ] ) ) {
+					continue;
+				}
+
+				$seen[ $identity ] = true;
 				$nums++;
-				$size += (int) file_get_contents( $file->getPathname() );
+				$size += $stats['size'];
 			}
 		}
 	} else {
@@ -45,25 +59,23 @@ $total_rows = 0;
 	<?php if ( 'enable' === get_option( 'scm_option_statistics_status' ) ) : ?>
 
 	<div class="scm-content-wrapper">
-
-		<table class="table-stats-wrapper">
-			<tr>
-				<td class="stats-l">
-					<form action="options.php" method="post">
-					<table class="table-stats" cellpadding="0" cellspacing="0">
-						<tr>
-							<th><?php _e( 'Clear Cache', 'cache-master' ); ?></th>
-							<th><?php _e( 'Cache Type', 'cache-master' ); ?></th>
-							<th><?php _e( 'Rows', 'cache-master' ); ?></th>
-							<th><?php _e( 'Total Size', 'cache-master' ); ?> (MB)</th>
-						<tr>
+		<div class="ams-legacy-statistics-layout">
+			<section class="ams-dashboard-panel">
+				<form action="options.php" method="post">
+					<ul class="ams-legacy-statistics-list">
+						<li class="ams-legacy-statistics-head">
+							<span><?php _e( 'Clear Cache', 'ams-cache' ); ?></span>
+							<span><?php _e( 'Cache Type', 'ams-cache' ); ?></span>
+							<span><?php _e( 'Rows', 'ams-cache' ); ?></span>
+							<span><?php _e( 'Total Size', 'ams-cache' ); ?> (MB)</span>
+						</li>
 						<?php foreach ( scm_get_cache_type_list() as $key => $value ) : ?>
 							<?php $stats_data = scm_get_stats( $key ); ?>
-							<tr>
-								<td id="option-item-<?php echo $key; ?>"></td>
-								<td style="text-align: left;"><?php echo $value; ?></td>
-								<td><?php echo $stats_data['nums']; ?></td>
-								<td>
+							<li>
+								<span id="option-item-<?php echo $key; ?>"></span>
+								<span><?php echo $value; ?></span>
+								<span><?php echo $stats_data['nums']; ?></span>
+								<span>
 									<?php
 
 									$size = round( $stats_data['size'] / ( 1024 * 1024 ), 2 );
@@ -78,33 +90,30 @@ $total_rows = 0;
 									$total_rows += $stats_data['nums'];
 
 									?>
-								</td>
-							</tr>
+								</span>
+							</li>
 						<?php endforeach; ?>
-						<tr>
-							<td class="scm-total-size">
-								<input type="radio" name="scm_option_clear_cache" id="cache-master-clear-cache-all-option-enable" value="all" >
-							</td>
-							<td class="scm-total-size" style="text-align: left;"><?php _e( 'All', 'cache-master' ); ?></td>
-							<td class="scm-total-size"><?php echo $total_rows; ?></td>
-							<td class="scm-total-size"><?php echo $total_size; ?></td>
-
-						</tr>
-					</table>
+						<li class="scm-total-size">
+							<span><input type="radio" name="scm_option_clear_cache" id="ams-cache-clear-cache-all-option-enable" value="all" ></span>
+							<span><?php _e( 'All', 'ams-cache' ); ?></span>
+							<span><?php echo $total_rows; ?></span>
+							<span><?php echo $total_size; ?></span>
+						</li>
+					</ul>
 					<div id="show-form-clear-cache"></div>
-					<?php submit_button( __( 'Confirm Clearing Cache', 'cache-master' ) ); ?>
-					</form>
-				</td>
-				<td class="stats-r">
-					<form action="options.php" method="post">
-						<?php settings_fields( 'scm_setting_group_3' ); ?>
-						<?php do_settings_sections( 'scm_setting_page_3' ); ?>
-						<hr />
-						<?php submit_button(); ?>
-					</form>
-				</td>
-			</tr>
-		</table>
+					<?php submit_button( __( 'Confirm Clearing Cache', 'ams-cache' ) ); ?>
+				</form>
+			</section>
+
+			<section class="ams-dashboard-panel">
+				<form action="options.php" method="post">
+					<?php settings_fields( 'scm_setting_group_3' ); ?>
+					<?php do_settings_sections( 'scm_setting_page_3' ); ?>
+					<hr />
+					<?php submit_button(); ?>
+				</form>
+			</section>
+		</div>
 	</div>
 	<div id="hidden-form-clear-cache" style="display: none">
 		<?php settings_fields( 'scm_setting_group_4' ); ?>
@@ -123,7 +132,7 @@ $total_rows = 0;
 			<?php settings_fields( 'scm_setting_group_4' ); ?>
 			<?php do_settings_sections( 'scm_setting_page_4' ); ?>
 			<hr />
-			<?php submit_button( __( 'Confirm Clearing Cache', 'cache-master' ) ); ?>
+			<?php submit_button( __( 'Confirm Clearing Cache', 'ams-cache' ) ); ?>
 		</form>
 
 	<?php endif; ?>

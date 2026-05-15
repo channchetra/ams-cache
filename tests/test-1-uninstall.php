@@ -22,7 +22,7 @@ class UninstallTest extends WP_UnitTestCase {
 
 		update_option( 'scm_option_uninstall', 'yes' );
 
-		$found = uninstall_plugin( 'cache-master/cache-master.php' );
+		$found = uninstall_plugin( 'ams-cache/cache-master.php' );
 
 		$this->assertTrue( $found );
 

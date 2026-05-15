@@ -1,8 +1,8 @@
 <?php
 /**
- * Cache Master helper functions.
+ * AMS Cache helper functions.
  *
- * @package   Cache Master
+ * @package   AMS Cache
  * @author    Terry Lin <terrylinooo>
  * @license   GPLv3 (or later)
  * @link      https://terryl.in
@@ -70,7 +70,14 @@ function scm_set_dir_hash() {
  * @return string
  */
 function scm_get_upload_dir() {
-	return WP_CONTENT_DIR . '/uploads/cache-master/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+	$base_dir   = WP_CONTENT_DIR . '/uploads/ams-cache';
+	$legacy_dir = WP_CONTENT_DIR . '/uploads/' . 'cache' . '-master';
+
+	if ( ! is_dir( $base_dir ) && is_dir( $legacy_dir ) ) {
+		@rename( $legacy_dir, $base_dir );
+	}
+
+	return $base_dir . '/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
 }
 
 /**
@@ -127,6 +134,2303 @@ function scm_get_stats_dir( $cache_type = 'post' ) {
 }
 
 /**
+ * Get the cache key prefix used to isolate shared cache stores.
+ *
+ * @return string
+ */
+function scm_get_cache_key_prefix() {
+	$prefix = get_option( 'scm_option_cache_key_prefix', '' );
+
+	if ( '' === $prefix ) {
+		$prefix = 'scm_' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '_';
+	}
+
+	$prefix = preg_replace( '/[^A-Za-z0-9_.-]/', '_', $prefix );
+
+	if ( '' === $prefix ) {
+		$prefix = 'scm_' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '_';
+	}
+
+	return rtrim( $prefix, '._-' ) . '_';
+}
+
+/**
+ * Normalize a request URI before using it as a cache identity.
+ *
+ * @param string $uri Request URI, URL, or path.
+ *
+ * @return string
+ */
+function scm_normalize_cache_uri( $uri ) {
+	$path = parse_url( (string) $uri, PHP_URL_PATH );
+
+	if ( empty( $path ) ) {
+		$path = '/';
+	}
+
+	$path = '/' . ltrim( $path, '/' );
+	$path = preg_replace( '#/+#', '/', $path );
+
+	if ( '/' !== $path ) {
+		$extension = pathinfo( $path, PATHINFO_EXTENSION );
+
+		if ( '' === $extension && '/' !== substr( $path, -1 ) ) {
+			$path .= '/';
+		}
+	}
+
+	return $path;
+}
+
+/**
+ * Check whether current request carries WordPress auth cookies.
+ *
+ * @return bool
+ */
+function scm_request_has_auth_cookie() {
+	foreach ( $_COOKIE as $name => $value ) {
+		if (
+			0 === strpos( $name, 'wordpress_logged_in_' ) ||
+			0 === strpos( $name, 'wordpress_sec_' ) ||
+			0 === strpos( $name, 'wp-postpass_' )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Check if a path looks like a frontend HTML document.
+ *
+ * @param string $path Request path.
+ *
+ * @return bool
+ */
+function scm_is_cacheable_document_path( $path ) {
+	$path = scm_normalize_cache_uri( $path );
+
+	if ( preg_match( '#/(?:wp-admin|wp-json)(?:/|$)|/(?:wp-login\.php|xmlrpc\.php)$#i', $path ) ) {
+		return false;
+	}
+
+	if ( preg_match( '#\.(?:css|js|map|json|xml|txt|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|eot|otf|mp4|webm|mp3|m4a|pdf|zip)$#i', $path ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Check if a URI can be treated as a cacheable HTML document request.
+ *
+ * @param string|null $uri Request URI.
+ *
+ * @return bool
+ */
+function scm_is_cacheable_request_uri( $uri = null ) {
+	if ( isset( $_SERVER['REQUEST_METHOD'] ) && ! in_array( $_SERVER['REQUEST_METHOD'], array( 'GET', 'HEAD' ), true ) ) {
+		return false;
+	}
+
+	if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+		return false;
+	}
+
+	if ( scm_request_has_auth_cookie() ) {
+		return false;
+	}
+
+	if ( null === $uri ) {
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+	}
+
+	$path = scm_normalize_cache_uri( $uri );
+
+	return scm_is_cacheable_document_path( $path );
+}
+
+/**
+ * Check if URI is the canonical homepage path.
+ *
+ * @param string $uri Request URI, URL, or path.
+ *
+ * @return bool
+ */
+function scm_is_homepage_uri( $uri ) {
+	$home_path = '/';
+
+	if ( function_exists( 'home_url' ) ) {
+		$home_path = scm_normalize_cache_uri( home_url( '/' ) );
+	}
+
+	return scm_normalize_cache_uri( $uri ) === $home_path;
+}
+
+/**
+ * Build the cache key for a request URI.
+ *
+ * @param string $uri Request URI or path.
+ *
+ * @return string
+ */
+function scm_get_cache_key( $uri ) {
+	return md5( scm_get_cache_key_prefix() . '|' . scm_normalize_cache_uri( $uri ) );
+}
+
+/**
+ * Check whether Nginx direct static cache is enabled.
+ *
+ * @return bool
+ */
+function scm_is_nginx_direct_cache_enabled() {
+	return 'yes' === get_option( 'scm_option_nginx_direct_cache_status', 'no' );
+}
+
+/**
+ * Get Nginx direct cache relative directory.
+ *
+ * @return string
+ */
+function scm_get_nginx_static_cache_relative_dir() {
+	return 'wp-content/uploads/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+}
+
+/**
+ * Get Nginx direct cache directory.
+ *
+ * @return string
+ */
+function scm_get_nginx_static_cache_dir() {
+	return WP_CONTENT_DIR . '/uploads/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+}
+
+/**
+ * Convert request URI into a static cache file path.
+ *
+ * @param string $uri Request URI or path.
+ *
+ * @return string
+ */
+function scm_get_nginx_static_cache_path( $uri ) {
+	$path = parse_url( $uri, PHP_URL_PATH );
+
+	if ( empty( $path ) ) {
+		$path = '/';
+	}
+
+	$site_path = parse_url( home_url( '/' ), PHP_URL_PATH );
+
+	if ( ! empty( $site_path ) && '/' !== $site_path && 0 === strpos( $path, $site_path ) ) {
+		$path = substr( $path, strlen( rtrim( $site_path, '/' ) ) );
+	}
+
+	$path = '/' . trim( $path, '/' );
+
+	if ( '/' === $path ) {
+		return trailingslashit( scm_get_nginx_static_cache_dir() ) . 'index.html';
+	}
+
+	$segments = array_filter( explode( '/', trim( $path, '/' ) ) );
+	$safe     = array();
+
+	foreach ( $segments as $segment ) {
+		$segment = rawurldecode( $segment );
+
+		if ( '' === $segment || '.' === $segment || '..' === $segment ) {
+			return '';
+		}
+
+		if ( ! preg_match( '/^[A-Za-z0-9._~%-]+$/', $segment ) ) {
+			return '';
+		}
+
+		$safe[] = $segment;
+	}
+
+	if ( empty( $safe ) ) {
+		return '';
+	}
+
+	return trailingslashit( scm_get_nginx_static_cache_dir() ) . implode( '/', $safe ) . '/index.html';
+}
+
+/**
+ * Write static HTML mirror used by Nginx direct cache.
+ *
+ * @param string $uri     Request URI or path.
+ * @param string $content Full HTML content.
+ *
+ * @return bool
+ */
+function scm_write_nginx_static_cache( $uri, $content ) {
+	if (
+		! scm_is_nginx_direct_cache_enabled() ||
+		'file' !== get_option( 'scm_option_driver', 'file' ) ||
+		empty( $content ) ||
+		false === strpos( $content, '</body>' )
+	) {
+		return false;
+	}
+
+	if ( isset( $_SERVER['REQUEST_METHOD'] ) && ! in_array( $_SERVER['REQUEST_METHOD'], array( 'GET', 'HEAD' ), true ) ) {
+		return false;
+	}
+
+	if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+		return false;
+	}
+
+	$file = scm_get_nginx_static_cache_path( $uri );
+
+	if ( empty( $file ) ) {
+		return false;
+	}
+
+	$dir = dirname( $file );
+
+	if ( ! is_dir( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+
+	if ( ! is_dir( $dir ) || ! is_writable( $dir ) ) {
+		return false;
+	}
+
+	$result = file_put_contents( $file, $content, LOCK_EX );
+
+	if ( false === $result ) {
+		return false;
+	}
+
+	chmod( $file, 0644 );
+
+	return true;
+}
+
+/**
+ * Delete one Nginx static cache file.
+ *
+ * @param string $uri Request URI or path.
+ *
+ * @return bool
+ */
+function scm_delete_nginx_static_cache( $uri ) {
+	$file = scm_get_nginx_static_cache_path( $uri );
+
+	if ( empty( $file ) || ! file_exists( $file ) ) {
+		return false;
+	}
+
+	return unlink( $file );
+}
+
+/**
+ * Clear all Nginx direct static cache files.
+ *
+ * @return int
+ */
+function scm_clear_nginx_static_cache() {
+	$dir = scm_get_nginx_static_cache_dir();
+
+	if ( ! is_dir( $dir ) ) {
+		return 0;
+	}
+
+	$removed = 0;
+	$files   = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+
+	foreach ( $files as $file ) {
+		if ( $file->isDir() ) {
+			rmdir( $file->getPathname() );
+			continue;
+		}
+
+		if ( unlink( $file->getPathname() ) ) {
+			$removed++;
+		}
+	}
+
+	rmdir( $dir );
+
+	return $removed;
+}
+
+/**
+ * Read a stats file in old and new formats.
+ *
+ * @param string $path Stats file path.
+ *
+ * @return array
+ */
+function scm_read_stats_file( $path ) {
+	$content = file_exists( $path ) ? file_get_contents( $path ) : '';
+	$data    = json_decode( $content, true );
+
+	if ( is_array( $data ) ) {
+		return array(
+			'size' => isset( $data['size'] ) ? (int) $data['size'] : 0,
+			'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
+		);
+	}
+
+	return array(
+		'size' => (int) $content,
+		'uri'  => '',
+	);
+}
+
+/**
+ * Delete stale stats/cache rows that point to the same URI.
+ *
+ * @param string                         $type        Cache type.
+ * @param string                         $uri         Request URI.
+ * @param string                         $current_key Current cache key to keep.
+ * @param \Shieldon\SimpleCache\Cache|null $driver    Active cache driver.
+ *
+ * @return int
+ */
+function scm_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $driver = null ) {
+	$dir = scm_get_stats_dir( $type );
+
+	if ( ! is_dir( $dir ) ) {
+		return 0;
+	}
+
+	$target_uri = scm_normalize_cache_uri( $uri );
+	$removed    = 0;
+
+	foreach ( new DirectoryIterator( $dir ) as $file ) {
+		if ( ! $file->isFile() || 'json' !== $file->getExtension() ) {
+			continue;
+		}
+
+		$key = strstr( $file->getFilename(), '.', true );
+
+		if ( '' !== $current_key && $key === $current_key ) {
+			continue;
+		}
+
+		$stats = scm_read_stats_file( $file->getPathname() );
+
+		if ( empty( $stats['uri'] ) || scm_normalize_cache_uri( $stats['uri'] ) !== $target_uri ) {
+			continue;
+		}
+
+		if ( $driver ) {
+			$driver->delete( $key );
+		}
+
+		unlink( $file->getPathname() );
+		$removed++;
+	}
+
+	return $removed;
+}
+
+/**
+ * Delete statistics rows by cache key.
+ *
+ * @param string $key Cache key.
+ *
+ * @return int
+ */
+function scm_delete_cache_stats_by_key( $key ) {
+	$stats_root = scm_get_upload_dir() . '/stats';
+
+	if ( empty( $key ) || ! is_dir( $stats_root ) ) {
+		return 0;
+	}
+
+	$removed = 0;
+
+	foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $stats_root, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+		if ( ! $file->isFile() || $file->getFilename() !== $key . '.json' ) {
+			continue;
+		}
+
+		if ( unlink( $file->getPathname() ) ) {
+			$removed++;
+		}
+	}
+
+	return $removed;
+}
+
+/**
+ * Purge cache for one normalized URI.
+ *
+ * @param string                         $uri    Request URI, URL, or path.
+ * @param \Shieldon\SimpleCache\Cache|null $driver Active cache driver.
+ *
+ * @return array
+ */
+function scm_purge_cache_uri( $uri, $driver = null ) {
+	$uri = scm_normalize_cache_uri( $uri );
+
+	if ( ! scm_is_cacheable_document_path( $uri ) ) {
+		return array(
+			'key'     => '',
+			'uri'     => $uri,
+			'removed' => 0,
+		);
+	}
+
+	if ( null === $driver ) {
+		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+	}
+
+	$key     = scm_get_cache_key( $uri );
+	$removed = 0;
+
+	if ( $driver ) {
+		$driver->delete( $key );
+		$removed++;
+	}
+
+	$removed += scm_delete_cache_stats_by_key( $key );
+
+	if ( scm_delete_nginx_static_cache( $uri ) ) {
+		$removed++;
+	}
+
+	return array(
+		'key'     => $key,
+		'uri'     => $uri,
+		'removed' => $removed,
+	);
+}
+
+/**
+ * Get Nginx direct cache environment checks.
+ *
+ * @return array
+ */
+function scm_get_nginx_direct_cache_requirements() {
+	$static_dir = scm_get_nginx_static_cache_dir();
+
+	if ( ! is_dir( $static_dir ) ) {
+		wp_mkdir_p( $static_dir );
+	}
+
+	return array(
+		'server'    => array(
+			'label'  => __( 'Nginx detected', 'ams-cache' ),
+			'passed' => isset( $_SERVER['SERVER_SOFTWARE'] ) && false !== stripos( $_SERVER['SERVER_SOFTWARE'], 'nginx' ),
+			'detail' => isset( $_SERVER['SERVER_SOFTWARE'] ) ? $_SERVER['SERVER_SOFTWARE'] : __( 'Unknown server software', 'ams-cache' ),
+		),
+		'driver'    => array(
+			'label'  => __( 'File cache driver selected', 'ams-cache' ),
+			'passed' => 'file' === get_option( 'scm_option_driver', 'file' ),
+			'detail' => get_option( 'scm_option_driver', 'file' ),
+		),
+		'permalink' => array(
+			'label'  => __( 'Pretty permalinks enabled', 'ams-cache' ),
+			'passed' => '' !== get_option( 'permalink_structure', '' ),
+			'detail' => '' !== get_option( 'permalink_structure', '' ) ? get_option( 'permalink_structure' ) : __( 'Plain permalinks', 'ams-cache' ),
+		),
+		'writable'  => array(
+			'label'  => __( 'Static cache directory writable', 'ams-cache' ),
+			'passed' => is_dir( $static_dir ) && is_writable( $static_dir ),
+			'detail' => $static_dir,
+		),
+		'config'    => array(
+			'label'  => __( 'Nginx snippet installed manually', 'ams-cache' ),
+			'passed' => false,
+			'detail' => __( 'Copy the generated snippet into your server block, then run nginx -t and reload Nginx.', 'ams-cache' ),
+		),
+	);
+}
+
+/**
+ * Generate Nginx server block snippet for direct static cache.
+ *
+ * @return string
+ */
+function scm_get_nginx_direct_cache_snippet() {
+	$relative_dir = '/' . trim( scm_get_nginx_static_cache_relative_dir(), '/' );
+
+	return trim(
+		"# AMS Cache direct static cache.\n" .
+		"# Put inside the Nginx server {} block. Merge the location / block with your existing WordPress config.\n" .
+		"set \$ams_cache_file \"\";\n" .
+		"set \$ams_cache_skip 0;\n\n" .
+		"if (\$request_method !~ ^(GET|HEAD)$) { set \$ams_cache_skip 1; }\n" .
+		"if (\$query_string != \"\") { set \$ams_cache_skip 1; }\n" .
+		"if (\$http_cookie ~* \"wordpress_logged_in_|wordpress_sec_|comment_author_|woocommerce_items_in_cart|woocommerce_cart_hash|wp_woocommerce_session_\") { set \$ams_cache_skip 1; }\n" .
+		"if (\$request_uri ~* \"(/wp-admin/|/wp-login\\.php|/xmlrpc\\.php|/wp-json/|/cart/?|/checkout/?|/my-account/?)\") { set \$ams_cache_skip 1; }\n\n" .
+		"if (\$ams_cache_skip = 0) { set \$ams_cache_file \"" . $relative_dir . "\$uri/index.html\"; }\n\n" .
+		"gzip on;\n" .
+		"gzip_vary on;\n" .
+		"gzip_types text/plain text/css application/javascript application/json image/svg+xml application/xml;\n\n" .
+		"location ^~ " . $relative_dir . "/ {\n" .
+		"    internal;\n" .
+		"    add_header X-AMS-Cache-Static HIT always;\n" .
+		"}\n\n" .
+		"location ~* \\.(?:css|js|jpg|jpeg|gif|png|webp|avif|svg|ico|woff2?)$ {\n" .
+		"    expires 1y;\n" .
+		"    add_header Cache-Control \"public, immutable\";\n" .
+		"    try_files \$uri =404;\n" .
+		"}\n\n" .
+		"location / {\n" .
+		"    try_files \$ams_cache_file \$uri \$uri/ /index.php?\$args;\n" .
+		"}"
+	);
+}
+
+/**
+ * Default page optimization settings.
+ *
+ * @return array
+ */
+function scm_get_default_page_optimization_settings() {
+	return array(
+		'status'               => 'no',
+		'minify_html'          => 'yes',
+		'remove_comments'      => 'yes',
+		'minify_inline_css'    => 'yes',
+		'lazy_media'           => 'yes',
+		'critical_images'      => 'yes',
+		'preconnect_fonts'     => 'yes',
+		'defer_js'             => 'no',
+		'local_ucss'           => 'no',
+		'js_analysis'          => 'no',
+		'node_path'            => 'node',
+		'purgecss_path'        => 'purgecss',
+		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item-has-children\nwoocommerce\nwp-block\nalignwide\nalignfull",
+		'critical_image_count' => 1,
+		'media_exclusions'     => "logo\navatar\ncaptcha",
+		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal",
+	);
+}
+
+/**
+ * Get page optimization settings.
+ *
+ * @return array
+ */
+function scm_get_page_optimization_settings() {
+	$settings = (array) get_option( 'scm_option_page_optimization', array() );
+	$settings = array_merge( scm_get_default_page_optimization_settings(), $settings );
+
+	$settings['critical_image_count'] = max( 0, min( 5, (int) $settings['critical_image_count'] ) );
+	$settings['node_path']            = trim( (string) $settings['node_path'] );
+	$settings['purgecss_path']        = trim( (string) $settings['purgecss_path'] );
+
+	return $settings;
+}
+
+/**
+ * Check whether page optimization is enabled.
+ *
+ * @return bool
+ */
+function scm_is_page_optimization_enabled() {
+	$settings = scm_get_page_optimization_settings();
+
+	return 'yes' === $settings['status'];
+}
+
+/**
+ * Get the optimization report directory.
+ *
+ * @return string
+ */
+function scm_get_page_optimization_report_dir() {
+	return scm_get_upload_dir() . '/optimization_reports';
+}
+
+/**
+ * Get local optimizer workspace root.
+ *
+ * @return string
+ */
+function scm_get_page_optimization_work_dir() {
+	return scm_get_upload_dir() . '/optimization_work';
+}
+
+/**
+ * Get latest optimization runtime metadata.
+ *
+ * @return array
+ */
+function scm_get_page_optimization_runtime() {
+	return isset( $GLOBALS['scm_page_optimization_runtime'] ) && is_array( $GLOBALS['scm_page_optimization_runtime'] )
+		? $GLOBALS['scm_page_optimization_runtime']
+		: array();
+}
+
+/**
+ * Reset optimization runtime metadata.
+ *
+ * @return void
+ */
+function scm_reset_page_optimization_runtime() {
+	$GLOBALS['scm_page_optimization_runtime'] = array();
+}
+
+/**
+ * Store optimization runtime metadata.
+ *
+ * @param string $key   Runtime key.
+ * @param array  $value Runtime payload.
+ *
+ * @return void
+ */
+function scm_set_page_optimization_runtime( $key, $value ) {
+	if ( ! isset( $GLOBALS['scm_page_optimization_runtime'] ) || ! is_array( $GLOBALS['scm_page_optimization_runtime'] ) ) {
+		$GLOBALS['scm_page_optimization_runtime'] = array();
+	}
+
+	$GLOBALS['scm_page_optimization_runtime'][ $key ] = $value;
+}
+
+/**
+ * Count inline style bytes.
+ *
+ * @param string $html HTML content.
+ *
+ * @return int
+ */
+function scm_get_inline_style_bytes( $html ) {
+	if ( ! preg_match_all( '/<style\b[^>]*>(.*?)<\/style>/is', (string) $html, $matches ) ) {
+		return 0;
+	}
+
+	return strlen( implode( '', $matches[1] ) );
+}
+
+/**
+ * Count regex matches inside HTML.
+ *
+ * @param string $pattern Regex pattern.
+ * @param string $html    HTML content.
+ *
+ * @return int
+ */
+function scm_count_html_matches( $pattern, $html ) {
+	return (int) preg_match_all( $pattern, (string) $html, $matches );
+}
+
+/**
+ * Build one feature report entry.
+ *
+ * @param bool   $enabled Whether the feature is enabled.
+ * @param string $status  Feature status.
+ * @param string $detail  Feature detail.
+ * @param array  $metrics Feature metrics.
+ *
+ * @return array
+ */
+function scm_build_page_optimization_feature_report( $enabled, $status, $detail, $metrics = array() ) {
+	return array(
+		'enabled' => (bool) $enabled,
+		'status'  => $status,
+		'detail'  => $detail,
+		'metrics' => is_array( $metrics ) ? $metrics : array(),
+	);
+}
+
+/**
+ * Build an optimization report for one cached page.
+ *
+ * @param string $before    HTML before optimization.
+ * @param string $after     HTML after optimization.
+ * @param array  $settings  Optimization settings.
+ * @param string $uri       Request URI.
+ * @param string $data_type Cache data type.
+ *
+ * @return array
+ */
+function scm_build_page_optimization_report( $before, $after, $settings, $uri = '', $data_type = '' ) {
+	$before_bytes    = strlen( (string) $before );
+	$after_bytes     = strlen( (string) $after );
+	$comments_before = scm_count_html_matches( '/<!--(?!\s*\[if\b).*?-->/is', $before );
+	$comments_after  = scm_count_html_matches( '/<!--(?!\s*\[if\b).*?-->/is', $after );
+	$styles_before   = scm_get_inline_style_bytes( $before );
+	$styles_after    = scm_get_inline_style_bytes( $after );
+	$lazy_before     = scm_count_html_matches( '/\bloading\s*=\s*(["\'])lazy\1/i', $before );
+	$lazy_after      = scm_count_html_matches( '/\bloading\s*=\s*(["\'])lazy\1/i', $after );
+	$critical_before = scm_count_html_matches( '/\bfetchpriority\s*=\s*(["\'])high\1/i', $before );
+	$critical_after  = scm_count_html_matches( '/\bfetchpriority\s*=\s*(["\'])high\1/i', $after );
+	$fonts_before    = scm_count_html_matches( '/<link\b[^>]*\brel\s*=\s*(["\'])(?:preconnect|dns-prefetch)\1[^>]*fonts\.(?:googleapis|gstatic)\.com/i', $before );
+	$fonts_after     = scm_count_html_matches( '/<link\b[^>]*\brel\s*=\s*(["\'])(?:preconnect|dns-prefetch)\1[^>]*fonts\.(?:googleapis|gstatic)\.com/i', $after );
+	$defer_before    = scm_count_html_matches( '/<script\b[^>]*\bdefer\b/i', $before );
+	$defer_after     = scm_count_html_matches( '/<script\b[^>]*\bdefer\b/i', $after );
+	$features        = array();
+	$runtime         = scm_get_page_optimization_runtime();
+
+	$features['minify_html'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['minify_html'],
+		'yes' !== $settings['minify_html'] ? 'disabled' : ( $after_bytes < $before_bytes ? 'applied' : 'no_change' ),
+		'yes' !== $settings['minify_html']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before size, 2: after size. */
+				__( '%1$s before, %2$s after.', 'ams-cache' ),
+				size_format( $before_bytes, 2 ),
+				size_format( $after_bytes, 2 )
+			)
+	);
+
+	$features['remove_comments'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['remove_comments'],
+		'yes' !== $settings['remove_comments'] ? 'disabled' : ( $comments_after < $comments_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['remove_comments']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before comments, 2: after comments. */
+				__( '%1$s comments before, %2$s after.', 'ams-cache' ),
+				number_format_i18n( $comments_before ),
+				number_format_i18n( $comments_after )
+			)
+	);
+
+	$features['minify_inline_css'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['minify_inline_css'],
+		'yes' !== $settings['minify_inline_css'] ? 'disabled' : ( $styles_after < $styles_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['minify_inline_css']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before size, 2: after size. */
+				__( '%1$s inline CSS before, %2$s after.', 'ams-cache' ),
+				size_format( $styles_before, 2 ),
+				size_format( $styles_after, 2 )
+			)
+	);
+
+	$features['lazy_media'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['lazy_media'],
+		'yes' !== $settings['lazy_media'] ? 'disabled' : ( $lazy_after > $lazy_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['lazy_media']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before tags, 2: after tags. */
+				__( '%1$s lazy tags before, %2$s after.', 'ams-cache' ),
+				number_format_i18n( $lazy_before ),
+				number_format_i18n( $lazy_after )
+			)
+	);
+
+	$features['critical_images'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['critical_images'],
+		'yes' !== $settings['critical_images'] ? 'disabled' : ( $critical_after > $critical_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['critical_images']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before tags, 2: after tags. */
+				__( '%1$s priority images before, %2$s after.', 'ams-cache' ),
+				number_format_i18n( $critical_before ),
+				number_format_i18n( $critical_after )
+			)
+	);
+
+	$features['preconnect_fonts'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['preconnect_fonts'],
+		'yes' !== $settings['preconnect_fonts'] ? 'disabled' : ( $fonts_after > $fonts_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['preconnect_fonts']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before links, 2: after links. */
+				__( '%1$s font hints before, %2$s after.', 'ams-cache' ),
+				number_format_i18n( $fonts_before ),
+				number_format_i18n( $fonts_after )
+			)
+	);
+
+	$features['defer_js'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['defer_js'],
+		'yes' !== $settings['defer_js'] ? 'disabled' : ( $defer_after > $defer_before ? 'applied' : 'no_change' ),
+		'yes' !== $settings['defer_js']
+			? __( 'Disabled.', 'ams-cache' )
+			: sprintf(
+				/* translators: 1: before scripts, 2: after scripts. */
+				__( '%1$s deferred scripts before, %2$s after.', 'ams-cache' ),
+				number_format_i18n( $defer_before ),
+				number_format_i18n( $defer_after )
+			)
+	);
+
+	$features['local_ucss'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['local_ucss'],
+		'yes' !== $settings['local_ucss']
+			? 'disabled'
+			: ( isset( $runtime['local_ucss']['status'] ) ? $runtime['local_ucss']['status'] : 'failed' ),
+		'yes' === $settings['local_ucss']
+			? ( isset( $runtime['local_ucss']['detail'] ) ? $runtime['local_ucss']['detail'] : __( 'Local UCSS engine did not return a result.', 'ams-cache' ) )
+			: __( 'Disabled.', 'ams-cache' ),
+		isset( $runtime['local_ucss']['metrics'] ) ? $runtime['local_ucss']['metrics'] : array()
+	);
+
+	$features['js_analysis'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['js_analysis'],
+		'yes' !== $settings['js_analysis']
+			? 'disabled'
+			: ( isset( $runtime['js_analysis']['status'] ) ? $runtime['js_analysis']['status'] : 'failed' ),
+		'yes' === $settings['js_analysis']
+			? ( isset( $runtime['js_analysis']['detail'] ) ? $runtime['js_analysis']['detail'] : __( 'JS analysis engine did not return a result.', 'ams-cache' ) )
+			: __( 'Disabled.', 'ams-cache' ),
+		isset( $runtime['js_analysis']['metrics'] ) ? $runtime['js_analysis']['metrics'] : array()
+	);
+
+	$applied_count = 0;
+
+	foreach ( $features as $feature ) {
+		if ( 'applied' === $feature['status'] ) {
+			$applied_count++;
+		}
+	}
+
+	return array(
+		'uri'            => scm_normalize_cache_uri( $uri ),
+		'dataType'       => $data_type,
+		'generatedAt'    => current_time( 'mysql' ),
+		'generatedUnix'  => time(),
+		'beforeBytes'    => $before_bytes,
+		'beforeLabel'    => size_format( $before_bytes, 2 ),
+		'afterBytes'     => $after_bytes,
+		'afterLabel'     => size_format( $after_bytes, 2 ),
+		'savedBytes'     => max( 0, $before_bytes - $after_bytes ),
+		'savedLabel'     => size_format( max( 0, $before_bytes - $after_bytes ), 2 ),
+		'savedPercent'   => $before_bytes > 0 ? round( ( ( $before_bytes - $after_bytes ) / $before_bytes ) * 100, 2 ) : 0,
+		'appliedCount'   => $applied_count,
+		'overallStatus'  => ! scm_is_page_optimization_enabled() ? 'disabled' : ( $applied_count > 0 ? 'applied' : 'no_change' ),
+		'features'       => $features,
+	);
+}
+
+/**
+ * Store one page optimization report.
+ *
+ * @param string $uri    Request URI.
+ * @param array  $report Report payload.
+ *
+ * @return void
+ */
+function scm_write_page_optimization_report( $uri, $report ) {
+	$dir = scm_get_page_optimization_report_dir();
+
+	if ( ! is_dir( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+
+	$key  = md5( scm_normalize_cache_uri( $uri ) );
+	$file = trailingslashit( $dir ) . $key . '.json';
+
+	file_put_contents( $file, wp_json_encode( $report ) );
+	scm_prune_page_optimization_reports();
+}
+
+/**
+ * Keep the report directory bounded for large sites.
+ *
+ * @param int $limit Maximum report files to keep.
+ *
+ * @return int Number of deleted reports.
+ */
+function scm_prune_page_optimization_reports( $limit = 200 ) {
+	$dir     = scm_get_page_optimization_report_dir();
+	$deleted = 0;
+	$limit   = max( 20, min( 1000, (int) apply_filters( 'scm_page_optimization_report_limit', $limit ) ) );
+
+	if ( ! is_dir( $dir ) ) {
+		return 0;
+	}
+
+	$files = array();
+
+	foreach ( new DirectoryIterator( $dir ) as $file ) {
+		if ( $file->isFile() && 'json' === $file->getExtension() ) {
+			$files[] = array(
+				'path'  => $file->getPathname(),
+				'mtime' => $file->getMTime(),
+			);
+		}
+	}
+
+	if ( count( $files ) <= $limit ) {
+		return 0;
+	}
+
+	usort(
+		$files,
+		function ( $a, $b ) {
+			return (int) $a['mtime'] - (int) $b['mtime'];
+		}
+	);
+
+	foreach ( array_slice( $files, 0, count( $files ) - $limit ) as $file ) {
+		if ( unlink( $file['path'] ) ) {
+			$deleted++;
+		}
+	}
+
+	return $deleted;
+}
+
+/**
+ * Get latest page optimization reports.
+ *
+ * @param int $limit Maximum reports.
+ * @param int $offset Number of reports to skip.
+ *
+ * @return array
+ */
+function scm_get_page_optimization_reports( $limit = 20, $offset = 0 ) {
+	$dir     = scm_get_page_optimization_report_dir();
+	$reports = array();
+	$limit   = max( 1, min( 100, (int) $limit ) );
+	$offset  = max( 0, (int) $offset );
+
+	if ( ! is_dir( $dir ) ) {
+		return $reports;
+	}
+
+	foreach ( new DirectoryIterator( $dir ) as $file ) {
+		if ( ! $file->isFile() || 'json' !== $file->getExtension() ) {
+			continue;
+		}
+
+		$data = json_decode( file_get_contents( $file->getPathname() ), true );
+
+		if ( ! is_array( $data ) ) {
+			continue;
+		}
+
+		$data['_mtime'] = $file->getMTime();
+		$reports[]      = $data;
+	}
+
+	usort(
+		$reports,
+		function ( $a, $b ) {
+			return (int) $b['_mtime'] - (int) $a['_mtime'];
+		}
+	);
+
+	return array_slice( $reports, $offset, $limit );
+}
+
+/**
+ * Count stored page optimization reports.
+ *
+ * @return int
+ */
+function scm_count_page_optimization_reports() {
+	$dir   = scm_get_page_optimization_report_dir();
+	$count = 0;
+
+	if ( ! is_dir( $dir ) ) {
+		return 0;
+	}
+
+	foreach ( new DirectoryIterator( $dir ) as $file ) {
+		if ( $file->isFile() && 'json' === $file->getExtension() ) {
+			$count++;
+		}
+	}
+
+	return $count;
+}
+
+/**
+ * Get newline-separated option as list.
+ *
+ * @param string $value Raw textarea value.
+ *
+ * @return array
+ */
+function scm_get_lines_from_textarea( $value ) {
+	$lines = preg_split( '/\r\n|\r|\n/', (string) $value );
+	$lines = array_map( 'trim', $lines );
+
+	return array_values( array_filter( $lines ) );
+}
+
+/**
+ * Create denied local optimizer workspace.
+ *
+ * @param string $prefix Workspace prefix.
+ *
+ * @return string
+ */
+function scm_create_page_optimization_workspace( $prefix ) {
+	$root = scm_get_page_optimization_work_dir();
+
+	if ( ! is_dir( $root ) ) {
+		wp_mkdir_p( $root );
+	}
+
+	if ( is_dir( $root ) ) {
+		if ( ! file_exists( trailingslashit( $root ) . 'index.html' ) ) {
+			file_put_contents( trailingslashit( $root ) . 'index.html', '' );
+		}
+
+		if ( ! file_exists( trailingslashit( $root ) . '.htaccess' ) ) {
+			file_put_contents( trailingslashit( $root ) . '.htaccess', "Require all denied\nDeny from all" );
+		}
+	}
+
+	$dir = trailingslashit( $root ) . sanitize_file_name( $prefix . '-' . wp_generate_uuid4() );
+
+	if ( wp_mkdir_p( $dir ) ) {
+		return $dir;
+	}
+
+	return '';
+}
+
+/**
+ * Delete one local optimizer workspace.
+ *
+ * @param string $dir Workspace path.
+ *
+ * @return void
+ */
+function scm_delete_page_optimization_workspace( $dir ) {
+	$root = realpath( scm_get_page_optimization_work_dir() );
+	$path = realpath( $dir );
+
+	if ( false === $root || false === $path || 0 !== strpos( $path, $root ) || ! is_dir( $path ) ) {
+		return;
+	}
+
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+
+	foreach ( $iterator as $file ) {
+		if ( $file->isDir() ) {
+			rmdir( $file->getPathname() );
+		} else {
+			unlink( $file->getPathname() );
+		}
+	}
+
+	rmdir( $path );
+}
+
+/**
+ * Check if HTML tag matches exclusion keywords.
+ *
+ * @param string $tag      HTML tag.
+ * @param array  $keywords Exclusion keywords.
+ *
+ * @return bool
+ */
+function scm_html_tag_is_excluded( $tag, $keywords ) {
+	foreach ( $keywords as $keyword ) {
+		if ( '' !== $keyword && false !== stripos( $tag, $keyword ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Resolve one same-site asset URL to a readable local path.
+ *
+ * @param string $url Asset URL.
+ *
+ * @return string
+ */
+function scm_local_asset_url_to_path( $url ) {
+	$url       = html_entity_decode( trim( (string) $url ), ENT_QUOTES, 'UTF-8' );
+	$site_url  = home_url( '/' );
+	$site_host = parse_url( $site_url, PHP_URL_HOST );
+	$url_host  = parse_url( $url, PHP_URL_HOST );
+	$path      = parse_url( $url, PHP_URL_PATH );
+
+	if (
+		'' === $url ||
+		(
+			false !== strpos( $url, '//' ) &&
+			! empty( $url_host ) &&
+			strtolower( (string) $url_host ) !== strtolower( (string) $site_host )
+		)
+	) {
+		return '';
+	}
+
+	if ( empty( $path ) ) {
+		$path = $url;
+	}
+
+	$path = ltrim( wp_normalize_path( rawurldecode( $path ) ), '/' );
+
+	if ( '' === $path || false !== strpos( $path, '..' ) ) {
+		return '';
+	}
+
+	$full_path = wp_normalize_path( ABSPATH . $path );
+	$root_path = wp_normalize_path( ABSPATH );
+
+	if ( 0 !== strpos( $full_path, $root_path ) ) {
+		return '';
+	}
+
+	return $full_path;
+}
+
+/**
+ * Get HTML attribute value.
+ *
+ * @param string $tag  HTML tag.
+ * @param string $attr Attribute name.
+ *
+ * @return string
+ */
+function scm_html_get_attribute( $tag, $attr ) {
+	$attr = preg_quote( $attr, '/' );
+
+	if ( preg_match( '/\s' . $attr . '\s*=\s*(["\'])(.*?)\1/is', $tag, $match ) ) {
+		return $match[2];
+	}
+
+	if ( preg_match( '/\s' . $attr . '\s*=\s*([^\s>]+)/is', $tag, $match ) ) {
+		return $match[1];
+	}
+
+	return '';
+}
+
+/**
+ * Check HTML attribute exists.
+ *
+ * @param string $tag  HTML tag.
+ * @param string $attr Attribute name.
+ *
+ * @return bool
+ */
+function scm_html_has_attribute( $tag, $attr ) {
+	return preg_match( '/\s' . preg_quote( $attr, '/' ) . '(?:\s*=|\s|\/?>)/i', $tag ) > 0;
+}
+
+/**
+ * Set HTML attribute.
+ *
+ * @param string $tag   HTML tag.
+ * @param string $attr  Attribute name.
+ * @param string $value Attribute value.
+ *
+ * @return string
+ */
+function scm_html_set_attribute( $tag, $attr, $value ) {
+	$escaped = htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' );
+	$pattern = '/\s' . preg_quote( $attr, '/' ) . '\s*=\s*(["\']).*?\1/is';
+
+	if ( preg_match( $pattern, $tag ) ) {
+		return preg_replace( $pattern, ' ' . $attr . '="' . $escaped . '"', $tag, 1 );
+	}
+
+	return preg_replace( '/\s*\/?>$/', ' ' . $attr . '="' . $escaped . '">', $tag, 1 );
+}
+
+/**
+ * Add boolean HTML attribute.
+ *
+ * @param string $tag  HTML tag.
+ * @param string $attr Attribute name.
+ *
+ * @return string
+ */
+function scm_html_add_boolean_attribute( $tag, $attr ) {
+	if ( scm_html_has_attribute( $tag, $attr ) ) {
+		return $tag;
+	}
+
+	return preg_replace( '/\s*\/?>$/', ' ' . $attr . '>', $tag, 1 );
+}
+
+/**
+ * Minify CSS content.
+ *
+ * @param string $css CSS content.
+ *
+ * @return string
+ */
+function scm_minify_css( $css ) {
+	$css = preg_replace( '#/\*.*?\*/#s', '', $css );
+	$css = preg_replace( '/\s+/', ' ', $css );
+	$css = preg_replace( '/\s*([{}:;,>+~])\s*/', '$1', $css );
+	$css = str_replace( ';}', '}', $css );
+
+	return trim( $css );
+}
+
+/**
+ * Remove safe HTML comments.
+ *
+ * @param string $html HTML content.
+ *
+ * @return string
+ */
+function scm_remove_html_comments( $html ) {
+	return preg_replace_callback(
+		'/<!--(.*?)-->/s',
+		function ( $match ) {
+			$comment = trim( $match[1] );
+
+			if (
+				0 === stripos( $comment, '[if' ) ||
+				0 === stripos( $comment, '<![endif' ) ||
+				0 === strpos( $comment, 'wp:' ) ||
+				0 === strpos( $comment, '/wp:' )
+			) {
+				return $match[0];
+			}
+
+			return '';
+		},
+		$html
+	);
+}
+
+/**
+ * Minify style blocks.
+ *
+ * @param string $html HTML content.
+ *
+ * @return string
+ */
+function scm_minify_inline_css_blocks( $html ) {
+	return preg_replace_callback(
+		'#<style\b([^>]*)>(.*?)</style>#is',
+		function ( $match ) {
+			return '<style' . $match[1] . '>' . scm_minify_css( $match[2] ) . '</style>';
+		},
+		$html
+	);
+}
+
+/**
+ * Minify HTML outside protected tags.
+ *
+ * @param string $html HTML content.
+ *
+ * @return string
+ */
+function scm_minify_html( $html ) {
+	$protected = array();
+
+	$html = preg_replace_callback(
+		'#<(script|style|pre|textarea)\b[^>]*>.*?</\1>#is',
+		function ( $match ) use ( &$protected ) {
+			$key = '%%SCM_PROTECTED_' . count( $protected ) . '%%';
+			$protected[ $key ] = $match[0];
+
+			return $key;
+		},
+		$html
+	);
+
+	$html = preg_replace( '/>\s+</', '><', $html );
+	$html = preg_replace( '/[ \t]+/', ' ', $html );
+	$html = trim( $html );
+
+	return strtr( $html, $protected );
+}
+
+/**
+ * Add media loading attributes and optional LCP preload.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_optimize_media_tags( $html, $settings ) {
+	$image_index = 0;
+	$preloads    = array();
+	$exclusions  = scm_get_lines_from_textarea( $settings['media_exclusions'] );
+	$lcp_count   = (int) $settings['critical_image_count'];
+
+	if ( 'yes' === $settings['lazy_media'] || 'yes' === $settings['critical_images'] ) {
+		$html = preg_replace_callback(
+			'/<img\b[^>]*>/i',
+			function ( $match ) use ( &$image_index, &$preloads, $exclusions, $settings, $lcp_count ) {
+				$tag = $match[0];
+
+				if ( scm_html_tag_is_excluded( $tag, $exclusions ) ) {
+					return $tag;
+				}
+
+				$image_index++;
+
+				if ( 'yes' === $settings['critical_images'] && $image_index <= $lcp_count ) {
+					$tag = scm_html_set_attribute( $tag, 'loading', 'eager' );
+					$tag = scm_html_set_attribute( $tag, 'fetchpriority', 'high' );
+
+					$src    = scm_html_get_attribute( $tag, 'src' );
+					$srcset = scm_html_get_attribute( $tag, 'srcset' );
+					$sizes  = scm_html_get_attribute( $tag, 'sizes' );
+
+					if ( '' !== $src ) {
+						$preloads[ $src ] = array(
+							'src'    => $src,
+							'srcset' => $srcset,
+							'sizes'  => $sizes,
+						);
+					}
+				} elseif ( 'yes' === $settings['lazy_media'] && ! scm_html_has_attribute( $tag, 'loading' ) ) {
+					$tag = scm_html_set_attribute( $tag, 'loading', 'lazy' );
+				}
+
+				if ( ! scm_html_has_attribute( $tag, 'decoding' ) ) {
+					$tag = scm_html_set_attribute( $tag, 'decoding', 'async' );
+				}
+
+				return $tag;
+			},
+			$html
+		);
+	}
+
+	if ( 'yes' === $settings['lazy_media'] ) {
+		$html = preg_replace_callback(
+			'/<iframe\b[^>]*>/i',
+			function ( $match ) use ( $exclusions ) {
+				$tag = $match[0];
+
+				if ( scm_html_tag_is_excluded( $tag, $exclusions ) || scm_html_has_attribute( $tag, 'loading' ) ) {
+					return $tag;
+				}
+
+				return scm_html_set_attribute( $tag, 'loading', 'lazy' );
+			},
+			$html
+		);
+	}
+
+	if ( ! empty( $preloads ) ) {
+		$links = '';
+
+		foreach ( $preloads as $preload ) {
+			if ( false === strpos( $html, 'href="' . $preload['src'] . '"' ) ) {
+				$link = '<link rel="preload" as="image" fetchpriority="high" href="' . esc_url( $preload['src'] ) . '"';
+
+				if ( '' !== $preload['srcset'] ) {
+					$link .= ' imagesrcset="' . esc_attr( $preload['srcset'] ) . '"';
+				}
+
+				if ( '' !== $preload['sizes'] ) {
+					$link .= ' imagesizes="' . esc_attr( $preload['sizes'] ) . '"';
+				}
+
+				$links .= $link . '>';
+			}
+		}
+
+		if ( '' !== $links ) {
+			$html = preg_replace( '#</head>#i', $links . '</head>', $html, 1 );
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * Add font preconnect hints.
+ *
+ * @param string $html HTML content.
+ *
+ * @return string
+ */
+function scm_add_font_preconnects( $html ) {
+	$links = '';
+
+	if ( false !== strpos( $html, 'fonts.googleapis.com' ) && false === strpos( $html, 'href="https://fonts.googleapis.com"' ) ) {
+		$links .= '<link rel="preconnect" href="https://fonts.googleapis.com">';
+	}
+
+	if ( false !== strpos( $html, 'fonts.gstatic.com' ) && false === strpos( $html, 'href="https://fonts.gstatic.com"' ) ) {
+		$links .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+	}
+
+	if ( '' !== $links ) {
+		$html = preg_replace( '#</head>#i', $links . '</head>', $html, 1 );
+	}
+
+	return $html;
+}
+
+/**
+ * Defer external scripts.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_defer_scripts( $html, $settings ) {
+	$exclusions = scm_get_lines_from_textarea( $settings['js_exclusions'] );
+
+	return preg_replace_callback(
+		'#<script\b[^>]*\bsrc\s*=\s*(["\']).*?\1[^>]*></script>#is',
+		function ( $match ) use ( $exclusions ) {
+			$tag = $match[0];
+
+			if (
+				scm_html_tag_is_excluded( $tag, $exclusions ) ||
+				scm_html_has_attribute( $tag, 'defer' ) ||
+				scm_html_has_attribute( $tag, 'async' ) ||
+				false !== stripos( $tag, 'type="module"' ) ||
+				false !== stripos( $tag, "type='module'" )
+			) {
+				return $tag;
+			}
+
+			return preg_replace( '/^<script\b/i', '<script defer', $tag, 1 );
+		},
+		$html
+	);
+}
+
+/**
+ * Build one PurgeCSS CLI command.
+ *
+ * @param string $purgecss   Escaped PurgeCSS executable.
+ * @param array  $css_files  Relative CSS filenames.
+ * @param array  $safelist   Safelisted selectors.
+ * @param string $output_dir Relative output directory.
+ *
+ * @return string
+ */
+function scm_build_local_ucss_command( $purgecss, $css_files, $safelist, $output_dir ) {
+	$command = $purgecss . ' --css';
+
+	foreach ( $css_files as $css_file ) {
+		$command .= ' ' . escapeshellarg( $css_file );
+	}
+
+	$command .= ' --content ' . escapeshellarg( 'content.html' );
+	$command .= ' --output ' . escapeshellarg( $output_dir );
+	$command .= ' --font-face --keyframes';
+
+	if ( ! empty( $safelist ) ) {
+		$command .= ' --safelist';
+
+		foreach ( $safelist as $selector ) {
+			$command .= ' ' . escapeshellarg( $selector );
+		}
+	}
+
+	return $command;
+}
+
+/**
+ * Pick useful one-line optimizer failure detail from noisy CLI output.
+ *
+ * @param string $output   CLI output.
+ * @param string $fallback Fallback detail.
+ *
+ * @return string
+ */
+function scm_get_local_optimizer_error_detail( $output, $fallback ) {
+	$lines = preg_split( '/\r\n|\r|\n/', trim( (string) $output ) );
+
+	foreach ( $lines as $line ) {
+		$line = trim( $line );
+
+		if ( '' !== $line && preg_match( '/(?:CssSyntaxError|Unknown word|Unclosed block|Missed semicolon)/i', $line ) ) {
+			return $line;
+		}
+	}
+
+	foreach ( $lines as $line ) {
+		$line = trim( $line );
+
+		if (
+			'' !== $line &&
+			0 !== strpos( $line, 'at ' ) &&
+			false === strpos( $line, '/node_modules/' ) &&
+			false === strpos( $line, '\\node_modules\\' )
+		) {
+			return $line;
+		}
+	}
+
+	return $fallback;
+}
+
+/**
+ * Run PurgeCSS on inline style blocks.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_local_ucss( $html, $settings ) {
+	if ( ! preg_match_all( '#<style\b([^>]*)>(.*?)</style>#is', $html, $matches, PREG_SET_ORDER ) ) {
+		scm_set_page_optimization_runtime(
+			'local_ucss',
+			array(
+				'status' => 'no_change',
+				'detail' => __( 'No inline CSS blocks found.', 'ams-cache' ),
+				'metrics' => array(
+					'beforeBytes'   => 0,
+					'afterBytes'    => 0,
+					'savedBytes'    => 0,
+					'blocks'        => 0,
+					'skippedBlocks' => 0,
+				),
+			)
+		);
+		return $html;
+	}
+
+	$purgecss = scm_get_executable_command( $settings['purgecss_path'] );
+	$workspace = scm_create_page_optimization_workspace( 'ucss' );
+
+	if ( '' === $purgecss || '' === $workspace ) {
+		scm_set_page_optimization_runtime(
+			'local_ucss',
+			array(
+				'status' => 'failed',
+				'detail' => __( 'Local UCSS engine could not start.', 'ams-cache' ),
+				'metrics' => array(),
+			)
+		);
+		return $html;
+	}
+
+	$content_file = trailingslashit( $workspace ) . 'content.html';
+	$output_dir   = trailingslashit( $workspace ) . 'output';
+	$css_files    = array();
+	$before_bytes = 0;
+
+	wp_mkdir_p( $output_dir );
+	file_put_contents( $content_file, $html );
+
+	foreach ( $matches as $index => $match ) {
+		$css_file = 'style-' . $index . '.css';
+		$css      = (string) $match[2];
+
+		$before_bytes += strlen( $css );
+		file_put_contents( trailingslashit( $workspace ) . $css_file, $css );
+		$css_files[] = $css_file;
+	}
+
+	$safelist        = scm_get_lines_from_textarea( $settings['ucss_safelist'] );
+	$command         = scm_build_local_ucss_command( $purgecss, $css_files, $safelist, 'output' );
+	$result          = scm_run_local_optimizer_command( $command, $workspace );
+	$replacements    = array();
+	$after_bytes     = 0;
+	$skipped_blocks  = 0;
+	$failure_detail  = '';
+	$batch_succeeded = $result['passed'];
+
+	foreach ( $matches as $index => $match ) {
+		$css_file    = 'style-' . $index . '.css';
+		$output_file = trailingslashit( $output_dir ) . $css_file;
+
+		if ( ! $batch_succeeded ) {
+			$block_output_dir = 'output-' . $index;
+			wp_mkdir_p( trailingslashit( $workspace ) . $block_output_dir );
+
+			$block_command = scm_build_local_ucss_command( $purgecss, array( $css_file ), $safelist, $block_output_dir );
+			$block_result  = scm_run_local_optimizer_command( $block_command, $workspace );
+			$output_file   = trailingslashit( $workspace ) . $block_output_dir . '/' . $css_file;
+
+			if ( ! $block_result['passed'] ) {
+				$skipped_blocks++;
+				$after_bytes += strlen( (string) $match[2] );
+				$replacements[ $index ] = $match[0];
+
+				if ( '' === $failure_detail ) {
+					$failure_detail = scm_get_local_optimizer_error_detail(
+						$block_result['output'],
+						__( 'PurgeCSS could not parse one inline CSS block.', 'ams-cache' )
+					);
+				}
+
+				continue;
+			}
+		}
+
+		if ( ! file_exists( $output_file ) ) {
+			$skipped_blocks++;
+			$after_bytes += strlen( (string) $match[2] );
+			$replacements[ $index ] = $match[0];
+
+			if ( '' === $failure_detail ) {
+				$failure_detail = __( 'PurgeCSS output was incomplete.', 'ams-cache' );
+			}
+
+			continue;
+		}
+
+		$purged_css   = file_get_contents( $output_file );
+		$after_bytes += strlen( (string) $purged_css );
+		$replacements[ $index ] = '<style' . $match[1] . '>' . $purged_css . '</style>';
+	}
+
+	if ( count( $matches ) === $skipped_blocks ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'local_ucss',
+			array(
+				'status' => 'failed',
+				'detail' => '' !== $failure_detail
+					? $failure_detail
+					: scm_get_local_optimizer_error_detail( $result['output'], __( 'PurgeCSS failed.', 'ams-cache' ) ),
+				'metrics' => array(),
+			)
+		);
+		return $html;
+	}
+
+	$replacement_index = 0;
+	$html = preg_replace_callback(
+		'#<style\b([^>]*)>(.*?)</style>#is',
+		function ( $match ) use ( &$replacement_index, $replacements ) {
+			$replacement = isset( $replacements[ $replacement_index ] ) ? $replacements[ $replacement_index ] : $match[0];
+			$replacement_index++;
+
+			return $replacement;
+		},
+		$html
+	);
+	scm_delete_page_optimization_workspace( $workspace );
+	scm_set_page_optimization_runtime(
+		'local_ucss',
+		array(
+			'status' => $after_bytes < $before_bytes ? 'applied' : 'no_change',
+			'detail' => $skipped_blocks > 0
+				? sprintf(
+					/* translators: 1: before size, 2: after size, 3: block count, 4: skipped block count. */
+					__( '%1$s inline CSS before, %2$s after across %3$s blocks; %4$s malformed blocks kept raw.', 'ams-cache' ),
+					size_format( $before_bytes, 2 ),
+					size_format( $after_bytes, 2 ),
+					number_format_i18n( count( $matches ) ),
+					number_format_i18n( $skipped_blocks )
+				)
+				: sprintf(
+					/* translators: 1: before size, 2: after size, 3: block count. */
+					__( '%1$s inline CSS before, %2$s after across %3$s blocks.', 'ams-cache' ),
+					size_format( $before_bytes, 2 ),
+					size_format( $after_bytes, 2 ),
+					number_format_i18n( count( $matches ) )
+				),
+			'metrics' => array(
+				'beforeBytes'   => $before_bytes,
+				'afterBytes'    => $after_bytes,
+				'savedBytes'    => max( 0, $before_bytes - $after_bytes ),
+				'blocks'        => count( $matches ),
+				'skippedBlocks' => $skipped_blocks,
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
+ * Run local Node.js script analysis and defer safe local scripts.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_local_js_analysis( $html, $settings ) {
+	if ( ! preg_match_all( '#<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1[^>]*></script>#is', $html, $matches, PREG_SET_ORDER ) ) {
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status' => 'no_change',
+				'detail' => __( 'No external scripts found.', 'ams-cache' ),
+				'metrics' => array(
+					'analyzed' => 0,
+					'deferred' => 0,
+				),
+			)
+		);
+		return $html;
+	}
+
+	$node      = scm_get_executable_command( $settings['node_path'] );
+	$analyzer  = SCM_PLUGIN_DIR . 'inc/assets/js/local-js-analyzer.js';
+	$workspace = scm_create_page_optimization_workspace( 'js-analysis' );
+
+	if ( '' === $node || '' === $workspace || ! file_exists( $analyzer ) ) {
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status' => 'failed',
+				'detail' => __( 'JS analysis engine could not start.', 'ams-cache' ),
+				'metrics' => array(),
+			)
+		);
+		return $html;
+	}
+
+	$exclusions = scm_get_lines_from_textarea( $settings['js_exclusions'] );
+	$scripts    = array();
+	$indexes    = array();
+
+	foreach ( $matches as $index => $match ) {
+		$tag = $match[0];
+		$src = html_entity_decode( $match[2], ENT_QUOTES, 'UTF-8' );
+
+		if (
+			scm_html_tag_is_excluded( $tag, $exclusions ) ||
+			scm_html_has_attribute( $tag, 'defer' ) ||
+			scm_html_has_attribute( $tag, 'async' ) ||
+			false !== stripos( $tag, 'type="module"' ) ||
+			false !== stripos( $tag, "type='module'" )
+		) {
+			continue;
+		}
+
+		$path = scm_local_asset_url_to_path( $src );
+
+		if ( '' === $path || ! file_exists( $path ) || ! is_readable( $path ) ) {
+			continue;
+		}
+
+		$scripts[] = array(
+			'src'     => $src,
+			'content' => file_get_contents( $path ),
+		);
+		$indexes[] = $index;
+	}
+
+	if ( empty( $scripts ) ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status' => 'no_change',
+				'detail' => __( 'No readable same-site scripts available for analysis.', 'ams-cache' ),
+				'metrics' => array(
+					'analyzed' => 0,
+					'deferred' => 0,
+				),
+			)
+		);
+		return $html;
+	}
+
+	$input_file  = trailingslashit( $workspace ) . 'scripts.json';
+	$output_file = trailingslashit( $workspace ) . 'analysis.json';
+	file_put_contents( $input_file, wp_json_encode( array( 'scripts' => $scripts ) ) );
+
+	$command = $node . ' ' . escapeshellarg( $analyzer ) . ' ' . escapeshellarg( $input_file ) . ' ' . escapeshellarg( $output_file );
+	$result  = scm_run_local_optimizer_command( $command );
+
+	if ( ! $result['passed'] || ! file_exists( $output_file ) ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status' => 'failed',
+				'detail' => '' !== $result['output'] ? strtok( $result['output'], "\r\n" ) : __( 'JS analysis failed.', 'ams-cache' ),
+				'metrics' => array(),
+			)
+		);
+		return $html;
+	}
+
+	$analysis = json_decode( file_get_contents( $output_file ), true );
+
+	if ( ! is_array( $analysis ) || empty( $analysis['scripts'] ) || ! is_array( $analysis['scripts'] ) ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status' => 'failed',
+				'detail' => __( 'JS analysis output was invalid.', 'ams-cache' ),
+				'metrics' => array(),
+			)
+		);
+		return $html;
+	}
+
+	$deferred = 0;
+
+	foreach ( $analysis['scripts'] as $analysis_index => $script ) {
+		if ( empty( $script['safeToDefer'] ) || ! isset( $indexes[ $analysis_index ] ) ) {
+			continue;
+		}
+
+		$match_index = $indexes[ $analysis_index ];
+		$old_tag     = $matches[ $match_index ][0];
+		$new_tag     = preg_replace( '/^<script\b/i', '<script defer', $old_tag, 1 );
+
+		$html = preg_replace( '#' . preg_quote( $old_tag, '#' ) . '#', $new_tag, $html, 1 );
+		$deferred++;
+	}
+
+	scm_delete_page_optimization_workspace( $workspace );
+	scm_set_page_optimization_runtime(
+		'js_analysis',
+		array(
+			'status' => $deferred > 0 ? 'applied' : 'no_change',
+			'detail' => sprintf(
+				/* translators: 1: analyzed scripts, 2: deferred scripts. */
+				__( '%1$s local scripts analyzed; %2$s safely deferred.', 'ams-cache' ),
+				number_format_i18n( count( $scripts ) ),
+				number_format_i18n( $deferred )
+			),
+			'metrics' => array(
+				'analyzed' => count( $scripts ),
+				'deferred' => $deferred,
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
+ * Optimize generated HTML before writing to cache.
+ *
+ * @param string $html HTML content.
+ *
+ * @return string
+ */
+function scm_optimize_html( $html ) {
+	if ( ! scm_is_page_optimization_enabled() || empty( $html ) ) {
+		return $html;
+	}
+
+	$settings = scm_get_page_optimization_settings();
+	$html     = apply_filters( 'scm_before_page_optimization', $html, $settings );
+	scm_reset_page_optimization_runtime();
+
+	if ( 'yes' === $settings['remove_comments'] ) {
+		$html = scm_remove_html_comments( $html );
+	}
+
+	if ( 'yes' === $settings['minify_inline_css'] ) {
+		$html = scm_minify_inline_css_blocks( $html );
+	}
+
+	if ( 'yes' === $settings['lazy_media'] || 'yes' === $settings['critical_images'] ) {
+		$html = scm_optimize_media_tags( $html, $settings );
+	}
+
+	if ( 'yes' === $settings['preconnect_fonts'] ) {
+		$html = scm_add_font_preconnects( $html );
+	}
+
+	if ( 'yes' === $settings['local_ucss'] ) {
+		$html = scm_apply_local_ucss( $html, $settings );
+	}
+
+	if ( 'yes' === $settings['js_analysis'] ) {
+		$html = scm_apply_local_js_analysis( $html, $settings );
+	}
+
+	if ( 'yes' === $settings['defer_js'] ) {
+		$html = scm_defer_scripts( $html, $settings );
+	}
+
+	if ( 'yes' === $settings['minify_html'] ) {
+		$html = scm_minify_html( $html );
+	}
+
+	return apply_filters( 'scm_after_page_optimization', $html, $settings );
+}
+
+/**
+ * Check shell_exec availability.
+ *
+ * @return bool
+ */
+function scm_is_shell_exec_available() {
+	if ( ! function_exists( 'shell_exec' ) ) {
+		return false;
+	}
+
+	$disabled = array_map( 'strtolower', array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) ) );
+
+	return ! in_array( 'shell_exec', $disabled, true );
+}
+
+/**
+ * Build one escaped executable command token.
+ *
+ * @param string $path Executable path or command.
+ *
+ * @return string
+ */
+function scm_get_executable_command( $path ) {
+	$path = trim( (string) $path );
+
+	if ( '' === $path ) {
+		return '';
+	}
+
+	if ( preg_match( '/[\/\\\\]/', $path ) ) {
+		if ( ! preg_match( '/^[A-Za-z0-9_ .:\\\\\/-]+$/', $path ) ) {
+			return '';
+		}
+
+		return escapeshellarg( $path );
+	}
+
+	if ( preg_match( '/^[A-Za-z0-9_.-]+$/', $path ) ) {
+		return escapeshellcmd( $path );
+	}
+
+	return '';
+}
+
+/**
+ * Run local optimizer command and capture exit code.
+ *
+ * @param string $command Shell command.
+ * @param string $cwd     Optional working directory.
+ *
+ * @return array
+ */
+function scm_run_local_optimizer_command( $command, $cwd = '' ) {
+	if ( ! scm_is_shell_exec_available() ) {
+		return array(
+			'passed' => false,
+			'output' => __( 'shell_exec is disabled.', 'ams-cache' ),
+		);
+	}
+
+	if ( '' !== $cwd ) {
+		$command = '\\' === DIRECTORY_SEPARATOR
+			? 'cd /d ' . escapeshellarg( $cwd ) . ' && ' . $command
+			: 'cd ' . escapeshellarg( $cwd ) . ' && ' . $command;
+	}
+
+	if ( '\\' === DIRECTORY_SEPARATOR ) {
+		$output = @shell_exec( $command . ' 2>&1 & echo SCM_EXIT:%ERRORLEVEL%' );
+	} else {
+		$path_prefix = 'PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:$PATH; ';
+		$output      = @shell_exec( $path_prefix . $command . ' 2>&1; printf "\nSCM_EXIT:%s" "$?"' );
+	}
+
+	$exit = 1;
+
+	if ( preg_match( '/SCM_EXIT:(\d+)/', (string) $output, $match ) ) {
+		$exit   = (int) $match[1];
+		$output = preg_replace( '/\s*SCM_EXIT:\d+\s*$/', '', (string) $output );
+	}
+
+	return array(
+		'passed' => 0 === $exit,
+		'output' => trim( (string) $output ),
+	);
+}
+
+/**
+ * Check if a configured executable responds to --version.
+ *
+ * @param string $path Executable path or command.
+ *
+ * @return array
+ */
+function scm_check_executable_version( $path ) {
+	$path = trim( (string) $path );
+
+	if ( '' === $path ) {
+		return array(
+			'passed' => false,
+			'detail' => __( 'Path is empty.', 'ams-cache' ),
+		);
+	}
+
+	$command = scm_get_executable_command( $path );
+
+	if ( '' === $command ) {
+		return array(
+			'passed' => false,
+			'detail' => __( 'Path contains unsupported characters.', 'ams-cache' ),
+		);
+	}
+
+	if ( ! scm_is_shell_exec_available() ) {
+		return array(
+			'passed' => false,
+			'detail' => __( 'shell_exec is disabled.', 'ams-cache' ),
+		);
+	}
+
+	$result = scm_run_local_optimizer_command( $command . ' --version' );
+	$output = trim( (string) $result['output'] );
+
+	if ( '' === $output || ! $result['passed'] || false !== stripos( $output, 'not found' ) || false !== stripos( $output, 'not recognized' ) ) {
+		return array(
+			'passed' => false,
+			'detail' => '' === $output ? sprintf(
+					/* translators: %s is executable path. */
+					__( 'No response from %s --version.', 'ams-cache' ),
+					$path
+				) : strtok( $output, "\r\n" ),
+		);
+	}
+
+	return array(
+		'passed' => true,
+		'detail' => strtok( $output, "\r\n" ),
+	);
+}
+
+/**
+ * Get page optimization requirement checks.
+ *
+ * @return array
+ */
+function scm_get_page_optimization_requirements() {
+	$settings       = scm_get_page_optimization_settings();
+	$node_check     = scm_check_executable_version( $settings['node_path'] );
+	$purgecss_check = scm_check_executable_version( $settings['purgecss_path'] );
+	$work_dir       = scm_get_page_optimization_work_dir();
+	$work_dir_ready = is_dir( $work_dir ) ? is_writable( $work_dir ) : wp_mkdir_p( $work_dir );
+
+	return array(
+		'cache_status' => array(
+			'label'  => __( 'Page cache enabled', 'ams-cache' ),
+			'passed' => 'enable' === get_option( 'scm_option_caching_status', 'disable' ),
+			'detail' => get_option( 'scm_option_caching_status', 'disable' ),
+		),
+		'permalink'    => array(
+			'label'  => __( 'Pretty permalinks enabled', 'ams-cache' ),
+			'passed' => '' !== get_option( 'permalink_structure', '' ),
+			'detail' => '' !== get_option( 'permalink_structure', '' ) ? get_option( 'permalink_structure' ) : __( 'Plain permalinks', 'ams-cache' ),
+		),
+		'html_parser'  => array(
+			'label'  => __( 'HTML rewrite engine available', 'ams-cache' ),
+			'passed' => true,
+			'detail' => __( 'Built-in PHP regex processor', 'ams-cache' ),
+		),
+		'server_gzip'  => array(
+			'label'  => __( 'Text compression', 'ams-cache' ),
+			'passed' => extension_loaded( 'zlib' ),
+			'detail' => extension_loaded( 'zlib' ) ? __( 'PHP zlib available; enable gzip/Brotli on your web server for best results.', 'ams-cache' ) : __( 'Enable gzip/Brotli on your web server.', 'ams-cache' ),
+		),
+		'shell_exec'   => array(
+			'label'  => __( 'Local optimizer command execution', 'ams-cache' ),
+			'passed' => scm_is_shell_exec_available(),
+			'detail' => scm_is_shell_exec_available() ? __( 'shell_exec is available.', 'ams-cache' ) : __( 'shell_exec is disabled by PHP.', 'ams-cache' ),
+		),
+		'node'         => array(
+			'label'  => __( 'Node.js for Local UCSS and JS Analysis', 'ams-cache' ),
+			'passed' => $node_check['passed'],
+			'detail' => $node_check['detail'],
+		),
+		'purgecss'     => array(
+			'label'  => __( 'PurgeCSS CLI for Local UCSS', 'ams-cache' ),
+			'passed' => $purgecss_check['passed'],
+			'detail' => $purgecss_check['detail'],
+		),
+		'work_dir'     => array(
+			'label'  => __( 'Local optimizer workspace', 'ams-cache' ),
+			'passed' => $work_dir_ready,
+			'detail' => $work_dir_ready ? __( 'Workspace is writable.', 'ams-cache' ) : __( 'Workspace is not writable.', 'ams-cache' ),
+		),
+	);
+}
+
+/**
+ * Get the maximum number of cached entries.
+ *
+ * A value of 0 disables pruning.
+ *
+ * @return int
+ */
+function scm_get_cache_max_entries() {
+	$limit = (int) get_option( 'scm_option_cache_max_entries', 0 );
+
+	return max( 0, $limit );
+}
+
+/**
+ * Prune oldest known cache entries when the cache index grows too large.
+ *
+ * This only deletes entries recorded in the statistics index, so shared Redis or
+ * Memcached stores are not flushed globally.
+ *
+ * @param \Shieldon\SimpleCache\Cache|null $driver Active cache driver.
+ *
+ * @return int Removed entry count.
+ */
+function scm_enforce_cache_entry_limit( $driver = null ) {
+	$limit = scm_get_cache_max_entries();
+
+	if ( $limit <= 0 ) {
+		return 0;
+	}
+
+	$stats_root = scm_get_upload_dir() . '/stats';
+
+	if ( ! is_dir( $stats_root ) ) {
+		return 0;
+	}
+
+	$entries = array();
+
+	foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $stats_root, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+		if ( ! $file->isFile() || 'json' !== $file->getExtension() ) {
+			continue;
+		}
+
+		$filename = $file->getFilename();
+		$key      = strstr( $filename, '.', true );
+
+		if ( false === $key || '' === $key ) {
+			continue;
+		}
+
+		$stats = scm_read_stats_file( $file->getPathname() );
+
+		$entries[] = array(
+			'key'  => $key,
+			'path' => $file->getPathname(),
+			'time' => $file->getMTime(),
+			'uri'  => $stats['uri'],
+		);
+	}
+
+	if ( count( $entries ) <= $limit ) {
+		return 0;
+	}
+
+	usort(
+		$entries,
+		function ( $a, $b ) {
+			return $a['time'] - $b['time'];
+		}
+	);
+
+	if ( null === $driver ) {
+		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+	}
+
+	$remove_count = count( $entries ) - $limit;
+	$removed      = 0;
+
+	for ( $i = 0; $i < $remove_count; $i++ ) {
+		if ( $driver ) {
+			$driver->delete( $entries[ $i ]['key'] );
+		}
+
+		if ( ! empty( $entries[ $i ]['uri'] ) ) {
+			scm_delete_nginx_static_cache( $entries[ $i ]['uri'] );
+		}
+
+		if ( file_exists( $entries[ $i ]['path'] ) ) {
+			unlink( $entries[ $i ]['path'] );
+		}
+
+		$removed++;
+	}
+
+	update_option( 'scm_last_cache_prune_count', $removed );
+
+	return $removed;
+}
+
+/**
+ * Get advanced driver settings from WordPress options.
+ *
+ * @param string $type Driver type.
+ *
+ * @return array
+ */
+function scm_get_driver_advanced_settings( $type ) {
+	if ( 'file' === $type ) {
+		return (array) get_option( 'scm_option_advanced_driver_file', array() );
+	}
+
+	if ( 'memcache' === $type || 'memcached' === $type ) {
+		return (array) get_option( 'scm_option_advanced_driver_memcached', array() );
+	}
+
+	if ( 'redis' === $type ) {
+		return (array) get_option( 'scm_option_advanced_driver_redis', array() );
+	}
+
+	if ( 'mongo' === $type ) {
+		return (array) get_option( 'scm_option_advanced_driver_mongodb', array() );
+	}
+
+	return array();
+}
+
+/**
+ * Get advanced driver connection type.
+ *
+ * @param string $type Driver type.
+ *
+ * @return string
+ */
+function scm_get_driver_connection_type( $type ) {
+	if ( 'memcache' === $type || 'memcached' === $type ) {
+		return get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' );
+	}
+
+	if ( 'redis' === $type ) {
+		return get_option( 'scm_option_advanced_driver_redis_connection_type', 'tcp' );
+	}
+
+	if ( 'mongo' === $type ) {
+		return get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' );
+	}
+
+	return 'tcp';
+}
+
+/**
+ * Normalize driver settings before passing them to Simple Cache.
+ *
+ * @param array  $setting         Driver settings.
+ * @param string $connection_type tcp|socket.
+ *
+ * @return array
+ */
+function scm_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
+	foreach ( $setting as $k => $v ) {
+		if ( is_string( $v ) ) {
+			$v = trim( $v );
+		}
+
+		if ( '' === $v ) {
+			unset( $setting[ $k ] );
+			continue;
+		}
+
+		if ( is_numeric( $v ) ) {
+			$v = (int) $v;
+		}
+
+		if ( 'compress' === $k ) {
+			$v = in_array( $v, array( true, 1, '1', 'yes', 'on' ), true );
+		}
+
+		if ( 'compress_threshold' === $k ) {
+			$v = max( 0, (int) $v );
+		}
+
+		if ( 'compress_level' === $k ) {
+			$v = max( 1, min( 9, (int) $v ) );
+		}
+
+		$setting[ $k ] = $v;
+	}
+
+	if ( 'socket' !== $connection_type && isset( $setting['unix_socket'] ) ) {
+		unset( $setting['unix_socket'] );
+	}
+
+	return $setting;
+}
+
+/**
  * Get the cache driver instance.
  *
  * @param string $type The type of the driver.
@@ -158,12 +2462,13 @@ function scm_driver_factory( $type ) {
 
 		case 'redis':
 			$setting = array(
-				'host' => '127.0.0.1',
-				'port' => 6379,
+				'host'     => '127.0.0.1',
+				'port'     => 6379,
+				'database' => 0,
 			);
 
-			$advanced_settings        = get_option( 'scm_option_advanced_driver_redis' );
-			$advanced_connection_type = get_option( 'scm_option_advanced_driver_redis_connection_type', 'tcp' );
+			$advanced_settings        = scm_get_driver_advanced_settings( $type );
+			$advanced_connection_type = scm_get_driver_connection_type( $type );
 			break;
 
 		case 'mongo':
@@ -172,8 +2477,8 @@ function scm_driver_factory( $type ) {
 				'port' => 27017,
 			);
 
-			$advanced_settings        = get_option( 'scm_option_advanced_driver_mongodb' );
-			$advanced_connection_type = get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' );
+			$advanced_settings        = scm_get_driver_advanced_settings( $type );
+			$advanced_connection_type = scm_get_driver_connection_type( $type );
 			break;
 
 		case 'memcache':
@@ -183,8 +2488,8 @@ function scm_driver_factory( $type ) {
 				'port' => 11211,
 			);
 
-			$advanced_settings        = get_option( 'scm_option_advanced_driver_memcached' );
-			$advanced_connection_type = get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' );
+			$advanced_settings        = scm_get_driver_advanced_settings( $type );
+			$advanced_connection_type = scm_get_driver_connection_type( $type );
 			break;
 
 		case 'apc':
@@ -199,23 +2504,13 @@ function scm_driver_factory( $type ) {
 			$setting = array(
 				'storage' => scm_get_upload_dir() . '/file_driver',
 			);
+
+			$advanced_settings = scm_get_driver_advanced_settings( $type );
 			break;
 	}
 
 	if ( ! empty( $advanced_settings ) ) {
-		$setting = $advanced_settings;
-
-		foreach ( $setting as $k => $v ) {
-			if ( is_numeric( $v ) ) {
-				$setting[ $k ] = (int) $v;
-			}
-		}
-
-		if ( 'socket' !== $advanced_connection_type ) {
-			if ( ! empty( $advanced_settings['unix_socket'] ) ) {
-				unset( $setting['unix_socket'] );
-			}
-		}
+		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_connection_type ) );
 	}
 
 	try {
@@ -231,7 +2526,7 @@ function scm_driver_factory( $type ) {
 			$driver = new \Shieldon\SimpleCache\Cache( $type, $setting );
 		} else {
 
-			error_log( sprintf( '[Cache Master] Driver %s is not supported, fallback to use File driver.', $type ) );
+			error_log( sprintf( '[AMS Cache] Driver %s is not supported, fallback to use File driver.', $type ) );
 
 			$driver = new \Shieldon\SimpleCache\Cache(
 				'file',
@@ -287,9 +2582,17 @@ function scm_get_default_config() {
 
 	return array(
 		'cache_driver'             => 'file',
+		'cache_key_prefix'         => '',
+		'cache_max_entries'        => 0,
+		'nginx_direct_cache'       => false,
 		'html_debug_comment'       => true,
 		'driver_advanced_settings' => array(),
 		'site_url'                 => '',
+		'preload'                  => array(
+			'enable'               => false,
+			'limit'                => 50,
+			'crawl_homepage_links' => true,
+		),
 		'woocommerce'              => array(
 			'enable' => false,
 		),
@@ -299,7 +2602,7 @@ function scm_get_default_config() {
 			'excluded_list'      => array(),
 			'excluded_get_vars'  => array(),
 			'excluded_post_vars' => array(),
-			'excluded_cookie'    => array(),
+			'excluded_cookie_vars' => array(),
 		),
 	);
 }
@@ -337,7 +2640,7 @@ function scm_variable_stack( $key, $value = '', $poistion = 'before' ) {
  */
 function scm_javascript() {
 	$script = '
-		<script id="cache-master-plugin">
+		<script id="ams-cache-plugin">
 			var cache_master = \'' . scm_variable_stack( null ) . '\';
 			var scm_report   = JSON.parse(cache_master);
 
@@ -358,20 +2661,771 @@ function scm_javascript() {
 				scm_text_sql_queries = scm_report["after"]["sql_queries"];
 				scm_text_page_generation_time = scm_report["after"]["page_generation_time"];
 			}
-
-			(function($) {
-				$(function() {
-					$(".scm-field-cache-status").html(scm_text_cache_status);
-					$(".scm-field-memory-usage").html(scm_text_memory_usage);
-					$(".scm-field-sql-queries").html(scm_text_sql_queries);
-					$(".scm-field-page-generation-time").html(scm_text_page_generation_time);
-					$(".cache-master-benchmark-report").attr("style", "");
-					$(".cache-master-plugin-widget-wrapper").attr("style", "");
-				});
-			})(jQuery);
+			var scm_field_cache_status = document.querySelector(".scm-field-cache-status");
+			if (null !== scm_field_cache_status) { scm_field_cache_status.textContent = scm_text_cache_status; }
+			var scm_field_memory_usage = document.querySelector(".scm-field-memory-usage");
+			if (null !== scm_field_memory_usage) { scm_field_memory_usage.textContent = scm_text_memory_usage; }
+			var scm_field_sql_queries = document.querySelector(".scm-field-sql-queries");
+			if (null !== scm_field_sql_queries) { scm_field_sql_queries.textContent = scm_text_sql_queries; }
+			var scm_field_page_generation_time = document.querySelector(".scm-field-page-generation-time");
+			if (null !== scm_field_page_generation_time) { scm_field_page_generation_time.textContent = scm_text_page_generation_time; }
+			var cache_master_benchmark_report = document.querySelector(".ams-cache-benchmark-report");
+			if (null !== cache_master_benchmark_report) { cache_master_benchmark_report.setAttribute("style", ""); }
+			var cache_master_plugin_widget_wrapper = document.querySelector(".ams-cache-plugin-widget-wrapper");
+			if (null !== cache_master_plugin_widget_wrapper) { cache_master_plugin_widget_wrapper.setAttribute("style", ""); }
 		</script>
 	';
 
 	return preg_replace( '/\s+/', ' ', $script );
+}
+
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'scm_preload_cache_event', 'scm_preload_cache' );
+	add_action( 'scm_preload_queue_event', 'scm_process_preload_queue' );
+}
+
+/**
+ * Check whether cache preloading is enabled.
+ *
+ * @return bool
+ */
+function scm_is_preload_enabled() {
+	return 'yes' === get_option( 'scm_option_preload_cache', 'no' );
+}
+
+/**
+ * Get the configured preload URL limit.
+ *
+ * @param int|null $limit Optional limit override.
+ *
+ * @return int
+ */
+function scm_get_preload_limit( $limit = null ) {
+	$limit     = is_null( $limit ) ? (int) get_option( 'scm_option_preload_limit', 50 ) : (int) $limit;
+	$max_limit = (int) apply_filters( 'scm_preload_max_limit', 1000 );
+	$max_limit = max( 1, min( 5000, $max_limit ) );
+
+	return max( 1, min( $max_limit, $limit ) );
+}
+
+/**
+ * Get the number of URLs to dispatch per preload batch.
+ *
+ * @return int
+ */
+function scm_get_preload_batch_size() {
+	$batch_size = (int) apply_filters( 'scm_preload_batch_size', 25 );
+
+	return max( 1, min( 100, $batch_size ) );
+}
+
+/**
+ * Schedule a background cache preload.
+ *
+ * @param bool $force Replace an existing scheduled preload.
+ *
+ * @return void
+ */
+function scm_schedule_preload_cache( $force = false ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! scm_is_preload_enabled() ) {
+		return;
+	}
+
+	if ( $force && function_exists( 'wp_clear_scheduled_hook' ) ) {
+		wp_clear_scheduled_hook( 'scm_preload_cache_event' );
+	}
+
+	if ( $force || ! wp_next_scheduled( 'scm_preload_cache_event' ) ) {
+		wp_schedule_single_event( time() + 5, 'scm_preload_cache_event' );
+	}
+}
+
+/**
+ * Schedule the next preload queue batch.
+ *
+ * @param int $delay Delay in seconds.
+ *
+ * @return void
+ */
+function scm_schedule_preload_queue( $delay = 15 ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+		return;
+	}
+
+	if ( ! wp_next_scheduled( 'scm_preload_queue_event' ) ) {
+		wp_schedule_single_event( time() + max( 1, (int) $delay ), 'scm_preload_queue_event' );
+	}
+}
+
+/**
+ * Preload a single URL with an unauthenticated loopback request.
+ *
+ * @param string $url URL to preload.
+ *
+ * @return void
+ */
+function scm_preload_url( $url, $blocking = false, $timeout = 1 ) {
+	if ( empty( $url ) || ! function_exists( 'wp_remote_get' ) ) {
+		return null;
+	}
+
+	return wp_remote_get(
+		esc_url_raw( $url ),
+		array(
+			'blocking'    => (bool) $blocking,
+			'timeout'     => max( 1, (int) $timeout ),
+			'redirection' => 2,
+			'user-agent'  => 'AMS Cache Preloader/' . SCM_PLUGIN_VERSION,
+		)
+	);
+}
+
+/**
+ * Get post types enabled for preload.
+ *
+ * @return array
+ */
+function scm_get_preload_post_types() {
+	$post_types = (array) get_option( 'scm_option_post_types', array() );
+	$post_types = array_keys(
+		array_filter(
+			$post_types,
+			function ( $enabled ) {
+				return 'yes' === $enabled;
+			}
+		)
+	);
+
+	$post_types = array_values( array_diff( $post_types, array( 'home' ) ) );
+
+	if ( empty( $post_types ) ) {
+		$post_types = array( 'post' );
+	}
+
+	return apply_filters( 'scm_preload_post_types', $post_types );
+}
+
+/**
+ * Convert a link from homepage HTML into a same-site absolute URL.
+ *
+ * @param string $href     Raw href value.
+ * @param string $base_url Base URL.
+ *
+ * @return string
+ */
+function scm_normalize_homepage_link_url( $href, $base_url ) {
+	$href = trim( html_entity_decode( (string) $href, ENT_QUOTES, 'UTF-8' ) );
+
+	if ( '' === $href || '#' === $href || preg_match( '#^(?:javascript|mailto|tel|data):#i', $href ) ) {
+		return '';
+	}
+
+	$href = strtok( $href, '#' );
+
+	if ( false === $href || '' === $href ) {
+		return '';
+	}
+
+	$home_parts = parse_url( home_url( '/' ) );
+	$base_parts = parse_url( $base_url );
+	$href_parts = parse_url( $href );
+	$scheme     = isset( $home_parts['scheme'] ) ? $home_parts['scheme'] : 'https';
+	$host       = isset( $home_parts['host'] ) ? $home_parts['host'] : '';
+	$port       = isset( $home_parts['port'] ) ? ':' . $home_parts['port'] : '';
+
+	if ( empty( $host ) ) {
+		return '';
+	}
+
+	if ( 0 === strpos( $href, '//' ) ) {
+		$href = $scheme . ':' . $href;
+		$href_parts = parse_url( $href );
+	}
+
+	if ( ! empty( $href_parts['scheme'] ) && ! empty( $href_parts['host'] ) ) {
+		if ( strtolower( $href_parts['host'] ) !== strtolower( $host ) ) {
+			return '';
+		}
+
+		$path = isset( $href_parts['path'] ) ? $href_parts['path'] : '/';
+	} elseif ( 0 === strpos( $href, '/' ) ) {
+		$path = $href;
+	} else {
+		$base_path = isset( $base_parts['path'] ) ? $base_parts['path'] : '/';
+		$base_dir  = rtrim( dirname( $base_path ), '\\/' );
+		$path      = ( '/' === $base_dir ? '' : $base_dir ) . '/' . $href;
+	}
+
+	$path = scm_normalize_cache_uri( $path );
+
+	if ( ! scm_is_cacheable_document_path( $path ) ) {
+		return '';
+	}
+
+	return $scheme . '://' . $host . $port . $path;
+}
+
+/**
+ * Crawl homepage HTML and return internal URLs in document order.
+ *
+ * @param int $limit Maximum URLs.
+ *
+ * @return array
+ */
+function scm_get_homepage_discovered_urls( $limit = 100 ) {
+	if ( ! function_exists( 'wp_remote_get' ) ) {
+		return array();
+	}
+
+	$limit  = scm_get_preload_limit( $limit );
+	$cached = get_transient( 'scm_homepage_discovered_urls' );
+
+	if ( is_array( $cached ) && isset( $cached['urls'], $cached['limit'] ) && (int) $cached['limit'] >= $limit ) {
+		return array_slice( (array) $cached['urls'], 0, $limit );
+	}
+
+	$home_url = home_url( '/' );
+	$result   = wp_remote_get(
+		$home_url,
+		array(
+			'blocking'    => true,
+			'timeout'     => 8,
+			'redirection' => 3,
+			'user-agent'  => 'AMS Cache Preload Crawler/' . SCM_PLUGIN_VERSION,
+		)
+	);
+
+	if ( is_wp_error( $result ) ) {
+		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		return array();
+	}
+
+	$status = (int) wp_remote_retrieve_response_code( $result );
+
+	if ( $status < 200 || $status >= 400 ) {
+		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		return array();
+	}
+
+	$html = wp_remote_retrieve_body( $result );
+
+	if ( empty( $html ) ) {
+		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		return array();
+	}
+
+	preg_match_all( '/<a\b[^>]*\shref\s*=\s*(["\'])(.*?)\1/i', $html, $matches );
+
+	if ( empty( $matches[2] ) ) {
+		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		return array();
+	}
+
+	$urls = array();
+
+	foreach ( $matches[2] as $href ) {
+		$url = scm_normalize_homepage_link_url( $href, $home_url );
+
+		if ( '' === $url || in_array( $url, $urls, true ) ) {
+			continue;
+		}
+
+		$urls[] = $url;
+
+		if ( count( $urls ) >= $limit ) {
+			break;
+		}
+	}
+
+	set_transient(
+		'scm_homepage_discovered_urls',
+		array(
+			'urls'  => $urls,
+			'limit' => $limit,
+		),
+		5 * MINUTE_IN_SECONDS
+	);
+
+	return apply_filters( 'scm_homepage_discovered_preload_urls', $urls, $limit );
+}
+
+/**
+ * Fallback priority URLs when the homepage crawler cannot see internal links.
+ *
+ * @param int   $limit         Maximum URLs.
+ * @param array $existing_urls URLs already selected.
+ *
+ * @return array
+ */
+function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls = array() ) {
+	$limit = scm_get_preload_limit( $limit );
+
+	if ( $limit <= 0 ) {
+		return array();
+	}
+
+	$existing_map = array();
+
+	foreach ( (array) $existing_urls as $url ) {
+		$existing_map[ scm_normalize_cache_uri( $url ) ] = true;
+	}
+
+	$urls  = array();
+	$posts = get_posts(
+		array(
+			'post_type'           => scm_get_preload_post_types(),
+			'post_status'         => 'publish',
+			'posts_per_page'      => $limit,
+			'fields'              => 'ids',
+			'no_found_rows'       => true,
+			'ignore_sticky_posts' => false,
+			'orderby'             => 'date',
+			'order'               => 'DESC',
+		)
+	);
+
+	foreach ( $posts as $post_id ) {
+		$url = get_permalink( $post_id );
+		$key = scm_normalize_cache_uri( $url );
+
+		if ( empty( $url ) || isset( $existing_map[ $key ] ) ) {
+			continue;
+		}
+
+		$existing_map[ $key ] = true;
+		$urls[]              = $url;
+
+		if ( count( $urls ) >= $limit ) {
+			break;
+		}
+	}
+
+	return apply_filters( 'scm_homepage_priority_fallback_urls', $urls, $limit, $existing_urls );
+}
+
+/**
+ * Get homepage and same-site links discovered from homepage.
+ *
+ * @param int|null $limit Maximum URLs.
+ *
+ * @return array
+ */
+function scm_get_homepage_priority_preload_urls( $limit = null ) {
+	$limit = scm_get_preload_limit( $limit );
+	$urls  = array();
+
+	if ( 'yes' === get_option( 'scm_option_post_homepage', 'yes' ) ) {
+		$urls[] = home_url( '/' );
+	}
+
+	if ( 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ) && count( $urls ) < $limit ) {
+		$discovered_urls = scm_get_homepage_discovered_urls( $limit - count( $urls ) );
+
+		foreach ( $discovered_urls as $url ) {
+			$urls[] = $url;
+
+			if ( count( $urls ) >= $limit ) {
+				break;
+			}
+		}
+
+		$minimum_discovered = (int) apply_filters( 'scm_homepage_priority_min_discovered_urls', 25 );
+
+		if ( count( $discovered_urls ) < $minimum_discovered && count( $urls ) < $limit ) {
+			foreach ( scm_get_homepage_priority_fallback_urls( $limit - count( $urls ), $urls ) as $url ) {
+				$urls[] = $url;
+
+				if ( count( $urls ) >= $limit ) {
+					break;
+				}
+			}
+		}
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+	return array_slice( apply_filters( 'scm_homepage_priority_preload_urls', $urls, $limit ), 0, $limit );
+}
+
+/**
+ * Warm homepage and homepage-discovered links first.
+ *
+ * @param int|null $limit    Maximum URLs.
+ * @param bool     $blocking Use blocking requests.
+ *
+ * @return int
+ */
+function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
+	if ( ! scm_is_preload_enabled() ) {
+		return 0;
+	}
+
+	$urls           = scm_get_homepage_priority_preload_urls( $limit );
+	$dispatch_limit = count( $urls );
+
+	if ( $blocking ) {
+		$dispatch_limit = min( $dispatch_limit, (int) apply_filters( 'scm_homepage_priority_blocking_limit', 1 ) );
+	}
+
+	foreach ( array_slice( $urls, 0, $dispatch_limit ) as $url ) {
+		scm_preload_url( $url, $blocking, $blocking ? 8 : 1 );
+	}
+
+	update_option( 'scm_last_homepage_priority_preload_time', time() );
+	update_option( 'scm_last_homepage_priority_preload_count', count( $urls ) );
+
+	return $dispatch_limit;
+}
+
+/**
+ * Build a short list of homepage and archive URLs to warm immediately.
+ *
+ * @param int $post_id Optional published post ID for affected archives.
+ * @param int $limit   Maximum URLs.
+ *
+ * @return array
+ */
+function scm_get_critical_preload_urls( $post_id = 0, $limit = 25 ) {
+	$limit = max( 1, min( 100, (int) $limit ) );
+	$urls  = array();
+	$post  = $post_id ? get_post( $post_id ) : null;
+
+	$add_url = function ( $url ) use ( &$urls, $limit ) {
+		if ( count( $urls ) >= $limit || empty( $url ) ) {
+			return;
+		}
+
+		if ( function_exists( 'is_wp_error' ) && is_wp_error( $url ) ) {
+			return;
+		}
+
+		$urls[] = (string) $url;
+	};
+
+	if ( 'yes' === get_option( 'scm_option_post_homepage', 'yes' ) ) {
+		$add_url( home_url( '/' ) );
+	}
+
+	$post_archives = (array) get_option( 'scm_option_post_archives', array() );
+
+	if ( $post && 'publish' === $post->post_status ) {
+		if ( isset( $post_archives['category'] ) && 'yes' === $post_archives['category'] ) {
+			foreach ( wp_get_post_categories( $post->ID ) as $term_id ) {
+				$add_url( get_category_link( (int) $term_id ) );
+			}
+		}
+
+		if ( isset( $post_archives['tag'] ) && 'yes' === $post_archives['tag'] ) {
+			foreach ( wp_get_post_tags( $post->ID, array( 'fields' => 'ids' ) ) as $term_id ) {
+				$add_url( get_tag_link( (int) $term_id ) );
+			}
+		}
+
+		if ( isset( $post_archives['author'] ) && 'yes' === $post_archives['author'] ) {
+			$add_url( get_author_posts_url( (int) $post->post_author ) );
+		}
+
+		if ( isset( $post_archives['date'] ) && 'yes' === $post_archives['date'] ) {
+			$timestamp = strtotime( $post->post_date );
+
+			if ( $timestamp ) {
+				$add_url( get_year_link( (int) gmdate( 'Y', $timestamp ) ) );
+				$add_url( get_month_link( (int) gmdate( 'Y', $timestamp ), (int) gmdate( 'm', $timestamp ) ) );
+			}
+		}
+
+		$archive_key = 'archive_' . $post->post_type;
+
+		if ( isset( $post_archives[ $archive_key ] ) && 'yes' === $post_archives[ $archive_key ] ) {
+			$add_url( get_post_type_archive_link( $post->post_type ) );
+		}
+
+		if ( 'yes' === get_option( 'scm_option_woocommerce_status', 'no' ) && 'product' === $post->post_type ) {
+			$woocommerce_archives = (array) get_option( 'scm_option_woocommerce_post_archives', array() );
+
+			foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
+				if ( isset( $woocommerce_archives[ $taxonomy ] ) && 'yes' === $woocommerce_archives[ $taxonomy ] ) {
+					foreach ( wp_get_post_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) ) as $term_id ) {
+						$add_url( get_term_link( (int) $term_id, $taxonomy ) );
+					}
+				}
+			}
+		}
+	} else {
+		foreach ( array( 'category' => 'get_category_link', 'tag' => 'get_tag_link' ) as $archive => $link_function ) {
+			if ( isset( $post_archives[ $archive ] ) && 'yes' === $post_archives[ $archive ] ) {
+				$taxonomy = ( 'tag' === $archive ) ? 'post_tag' : 'category';
+				$terms    = get_terms(
+					array(
+						'taxonomy'   => $taxonomy,
+						'hide_empty' => true,
+						'fields'     => 'ids',
+						'number'     => max( 1, $limit - count( $urls ) ),
+					)
+				);
+
+				if ( ! is_wp_error( $terms ) ) {
+					foreach ( $terms as $term_id ) {
+						$add_url( $link_function( (int) $term_id ) );
+					}
+				}
+			}
+		}
+
+		if ( isset( $post_archives['author'] ) && 'yes' === $post_archives['author'] ) {
+			$authors = get_users(
+				array(
+					'fields'              => 'ID',
+					'has_published_posts' => true,
+					'number'              => max( 1, $limit - count( $urls ) ),
+				)
+			);
+
+			foreach ( $authors as $author_id ) {
+				$add_url( get_author_posts_url( (int) $author_id ) );
+			}
+		}
+
+		foreach ( get_post_types( array( 'public' => true, 'has_archive' => true ), 'objects', 'and' ) as $post_type ) {
+			$archive_key = 'archive_' . $post_type->name;
+
+			if ( isset( $post_archives[ $archive_key ] ) && 'yes' === $post_archives[ $archive_key ] ) {
+				$add_url( get_post_type_archive_link( $post_type->name ) );
+			}
+		}
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+	return array_slice( apply_filters( 'scm_critical_preload_urls', $urls, $post_id, $limit ), 0, $limit );
+}
+
+/**
+ * Immediately warm homepage and archive URLs.
+ *
+ * @param int                            $post_id         Optional published post ID.
+ * @param bool                           $delete_existing Delete matching cache keys first.
+ * @param \Shieldon\SimpleCache\Cache|null $driver        Cache driver.
+ *
+ * @return int Number of dispatched URLs.
+ */
+function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driver = null ) {
+	if ( 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+		return 0;
+	}
+
+	$limit = (int) apply_filters( 'scm_critical_preload_limit', 25, $post_id );
+	$urls  = scm_get_critical_preload_urls( $post_id, $limit );
+
+	if ( empty( $urls ) ) {
+		return 0;
+	}
+
+	if ( $delete_existing && null === $driver ) {
+		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+	}
+
+	foreach ( $urls as $url ) {
+		if ( $delete_existing && $driver ) {
+			$path = parse_url( $url, PHP_URL_PATH );
+			$path = empty( $path ) ? '/' : $path;
+
+			scm_purge_cache_uri( $path, $driver );
+		}
+
+		$path        = parse_url( $url, PHP_URL_PATH );
+		$is_homepage = scm_is_homepage_uri( empty( $path ) ? '/' : $path );
+
+		scm_preload_url( $url, $is_homepage, $is_homepage ? 8 : 1 );
+	}
+
+	update_option( 'scm_last_critical_preload_time', time() );
+	update_option( 'scm_last_critical_preload_count', count( $urls ) );
+
+	return count( $urls );
+}
+
+/**
+ * Build URL list for preload.
+ *
+ * @param int|null $limit Maximum URLs.
+ *
+ * @return array
+ */
+function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
+	$limit = scm_get_preload_limit( $limit );
+	$urls  = is_array( $priority_urls ) ? $priority_urls : scm_get_homepage_priority_preload_urls( $limit );
+
+	$post_types = scm_get_preload_post_types();
+
+	if ( ! empty( $post_types ) && count( $urls ) < $limit ) {
+		$remaining = $limit - count( $urls );
+		$posts = get_posts(
+			array(
+				'post_type'      => $post_types,
+				'post_status'    => 'publish',
+				'posts_per_page' => $remaining,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			)
+		);
+
+		foreach ( $posts as $post_id ) {
+			$urls[] = get_permalink( $post_id );
+
+			if ( count( $urls ) >= $limit ) {
+				break;
+			}
+		}
+	}
+
+	$post_archives = (array) get_option( 'scm_option_post_archives', array() );
+
+	if ( count( $urls ) < $limit && isset( $post_archives['category'] ) && 'yes' === $post_archives['category'] ) {
+		$terms = get_terms( array( 'taxonomy' => 'category', 'hide_empty' => true, 'fields' => 'ids', 'number' => $limit - count( $urls ) ) );
+
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term_id ) {
+				$urls[] = get_category_link( $term_id );
+			}
+		}
+	}
+
+	if ( count( $urls ) < $limit && isset( $post_archives['tag'] ) && 'yes' === $post_archives['tag'] ) {
+		$terms = get_terms( array( 'taxonomy' => 'post_tag', 'hide_empty' => true, 'fields' => 'ids', 'number' => $limit - count( $urls ) ) );
+
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term_id ) {
+				$urls[] = get_tag_link( $term_id );
+			}
+		}
+	}
+
+	if ( count( $urls ) < $limit && isset( $post_archives['author'] ) && 'yes' === $post_archives['author'] ) {
+		$authors = get_users( array( 'has_published_posts' => true, 'number' => $limit - count( $urls ) ) );
+
+		foreach ( $authors as $author ) {
+			$urls[] = get_author_posts_url( $author->ID );
+		}
+	}
+
+	foreach ( $post_archives as $archive => $enabled ) {
+		if ( count( $urls ) >= $limit ) {
+			break;
+		}
+
+		if ( 'yes' === $enabled && 0 === strpos( $archive, 'archive_' ) ) {
+			$post_type = substr( $archive, 8 );
+			$url       = get_post_type_archive_link( $post_type );
+
+			if ( $url ) {
+				$urls[] = $url;
+			}
+		}
+	}
+
+	$woocommerce_archives = (array) get_option( 'scm_option_woocommerce_post_archives', array() );
+
+	foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
+		if ( count( $urls ) >= $limit ) {
+			break;
+		}
+
+		if ( isset( $woocommerce_archives[ $taxonomy ] ) && 'yes' === $woocommerce_archives[ $taxonomy ] ) {
+			$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => true, 'fields' => 'ids', 'number' => $limit - count( $urls ) ) );
+
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term_id ) {
+					$url = get_term_link( (int) $term_id, $taxonomy );
+
+					if ( ! is_wp_error( $url ) ) {
+						$urls[] = $url;
+					}
+				}
+			}
+		}
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+	return array_slice( apply_filters( 'scm_preload_urls', $urls, $limit ), 0, $limit );
+}
+
+/**
+ * Dispatch preload requests.
+ *
+ * @param int|null $limit Maximum URLs.
+ *
+ * @return int Number of queued URLs.
+ */
+function scm_preload_cache( $limit = null ) {
+	if ( ! scm_is_preload_enabled() ) {
+		return 0;
+	}
+
+	$limit         = scm_get_preload_limit( $limit );
+	delete_transient( 'scm_homepage_discovered_urls' );
+	$priority_urls = scm_get_homepage_priority_preload_urls( $limit );
+	$urls          = scm_get_preload_urls( $limit, $priority_urls );
+
+	update_option( 'scm_last_preload_time', time() );
+	update_option( 'scm_last_preload_count', count( $urls ) );
+	update_option( 'scm_last_preload_priority_count', count( $priority_urls ) );
+	update_option( 'scm_preload_queue_total', count( $urls ) );
+	update_option( 'scm_preload_queue_processed', 0 );
+	update_option( 'scm_preload_queue_remaining', count( $urls ) );
+	update_option( 'scm_preload_queue_started_time', time() );
+	update_option( 'scm_preload_queue_finished_time', 0 );
+
+	set_transient( 'scm_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
+
+	scm_process_preload_queue();
+
+	return count( $urls );
+}
+
+/**
+ * Process one preload queue batch.
+ *
+ * @return int Number of dispatched URLs.
+ */
+function scm_process_preload_queue() {
+	$queue = get_transient( 'scm_preload_queue' );
+
+	if ( empty( $queue ) || ! is_array( $queue ) ) {
+		delete_transient( 'scm_preload_queue' );
+		update_option( 'scm_preload_queue_remaining', 0 );
+		return 0;
+	}
+
+	$queue      = array_values( array_unique( array_filter( $queue ) ) );
+	$batch_size = scm_get_preload_batch_size();
+	$batch      = array_slice( $queue, 0, $batch_size );
+	$remaining  = array_slice( $queue, count( $batch ) );
+	$processed  = (int) get_option( 'scm_preload_queue_processed', 0 );
+
+	foreach ( $batch as $index => $url ) {
+		$path        = parse_url( $url, PHP_URL_PATH );
+		$is_homepage = scm_is_homepage_uri( empty( $path ) ? '/' : $path );
+		$blocking    = $is_homepage && 0 === $processed && 0 === $index;
+
+		scm_preload_url( $url, $blocking, $blocking ? 8 : 1 );
+	}
+
+	$processed += count( $batch );
+
+	update_option( 'scm_preload_queue_processed', $processed );
+	update_option( 'scm_preload_queue_remaining', count( $remaining ) );
+
+	if ( empty( $remaining ) ) {
+		delete_transient( 'scm_preload_queue' );
+		update_option( 'scm_preload_queue_finished_time', time() );
+		return count( $batch );
+	}
+
+	set_transient( 'scm_preload_queue', $remaining, 12 * HOUR_IN_SECONDS );
+	scm_schedule_preload_queue();
+
+	return count( $batch );
 }
 

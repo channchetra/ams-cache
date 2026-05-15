@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Options page.
+ * AMS Cache - Options page.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -41,7 +41,7 @@ if ( ! empty( $conflict_plugins ) ) {
 			<div class="notice notice-warning is-dismissible">
 				<p>
 					<?php // translators: %s is the plugin name. ?>
-					<?php echo sprintf( __( 'Cache Master cannot work with the plugin "%s" becasue of output buffer conflicts.', 'cache-master' ), $plugin ); ?>
+					<?php echo sprintf( __( 'AMS Cache cannot work with the plugin "%s" becasue of output buffer conflicts.', 'ams-cache' ), $plugin ); ?>
 				</p>
 			</div>
 			<?php
@@ -52,24 +52,27 @@ if ( ! empty( $conflict_plugins ) ) {
 ?>
 
 <nav class="nav-tab-wrapper">
-	<a href="?page=cache-master-settings" class="<?php scm_tab( $tab, null ); ?>">
-		<?php _e( 'Basic', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings" class="<?php scm_tab( $tab, null ); ?>">
+		<?php _e( 'Basic', 'ams-cache' ); ?>
 	</a>
-	<a href="?page=cache-master-settings&tab=advanced" class="<?php scm_tab( $tab, 'advanced' ); ?>">
-		<?php _e( 'Advanced', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings&tab=advanced" class="<?php scm_tab( $tab, 'advanced' ); ?>">
+		<?php _e( 'Advanced', 'ams-cache' ); ?>
 	</a>
-	<a href="?page=cache-master-settings&tab=preferences" class="<?php scm_tab( $tab, 'preferences' ); ?>">
-		<?php _e( 'Preferences', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings&tab=preferences" class="<?php scm_tab( $tab, 'preferences' ); ?>">
+		<?php _e( 'Preferences', 'ams-cache' ); ?>
 	</a>
-	<a href="?page=cache-master-settings&tab=benchmark" class="<?php scm_tab( $tab, 'benchmark' ); ?>">
-		<?php _e( 'Benchmark', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings&tab=optimization" class="<?php scm_tab( $tab, 'optimization' ); ?>">
+		<?php _e( 'Optimization', 'ams-cache' ); ?>
 	</a>
-	<a href="?page=cache-master-settings&tab=woocommerce" class="<?php scm_tab( $tab, 'woocommerce' ); ?>">
-		<?php _e( 'WooCommerce', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings&tab=benchmark" class="<?php scm_tab( $tab, 'benchmark' ); ?>">
+		<?php _e( 'Benchmark', 'ams-cache' ); ?>
+	</a>
+	<a href="?page=ams-cache-settings&tab=woocommerce" class="<?php scm_tab( $tab, 'woocommerce' ); ?>">
+		<?php _e( 'WooCommerce', 'ams-cache' ); ?>
 		<img src="<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/icon_beta.png">
 	</a>
-	<a href="?page=cache-master-settings&tab=exclusion" class="<?php scm_tab( $tab, 'exclusion' ); ?>">
-		<?php _e( 'Exclusion', 'cache-master' ); ?>
+	<a href="?page=ams-cache-settings&tab=exclusion" class="<?php scm_tab( $tab, 'exclusion' ); ?>">
+		<?php _e( 'Exclusion', 'ams-cache' ); ?>
 	</a>
 </nav>
 
@@ -91,27 +94,37 @@ if ( ! empty( $conflict_plugins ) ) {
 			<?php settings_fields( 'scm_setting_group_6' ); ?>
 			<?php do_settings_sections( 'scm_setting_page_6' ); ?>
 			<hr />
-			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'cache-master' ); ?></em></p>
+			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'ams-cache' ); ?></em></p>
+			<?php submit_button(); ?>
+		</form>
+	<?php endif; ?>
+
+	<?php if ( 'optimization' === $tab ) : ?>
+		<form action="options.php" method="post">
+			<?php settings_fields( 'scm_setting_group_10' ); ?>
+			<?php do_settings_sections( 'scm_setting_page_10' ); ?>
+			<hr />
+			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'ams-cache' ); ?></em></p>
 			<?php submit_button(); ?>
 		</form>
 	<?php endif; ?>
 
 	<?php if ( 'benchmark' === $tab ) : ?>
 		<p>
-			<em><?php _e( 'Benchmark information consists of memory usage, SQL query number, page generation time and page caching status.', 'cache-master' ); ?></em><br />
+			<em><?php _e( 'Benchmark information consists of memory usage, SQL query number, page generation time and page caching status.', 'ams-cache' ); ?></em><br />
 		</p>
 		<form action="options.php" method="post">
 			<?php settings_fields( 'scm_setting_group_5' ); ?>
 			<?php do_settings_sections( 'scm_setting_page_5' ); ?>
 			<hr />
-			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'cache-master' ); ?></em></p>
-			<em class="scm-msg scm-msg-notice"><?php _e( 'Excluded pages or pages contain JavaScript errors will not display benchmark information.', 'cache-master' ); ?></em>
+			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'ams-cache' ); ?></em></p>
+			<em class="scm-msg scm-msg-notice"><?php _e( 'Excluded pages or pages contain JavaScript errors will not display benchmark information.', 'ams-cache' ); ?></em>
 			<?php submit_button(); ?>
 		</form>
 	<?php endif; ?>
 
 	<?php if ( 'advanced' === $tab ) : ?>
-		<p><em><?php _e( 'Skip those settings unless you want to make changes to default settings.', 'cache-master' ); ?></em></p>
+		<p><em><?php _e( 'Skip those settings unless you want to make changes to default settings.', 'ams-cache' ); ?></em></p>
 		<form action="options.php" method="post">
 			<?php settings_fields( 'scm_setting_group_7' ); ?>
 			<?php do_settings_sections( 'scm_setting_page_7' ); ?>
@@ -130,7 +143,7 @@ if ( ! empty( $conflict_plugins ) ) {
 		<?php if ( ! $is_woocommerce_active ) : ?>
 			<div class="notice notice-warning is-dismissible">
 				<p>
-					<?php _e( 'WooCommerce is not actived.', 'cache-master' ); ?>
+					<?php _e( 'WooCommerce is not actived.', 'ams-cache' ); ?>
 				</p>
 			</div>
 		<?php endif; ?>
@@ -139,7 +152,7 @@ if ( ! empty( $conflict_plugins ) ) {
 			<?php settings_fields( 'scm_setting_group_8' ); ?>
 			<?php do_settings_sections( 'scm_setting_page_8' ); ?>
 			<hr />
-			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'cache-master' ); ?></em></p>
+			<p><em><?php _e( 'Once you make changes in this page, all cache data will be cleared.', 'ams-cache' ); ?></em></p>
 
 			<?php if ( $is_woocommerce_active ) : ?>
 				<?php submit_button(); ?>

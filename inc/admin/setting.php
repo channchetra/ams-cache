@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Setting page.
+ * AMS Cache - Setting page.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -62,16 +62,23 @@ function scm_settings() {
 			'post_types',
 			'post_homepage',
 			'post_archives',
+			'preload_cache',
+			'preload_limit',
+			'preload_homepage_links',
 		),
 
 		// Settings - Advanced (Page 7)
 		7 => array(
+			'advanced_driver_file',
 			'advanced_driver_memcached',
 			'advanced_driver_redis',
 			'advanced_driver_mongodb',
 			'advanced_driver_memcached_connection_type',
 			'advanced_driver_redis_connection_type',
 			'advanced_driver_mongodb_connection_type',
+			'cache_key_prefix',
+			'cache_max_entries',
+			'nginx_direct_cache_status',
 		),
 
 		// Settings - WooCommerce (Page 8)
@@ -90,6 +97,11 @@ function scm_settings() {
 			'excluded_post_vars',
 			'excluded_cookie_vars',
 		),
+
+		// Settings - Optimization (Page 10)
+		10 => array(
+			'page_optimization',
+		),
 	);
 
 	foreach ( $register_groups as $index => $options ) {
@@ -102,24 +114,24 @@ function scm_settings() {
 
 		// Settings - Basic
 		array(
-			'title'    => __( 'Driver', 'cache-master' ),
+			'title'    => __( 'Driver', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 1,
 			'settings' => array(
 				array(
-					'title'    => __( 'Caching Status', 'cache-master' ),
+					'title'    => __( 'Caching Status', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_caching_status' );
 					},
 				),
 				array(
-					'title'    => __( 'Cache Driver', 'cache-master' ),
+					'title'    => __( 'Cache Driver', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_driver' );
 					},
 				),
 				array(
-					'title'    => __( 'Time to Live', 'cache-master' ),
+					'title'    => __( 'Time to Live', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_ttl' );
 					},
@@ -128,18 +140,18 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Visibilty', 'cache-master' ),
+			'title'    => __( 'Visibilty', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 1,
 			'settings' => array(
 				array(
-					'title'    => __( 'Guests', 'cache-master' ),
+					'title'    => __( 'Guests', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_visibility_guest' );
 					},
 				),
 				array(
-					'title'    => __( 'Logged-in Users', 'cache-master' ),
+					'title'    => __( 'Logged-in Users', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_visibility_login_user' );
 					},
@@ -148,18 +160,18 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Others', 'cache-master' ),
+			'title'    => __( 'Others', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 1,
 			'settings' => array(
 				array(
-					'title'    => __( 'Debug Comment', 'cache-master' ),
+					'title'    => __( 'Debug Comment', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_html_debug_comment' );
 					},
 				),
 				array(
-					'title'    => __( 'Uninstall', 'cache-master' ),
+					'title'    => __( 'Uninstall', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_uninstall' );
 					},
@@ -170,24 +182,24 @@ function scm_settings() {
 		// Settings - Perferences
 
 		array(
-			'title'    => __( 'Pages', 'cache-master' ),
+			'title'    => __( 'Pages', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 6,
 			'settings' => array(
 				array(
-					'title'    => __( 'Post Types', 'cache-master' ),
+					'title'    => __( 'Post Types', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_post_types' );
 					},
 				),
 				array(
-					'title'    => __( 'Homepage', 'cache-master' ),
+					'title'    => __( 'Homepage', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_post_homepage' );
 					},
 				),
 				array(
-					'title'    => __( 'Archive Pages', 'cache-master' ),
+					'title'    => __( 'Archive Pages', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_post_archives' );
 					},
@@ -195,26 +207,46 @@ function scm_settings() {
 			),
 		),
 
+		array(
+			'title'    => __( 'Preload', 'ams-cache' ),
+			'callback' => 'scm_cb_setting_section',
+			'group_id' => 6,
+			'settings' => array(
+				array(
+					'title'    => __( 'Cache Preload', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_preload_cache' );
+					},
+				),
+			),
+		),
+
 		// Settings - Advanced
 		array(
-			'title'    => __( 'Driver', 'cache-master' ),
+			'title'    => __( 'Driver', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 7,
 			'settings' => array(
 				array(
-					'title'    => __( 'Redis', 'cache-master' ),
+					'title'    => __( 'File', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_advanced_cache_driver_file' );
+					},
+				),
+				array(
+					'title'    => __( 'Redis', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_advanced_cache_driver_redis' );
 					},
 				),
 				array(
-					'title'    => __( 'Memcached', 'cache-master' ),
+					'title'    => __( 'Memcached', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_advanced_cache_driver_memcached' );
 					},
 				),
 				array(
-					'title'    => __( 'MongoDB', 'cache-master' ),
+					'title'    => __( 'MongoDB', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_advanced_cache_driver_mongodb' );
 					},
@@ -222,14 +254,55 @@ function scm_settings() {
 			),
 		),
 
+		array(
+			'title'    => __( 'Shared Cache Stores', 'ams-cache' ),
+			'callback' => 'scm_cb_setting_section',
+			'group_id' => 7,
+			'settings' => array(
+				array(
+					'title'    => __( 'Key Prefix', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_cache_key_prefix' );
+					},
+				),
+				array(
+					'title'    => __( 'Max Cache Entries', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_cache_max_entries' );
+					},
+				),
+				array(
+					'title'    => __( 'Nginx Direct Cache', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_nginx_direct_cache' );
+					},
+				),
+			),
+		),
+
+		// Settings - Optimization
+		array(
+			'title'    => __( 'Page Optimization', 'ams-cache' ),
+			'callback' => 'scm_cb_setting_section',
+			'group_id' => 10,
+			'settings' => array(
+				array(
+					'title'    => __( 'Options', 'ams-cache' ),
+					'callback' => function() {
+						echo scm_load_view( 'option_page_optimization' );
+					},
+				),
+			),
+		),
+
 		// Settings - WooCommerce
 		array(
-			'title'    => __( 'Support', 'cache-master' ),
+			'title'    => __( 'Support', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 8,
 			'settings' => array(
 				array(
-					'title'    => __( 'Enable', 'cache-master' ),
+					'title'    => __( 'Enable', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_woocommerce_status' );
 					},
@@ -238,18 +311,18 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Pages', 'cache-master' ),
+			'title'    => __( 'Pages', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 8,
 			'settings' => array(
 				array(
-					'title'    => __( 'Post Types', 'cache-master' ),
+					'title'    => __( 'Post Types', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_woocommerce_post_types' );
 					},
 				),
 				array(
-					'title'    => __( 'Archive Pages', 'cache-master' ),
+					'title'    => __( 'Archive Pages', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_woocommerce_post_archives' );
 					},
@@ -258,12 +331,12 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Events', 'cache-master' ),
+			'title'    => __( 'Events', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 8,
 			'settings' => array(
 				array(
-					'title'    => __( 'Payment Complete', 'cache-master' ),
+					'title'    => __( 'Payment Complete', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_woocommerce_event_payment_complete' );
 					},
@@ -278,31 +351,31 @@ function scm_settings() {
 			'group_id' => 9,
 			'settings' => array(
 				array(
-					'title'    => __( 'Enable', 'cache-master' ),
+					'title'    => __( 'Enable', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_exclusion_status' );
 					},
 				),
 				array(
-					'title'    => __( 'Excluded URL Path List', 'cache-master' ),
+					'title'    => __( 'Excluded URL Path List', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_excluded_list' );
 					},
 				),
 				array(
-					'title'    => __( 'Excluded $_GET Variables', 'cache-master' ),
+					'title'    => __( 'Excluded $_GET Variables', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_excluded_get_vars' );
 					},
 				),
 				array(
-					'title'    => __( 'Excluded $_POST Variables', 'cache-master' ),
+					'title'    => __( 'Excluded $_POST Variables', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_excluded_post_vars' );
 					},
 				),
 				array(
-					'title'    => __( 'Excluded $_COOKIE Variables', 'cache-master' ),
+					'title'    => __( 'Excluded $_COOKIE Variables', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_excluded_cookie_vars' );
 					},
@@ -312,12 +385,12 @@ function scm_settings() {
 
 		// Expert mode.
 		array(
-			'title'    => __( 'Expert Mode', 'cache-master' ),
+			'title'    => __( 'Expert Mode', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 2,
 			'settings' => array(
 				array(
-					'title'    => __( 'Status', 'cache-master' ),
+					'title'    => __( 'Status', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_expert_mode_status' );
 					},
@@ -327,12 +400,12 @@ function scm_settings() {
 
 		// Statistics
 		array(
-			'title'    => __( 'Statistics', 'cache-master' ),
+			'title'    => __( 'Statistics', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 3,
 			'settings' => array(
 				array(
-					'title'    => __( 'Enable', 'cache-master' ),
+					'title'    => __( 'Enable', 'ams-cache' ),
 					'callback' => 'scm_cb_statistics_status',
 					'callback' => function() {
 						echo scm_load_view( 'option_statistics_status' );
@@ -342,7 +415,7 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Clear Cache', 'cache-master' ),
+			'title'    => __( 'Clear Cache', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 4,
 			'settings' => array(
@@ -357,18 +430,18 @@ function scm_settings() {
 
 		// Benchmark settings.
 		array(
-			'title'    => __( 'Footer Text', 'cache-master' ),
+			'title'    => __( 'Footer Text', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 5,
 			'settings' => array(
 				array(
-					'title'    => __( 'Enable', 'cache-master' ),
+					'title'    => __( 'Enable', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_benchmark_footer_text' );
 					},
 				),
 				array(
-					'title'    => __( 'Display', 'cache-master' ),
+					'title'    => __( 'Display', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_benchmark_footer_text_display' );
 					},
@@ -377,18 +450,18 @@ function scm_settings() {
 		),
 
 		array(
-			'title'    => __( 'Widget', 'cache-master' ),
+			'title'    => __( 'Widget', 'ams-cache' ),
 			'callback' => 'scm_cb_setting_section',
 			'group_id' => 5,
 			'settings' => array(
 				array(
-					'title'    => __( 'Enable', 'cache-master' ),
+					'title'    => __( 'Enable', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_benchmark_widget' );
 					},
 				),
 				array(
-					'title'    => __( 'Display', 'cache-master' ),
+					'title'    => __( 'Display', 'ams-cache' ),
 					'callback' => function() {
 						echo scm_load_view( 'option_benchmark_widget_display' );
 					},

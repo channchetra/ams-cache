@@ -1,8 +1,8 @@
 {
-    "name": "terrylinooo/cache-master",
-    "description": "Cache Master is an extremely light-weight and high-performace cache plugin that speeds up your WordPress sites on the fly.",
+    "name": "ams/ams-cache",
+    "description": "AMS Cache is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly.",
     "keywords": ["wordpress-plugin", "wordpress-cache", "cache-plugin"],
-    "homepage": "https://github.com/terrylinooo/cache-master",
+    "homepage": "https://ams.com.kh/",
     "license": "GPL-3.0-or-later",
     "authors": [
         {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Driver.
+ * AMS Cache - Driver.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -15,16 +15,16 @@ if ( ! defined( 'SCM_INC' ) ) {
 $option_driver_type = get_option( 'scm_option_driver', 'file' );
 
 $option_list = array(
-	'file'      => __( 'File', 'cache-master' ),
-	'redis'     => __( 'Redis', 'cache-master' ),
-	'memcache'  => __( 'Memcache', 'cache-master' ),
-	'memcached' => __( 'Memcached', 'cache-master' ),
-	'apc'       => __( 'APC', 'cache-master' ),
-	'apcu'      => __( 'APCu', 'cache-master' ),
-	'wincache'  => __( 'WinCache', 'cache-master' ),
-	'mongo'     => __( 'MongoDB', 'cache-master' ),
-	'mysql'     => __( 'MySQL', 'cache-master' ),
-	'sqlite'    => __( 'SQLite', 'cache-master' ),
+	'file'      => __( 'File', 'ams-cache' ),
+	'redis'     => __( 'Redis', 'ams-cache' ),
+	'memcache'  => __( 'Memcache', 'ams-cache' ),
+	'memcached' => __( 'Memcached', 'ams-cache' ),
+	'apc'       => __( 'APC', 'ams-cache' ),
+	'apcu'      => __( 'APCu', 'ams-cache' ),
+	'wincache'  => __( 'WinCache', 'ams-cache' ),
+	'mongo'     => __( 'MongoDB', 'ams-cache' ),
+	'mysql'     => __( 'MySQL', 'ams-cache' ),
+	'sqlite'    => __( 'SQLite', 'ams-cache' ),
 );
 
 $driver_status = array();
@@ -47,26 +47,27 @@ foreach ( array_keys( $option_list ) as $v ) {
 			<?php endforeach; ?>
 		</select>
 	</div>
-	<p><em><?php _e( 'Choose a driver to cache your posts and pages.', 'cache-master' ); ?></em></p>
+	<p><em><?php _e( 'Choose a driver to cache your posts and pages.', 'ams-cache' ); ?></em></p>
 </div>
 <div>
 	<div class="driver-status-container">
 	<?php foreach ( $option_list as $k => $v ) : ?>
 
 		<div class="driver-status-box">
-			<table style="border: 0; width: 100%">
-				<tr>
-					<td style="width: 80%"><?php echo $v; ?></td>
-					<td style="width: 20%">
-						<?php if ( $driver_status[ $k ] ) : ?>
-							<span class="dashicons dashicons-marker" style="color: #23b900"></span>
+			<div class="ams-driver-status-row">
+				<span><?php echo $v; ?></span>
+				<span>
+					<?php if ( $driver_status[ $k ] ) : ?>
+						<?php if ( $option_driver_type === $k ) : ?>
+							<span class="dashicons dashicons-yes-alt" style="color: #23b900"></span>
 						<?php else : ?>
-							<span class="dashicons dashicons-marker" style="color: #c60900"></span>
-
+							<span class="dashicons dashicons-marker" style="color: #23b900"></span>
 						<?php endif; ?>
-					</td>
-				</tr>
-			</table>
+					<?php else : ?>
+						<span class="dashicons dashicons-marker" style="color: #c60900"></span>
+					<?php endif; ?>
+				</span>
+			</div>
 		</div>
 	<?php endforeach; ?>
 	</div>

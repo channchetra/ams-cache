@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - WooCommerce events.
+ * AMS Cache - WooCommerce events.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -28,11 +28,9 @@ function scm_payment_complete( $order_id ) {
 	}
 
 	$post_url    = get_permalink( $product_id );
-	$cache_key   = md5( parse_url( $post_url, PHP_URL_PATH ) );
+	$post_path   = parse_url( $post_url, PHP_URL_PATH );
 	$driver_type = get_option( 'scm_option_driver' );
 	$driver      = scm_driver_factory( $driver_type );
 
-	if ( $driver ) {
-		$driver->delete( $cache_key );
-	}
+	scm_purge_cache_uri( $post_path, $driver );
 }

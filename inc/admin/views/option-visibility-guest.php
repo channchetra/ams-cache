@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - The visibility of cache for logged-in users.
+ * AMS Cache - The visibility of cache for logged-in users.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -12,17 +12,10 @@ if ( ! defined( 'SCM_INC' ) ) {
 	die;
 }
 
-$option_visibility_guest = get_option( 'scm_option_visibility_guest', 'yes' );
-
 ?>
 
 <div>
-	<div>
-		<input type="radio" name="scm_option_visibility_guest" id="cache-master-visibility-guest-option-yes" value="yes" 
-			<?php checked( $option_visibility_guest, 'yes' ); ?>>
-		<label for="cache-master-visibility-guest-option-yes">
-			<?php _e( 'Yes', 'cache-master' ); ?><br />
-		<label>
-	</div>
+	<input type="hidden" name="scm_option_visibility_guest" value="yes">
+	<span class="ams-readonly-choice"><?php _e( 'Always cached for guests', 'ams-cache' ); ?></span>
 </div>
-<p><em><?php _e( 'Always show cached pages to guests.', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Always show cached pages to guests.', 'ams-cache' ); ?></em></p>

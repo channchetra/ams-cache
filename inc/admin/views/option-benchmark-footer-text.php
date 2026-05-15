@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Uninstall option.
+ * AMS Cache - Uninstall option.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -18,18 +18,18 @@ $option_benchmark_footer_text = get_option( 'scm_option_benchmark_footer_text', 
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_footer_text" id="cache-master-benchmark-footer-text-option-yes" value="yes" 
+		<input type="radio" name="scm_option_benchmark_footer_text" id="ams-cache-benchmark-footer-text-option-yes" value="yes" 
 			<?php checked( $option_benchmark_footer_text, 'yes' ); ?>>
-		<label for="cache-master-benchmark-footer-text-option-yes">
-			<?php _e( 'Yes', 'cache-master' ); ?><br />
+		<label for="ams-cache-benchmark-footer-text-option-yes">
+			<?php _e( 'Yes', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_footer_text" id="cache-master-benchmark-footer-text-option-no" value="no" 
+		<input type="radio" name="scm_option_benchmark_footer_text" id="ams-cache-benchmark-footer-text-option-no" value="no" 
 			<?php checked( $option_benchmark_footer_text, 'no' ); ?>>
-		<label for="cache-master-benchmark-footer-text-option-no">
-			<?php _e( 'No', 'cache-master' ); ?>
+		<label for="ams-cache-benchmark-footer-text-option-no">
+			<?php _e( 'No', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Display the benchmark information in the footer area.', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Display the benchmark information in the footer area.', 'ams-cache' ); ?></em></p>

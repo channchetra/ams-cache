@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Activating plugin.
+ * AMS Cache - Activating plugin.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -72,9 +72,20 @@ function scm_activation() {
 		'excluded_get_variables'             => '',
 		'excluded_post_variables'            => '',
 		'excluded_cookie_variables'          => '',
+		'advanced_driver_file'               => array(),
 		'advanced_driver_memcached'          => array(),
 		'advanced_driver_redis'              => array(),
 		'advanced_driver_mongodb'            => array(),
+		'advanced_driver_memcached_connection_type' => 'tcp',
+		'advanced_driver_redis_connection_type'     => 'tcp',
+		'advanced_driver_mongodb_connection_type'   => 'tcp',
+		'cache_key_prefix'                   => 'scm_' . get_current_blog_id() . '_' . scm_get_dir_hash() . '_',
+		'cache_max_entries'                  => 0,
+		'nginx_direct_cache_status'          => 'no',
+		'page_optimization'                  => scm_get_default_page_optimization_settings(),
+		'preload_cache'                      => 'no',
+		'preload_limit'                      => 50,
+		'preload_homepage_links'             => 'yes',
 		'html_debug_comment'                 => 'yes',
 		'post_types'                         => $post_types,
 		'post_archives'                      => $post_archives,
@@ -158,6 +169,7 @@ function scm_setup_security_files() {
 function scm_deactivation() {
 
 	$option_uninstall = get_option( 'scm_option_uninstall' );
+	delete_transient( 'scm_preload_queue' );
 
 	if ( 'yes' === $option_uninstall ) {
 
@@ -182,9 +194,25 @@ function scm_deactivation() {
 			'excluded_get_vars',
 			'excluded_post_vars',
 			'excluded_cookie_vars',
+			'advanced_driver_file',
 			'advanced_driver_memcached',
 			'advanced_driver_redis',
 			'advanced_driver_mongodb',
+			'advanced_driver_memcached_connection_type',
+			'advanced_driver_redis_connection_type',
+			'advanced_driver_mongodb_connection_type',
+			'cache_key_prefix',
+			'cache_max_entries',
+			'nginx_direct_cache_status',
+			'page_optimization',
+			'preload_cache',
+			'preload_limit',
+			'preload_homepage_links',
+			'preload_queue_total',
+			'preload_queue_processed',
+			'preload_queue_remaining',
+			'preload_queue_started_time',
+			'preload_queue_finished_time',
 			'html_debug_comment',
 			'post_types',
 			'post_archives',

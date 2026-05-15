@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Caching status.
+ * AMS Cache - Caching status.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -18,18 +18,18 @@ $option_caching_status = get_option( 'scm_option_caching_status', 'disable' );
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_caching_status" id="cache-master-caching-status-enable" value="enable" 
+		<input type="radio" name="scm_option_caching_status" id="ams-cache-caching-status-enable" value="enable" 
 			<?php checked( $option_caching_status, 'enable' ); ?>>
-		<label for="cache-master-caching-status-enable">
-			<?php _e( 'Enable', 'cache-master' ); ?><br />
+		<label for="ams-cache-caching-status-enable">
+			<?php _e( 'Enable', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_caching_status" id="cache-master-caching-status-disable" value="disable" 
+		<input type="radio" name="scm_option_caching_status" id="ams-cache-caching-status-disable" value="disable" 
 			<?php checked( $option_caching_status, 'disable' ); ?>>
-		<label for="cache-master-caching-status-disable">
-			<?php _e( 'Disable', 'cache-master' ); ?>
+		<label for="ams-cache-caching-status-disable">
+			<?php _e( 'Disable', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Once you disable this option, Cache Master will stop working and all cache will be cleared.', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Once you disable this option, AMS Cache will stop working and all cache will be cleared.', 'ams-cache' ); ?></em></p>

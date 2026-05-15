@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Activating plugin.
+ * AMS Cache - Activating plugin.
  *
  * @author Terry Lin
  * @link https://terryl.in/

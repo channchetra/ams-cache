@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Uninstall option.
+ * AMS Cache - Uninstall option.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -18,18 +18,18 @@ $option_post_homepage = get_option( 'scm_option_post_homepage', 'yes' );
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_post_homepage" id="cache-master-post-homepage-option-yes" value="yes" 
+		<input type="radio" name="scm_option_post_homepage" id="ams-cache-post-homepage-option-yes" value="yes" 
 			<?php checked( $option_post_homepage, 'yes' ); ?>>
-		<label for="cache-master-post-homepage-option-yes">
-			<?php _e( 'Yes', 'cache-master' ); ?><br />
+		<label for="ams-cache-post-homepage-option-yes">
+			<?php _e( 'Yes', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_post_homepage" id="cache-master-post-homepage-option-no" value="no" 
+		<input type="radio" name="scm_option_post_homepage" id="ams-cache-post-homepage-option-no" value="no" 
 			<?php checked( $option_post_homepage, 'no' ); ?>>
-		<label for="cache-master-post-homepage-option-no">
-			<?php _e( 'No', 'cache-master' ); ?>
+		<label for="ams-cache-post-homepage-option-no">
+			<?php _e( 'No', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Would you like to cache the homepage of your site?', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Would you like to cache the homepage of your site?', 'ams-cache' ); ?></em></p>

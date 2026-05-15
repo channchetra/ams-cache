@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Advanced settings - Driver: MongoDB.
+ * AMS Cache - Advanced settings - Driver: MongoDB.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -17,15 +17,15 @@ $option_mongodb = get_option( 'scm_option_advanced_driver_mongodb' );
 $option_mongodb_connection_type = get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' );
 
 $option_list = array(
-	'host'        => __( 'Host', 'cache-master' ),
-	'port'        => __( 'Port', 'cache-master' ),
+	'host'        => __( 'Host', 'ams-cache' ),
+	'port'        => __( 'Port', 'ams-cache' ),
 	'or'          => 'or',
-	'unix_socket' => __( 'Unix Socket', 'cache-master' ),
+	'unix_socket' => __( 'Unix Socket', 'ams-cache' ),
 	'or2'         => 'or',
-	'user'        => __( 'User', 'cache-master' ),
-	'pass'        => __( 'Password', 'cache-master' ),
-	'database'    => __( 'Database', 'cache-master' ),
-	'collection'  => __( 'Collection', 'cache-master' ),
+	'user'        => __( 'User', 'ams-cache' ),
+	'pass'        => __( 'Password', 'ams-cache' ),
+	'database'    => __( 'Database', 'ams-cache' ),
+	'collection'  => __( 'Collection', 'ams-cache' ),
 	'or3'         => 'or',
 );
 
@@ -59,20 +59,20 @@ if ( scm_test_driver( 'mongo' ) ) {
 			<div class="scm-option-item">
 				<div class="scm-label-wrapper">
 					<label>
-						<?php _e( 'Connection', 'cache-master' ); ?>
+						<?php _e( 'Connection', 'ams-cache' ); ?>
 					<label>
 				</div>
 				<span>
-					<input type="radio" name="scm_option_advanced_driver_mongodb_connection_type" id="cache-master-advanced-driver-mongodb-connection-tcp" value="tcp" 
+					<input type="radio" name="scm_option_advanced_driver_mongodb_connection_type" id="ams-cache-advanced-driver-mongodb-connection-tcp" value="tcp" 
 						<?php checked( $option_mongodb_connection_type, 'tcp' ); ?>>
-					<label for="cache-master-advanced-driver-mongodb-connection-tcp">
-						<?php _e( 'TCP', 'cache-master' ); ?>
+					<label for="ams-cache-advanced-driver-mongodb-connection-tcp">
+						<?php _e( 'TCP', 'ams-cache' ); ?>
 					<label>
 					&nbsp;&nbsp;&nbsp;&nbsp;
-					<input type="radio" name="scm_option_advanced_driver_mongodb_connection_type" id="cache-master-advanced-driver-mongodb-connection-socket" value="socket" 
+					<input type="radio" name="scm_option_advanced_driver_mongodb_connection_type" id="ams-cache-advanced-driver-mongodb-connection-socket" value="socket" 
 						<?php checked( $option_mongodb_connection_type, 'socket' ); ?>>
-					<label for="cache-master-advanced-driver-mongodb-connection-socket">
-						<?php _e( 'Unix Socket', 'cache-master' ); ?>
+					<label for="ams-cache-advanced-driver-mongodb-connection-socket">
+						<?php _e( 'Unix Socket', 'ams-cache' ); ?>
 					<label>
 				</span>
 			</div><br /><br />
@@ -84,7 +84,7 @@ if ( scm_test_driver( 'mongo' ) ) {
 				<?php endif; ?>
 			<div class="scm-option-item">
 				<div class="scm-label-wrapper">
-					<label for="cache-master-advanced-driver-mongodb-option-<?php echo $k; ?>">
+					<label for="ams-cache-advanced-driver-mongodb-option-<?php echo $k; ?>">
 						<?php echo $v; ?>
 					<label>
 				</div>
@@ -98,20 +98,20 @@ if ( scm_test_driver( 'mongo' ) ) {
 				<input 
 					type="text" 
 					name="scm_option_advanced_driver_mongodb[<?php echo $k; ?>]" 
-					id="cache-master-advanced-driver-mongodb-option-<?php echo $k; ?>" 
-					value="<?php esc_attr( $mongodb_field_value ); ?>" 
+					id="ams-cache-advanced-driver-mongodb-option-<?php echo $k; ?>" 
+					value="<?php echo esc_attr( $mongodb_field_value ); ?>" 
 				/>
 			</div>
 			<?php endforeach; ?>
 
 		</div>
-		<p><em><?php _e( 'Change the settings carefully, make sure you know what you are doing.', 'cache-master' ); ?></em></p>
+		<p><em><?php _e( 'Change the settings carefully, make sure you know what you are doing.', 'ams-cache' ); ?></em></p>
 		<?php if ( ! $is_driver_setting_correct ) : ?>
 		<p><em class="scm-msg scm-msg-error">
-			<?php _e( 'The settings you have set are not working, please recheck your settings.', 'cache-master' ); ?>
+			<?php _e( 'The settings you have set are not working, please recheck your settings.', 'ams-cache' ); ?>
 			<?php if ( 'socket' === $option_mongodb_connection_type ) : ?>
 				<br />
-				<?php _e( 'Set the permission of the socket file to 777 might solve this problem.', 'cache-master' ); ?>
+				<?php _e( 'Set the permission of the socket file to 777 might solve this problem.', 'ams-cache' ); ?>
 			<?php endif; ?>
 		<?php endif; ?>
 		</em></p>
@@ -122,22 +122,22 @@ if ( scm_test_driver( 'mongo' ) ) {
 			<div class="scm-option-item">
 				<div class="scm-label-wrapper">
 					<label>
-						<?php _e( 'Connection', 'cache-master' ); ?>
+						<?php _e( 'Connection', 'ams-cache' ); ?>
 					<label>
 				</div>
 				<span>
 					<input type="radio" value="tcp" disabled 
 						<?php checked( $option_mongodb_connection_type, 'tcp' ); ?>>
 					<label>
-						<?php _e( 'TCP', 'cache-master' ); ?>
+						<?php _e( 'TCP', 'ams-cache' ); ?>
 					<label>
 					&nbsp;&nbsp;&nbsp;&nbsp;
 					<input type="radio" value="socket" disabled
 						<?php checked( $option_mongodb_connection_type, 'socket' ); ?>>
 					<label>
-						<?php _e( 'Unix Socket', 'cache-master' ); ?>
+						<?php _e( 'Unix Socket', 'ams-cache' ); ?>
 					<label>
-					<input type="hidden" name="scm_option_advanced_driver_mongodb_connection_type" value="<?php esc_attr( $option_mongodb_connection_type ); ?>">
+					<input type="hidden" name="scm_option_advanced_driver_mongodb_connection_type" value="<?php echo esc_attr( $option_mongodb_connection_type ); ?>">
 				</span>
 			</div><br /><br />
 
@@ -159,11 +159,11 @@ if ( scm_test_driver( 'mongo' ) ) {
 					<?php $mongodb_field_value = $option_default_list[ $k ]; ?>
 				<?php endif; ?>
 
-				<input type="text" value="<?php echo $mongodb_field_value; ?>" disabled  />
+				<input type="text" value="<?php echo esc_attr( $mongodb_field_value ); ?>" disabled  />
 			</div>
 			<?php endforeach; ?>
 		</div>
-		<p><em class="scm-msg scm-msg-info"><?php _e( 'This option is not available to change, becasue you are using this driver.', 'cache-master' ); ?></em></p>
+		<p><em class="scm-msg scm-msg-info"><?php _e( 'This option is not available to change, becasue you are using this driver.', 'ams-cache' ); ?></em></p>
 
 	<?php endif; ?>
 
@@ -177,11 +177,11 @@ if ( scm_test_driver( 'mongo' ) ) {
 					<?php echo $v; ?>
 				<label>
 			</div>
-			<input type="text" value="<?php echo $option_default_list[ $k ]; ?>" disabled  />
+			<input type="text" value="<?php echo esc_attr( $option_default_list[ $k ] ); ?>" disabled  />
 		</div>
 		<?php endforeach; ?>
 	</div>
 	<?php // translators: %s is the name of the PHP extension ?>
-	<p><em class="scm-msg scm-msg-error"><?php echo sprintf( __( 'PHP extension "%s" is not installed on your system.', 'cache-master' ), 'mongodb' ); ?></em></p>
+	<p><em class="scm-msg scm-msg-error"><?php echo sprintf( __( 'PHP extension "%s" is not installed on your system.', 'ams-cache' ), 'mongodb' ); ?></em></p>
 
 <?php endif; ?>

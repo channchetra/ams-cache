@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Expert-mode.
+ * AMS Cache - Expert-mode.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -30,23 +30,23 @@ if ( ! file_exists( $wp_config_file ) ) {
 		<?php submit_button(); ?>
 	</form>
 
-	<h2><?php _e( 'Code', 'cache-master' ); ?></h2>
-	<p><?php _e( 'This PHP code is generated dynamically depending on your settings.', 'cache-master' ); ?></p>
+	<h2><?php _e( 'Code', 'ams-cache' ); ?></h2>
+	<p><?php _e( 'This PHP code is generated dynamically depending on your settings.', 'ams-cache' ); ?></p>
 	<?php // translators: %s is a placeholder for a file name. ?>
-	<p><?php echo sprintf( __( 'Please modify %1$s and insert the following code into %2$s', 'cache-master' ), '<code>' . $wp_config_file . '</code>', '<code>wp-config.php</code>' ); ?></p>
+	<p><?php echo sprintf( __( 'Please modify %1$s and insert the following code into %2$s', 'ams-cache' ), '<code>' . $wp_config_file . '</code>', '<code>wp-config.php</code>' ); ?></p>
 	<div class="scm-code-block"><pre><code class="language-php"><?php echo scm_expert_mode_code_template(); ?></code></pre></div>
 
-	<h2><?php _e( 'Guide', 'cache-master' ); ?></h2>
-	<p><?php _e( 'The position of the PHP code is supposed to put right after the DB constants.', 'cache-master' ); ?> (<code>DB_COLLATE</code>)</p>
+	<h2><?php _e( 'Guide', 'ams-cache' ); ?></h2>
+	<p><?php _e( 'The position of the PHP code is supposed to put right after the DB constants.', 'ams-cache' ); ?> (<code>DB_COLLATE</code>)</p>
 	<div>
 		<img src="<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/expert-mode-code.png">	
 	</div>
 	<?php // translators: %s is a placeholder for a file name. ?>
-	<p><?php echo sprintf( __( 'Once you have done things right, if you are using Chome, %s or right click and select "View Source" to vew the HTML source code.', 'cache-master' ), '<code>Ctrl + U</code>' ); ?></p>
+	<p><?php echo sprintf( __( 'Once you have done things right, if you are using Chome, %s or right click and select "View Source" to vew the HTML source code.', 'ams-cache' ), '<code>Ctrl + U</code>' ); ?></p>
 	<div>
 		<img src="<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/sample-expert-mode.png">	
 	</div>
-	<p><?php _e( 'You should see the result like this.', 'cache-master' ); ?></p>
+	<p><?php _e( 'You should see the result like this.', 'ams-cache' ); ?></p>
 </div>
 
 <script>

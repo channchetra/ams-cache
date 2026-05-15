@@ -10,3 +10,6 @@ vendor
 !vendor/shieldon
 !vendor/autoload.php
 .phpunit.result.cache
+dist/
+*.zip
+sample.txt

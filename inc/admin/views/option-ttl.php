@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - TTL.
+ * AMS Cache - TTL.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -31,48 +31,36 @@ if ( $option_ttl > 2592000 ) {
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_ttl_mechanism" id="cache-master-ttl-mechanisum-enable" value="enable" 
+		<input type="radio" name="scm_option_ttl_mechanism" id="ams-cache-ttl-mechanisum-enable" value="enable" 
 			<?php checked( $option_ttl_mechanism, 'enable' ); ?>>
-		<label for="cache-master-ttl-mechanisum-enable">
-			<?php _e( 'Enable', 'cache-master' ); ?><br />
+		<label for="ams-cache-ttl-mechanisum-enable">
+			<?php _e( 'Enable', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_ttl_mechanism" id="cache-master-ttl-mechanisum-disable" value="disable" 
+		<input type="radio" name="scm_option_ttl_mechanism" id="ams-cache-ttl-mechanisum-disable" value="disable" 
 			<?php checked( $option_ttl_mechanism, 'disable' ); ?>>
-		<label for="cache-master-ttl-mechanisum-disable">
-			<?php _e( 'Disable', 'cache-master' ); ?>
+		<label for="ams-cache-ttl-mechanisum-disable">
+			<?php _e( 'Disable', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Once you disable this option, Cache Master will not automatically clear and update the cache.', 'cache-master' ); ?></em></p>
+<p><em><?php _e( 'Once you disable this option, AMS Cache will not automatically clear and update the cache.', 'ams-cache' ); ?></em></p>
 
 <div style="margin-top: 30px">
 	<div>
 		<input type="text" name="scm_option_ttl" value="<?php echo esc_attr( $option_ttl ); ?>">
 	</div>
 </div>
-<p><em><?php _e( 'Please fill in a number between 300-2592000. (in seconds)', 'cache-master' ); ?></em></p>
-<h4><?php _e( 'Examples', 'cache-master' ); ?></h3>
-<table class="scm-table-ttl-example">
-	<tr>
-		<th><?php _e( 'Time', 'cache-master' ); ?></th>
-		<th><?php _e( 'Description', 'cache-master' ); ?></th>
-	</tr>
-	<tr>
-		<td>300</td>
-		<td><?php _e( '5 minutes', 'cache-master' ); ?></td>
-	</tr>
-	<tr>
-		<td>3600</td>
-		<td><?php _e( '1 hour', 'cache-master' ); ?></td>
-	</tr>
-	<tr>
-		<td>86400</td>
-		<td><?php _e( '24 hours', 'cache-master' ); ?></td>
-	</tr>
-	<tr>
-		<td>2592000</td>
-		<td><?php _e( '30 days', 'cache-master' ); ?></td>
-	</tr>
-</table>
+<p><em><?php _e( 'Please fill in a number between 300-2592000. (in seconds)', 'ams-cache' ); ?></em></p>
+<h4><?php _e( 'Examples', 'ams-cache' ); ?></h3>
+<ul class="ams-ttl-example-list">
+	<li class="ams-ttl-example-head">
+		<span><?php _e( 'Time', 'ams-cache' ); ?></span>
+		<span><?php _e( 'Description', 'ams-cache' ); ?></span>
+	</li>
+	<li><span>300</span><span><?php _e( '5 minutes', 'ams-cache' ); ?></span></li>
+	<li><span>3600</span><span><?php _e( '1 hour', 'ams-cache' ); ?></span></li>
+	<li><span>86400</span><span><?php _e( '24 hours', 'ams-cache' ); ?></span></li>
+	<li><span>2592000</span><span><?php _e( '30 days', 'ams-cache' ); ?></span></li>
+</ul>

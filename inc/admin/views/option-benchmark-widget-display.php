@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Uninstall option.
+ * AMS Cache - Uninstall option.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -18,29 +18,29 @@ $option_benchmark_widget_display = get_option( 'scm_option_benchmark_widget_disp
 
 <div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_widget_display" id="cache-master-benchmark-widget-display-option-text" value="text" 
+		<input type="radio" name="scm_option_benchmark_widget_display" id="ams-cache-benchmark-widget-display-option-text" value="text" 
 			<?php checked( $option_benchmark_widget_display, 'text' ); ?>>
-		<label for="cache-master-benchmark-widget-option-text">
-			<?php _e( 'Text', 'cache-master' ); ?><br />
+		<label for="ams-cache-benchmark-widget-option-text">
+			<?php _e( 'Text', 'ams-cache' ); ?><br />
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_widget_display" id="cache-master-benchmark-widget-display-option-icon" value="icon" 
+		<input type="radio" name="scm_option_benchmark_widget_display" id="ams-cache-benchmark-widget-display-option-icon" value="icon" 
 			<?php checked( $option_benchmark_widget_display, 'icon' ); ?>>
-		<label for="cache-master-benchmark-widget-display-option-icon">
-			<?php _e( 'Icon', 'cache-master' ); ?>
+		<label for="ams-cache-benchmark-widget-display-option-icon">
+			<?php _e( 'Icon', 'ams-cache' ); ?>
 		<label>
 	</div>
 	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_widget_display" id="cache-master-benchmark-widget-display-option-both" value="both" 
+		<input type="radio" name="scm_option_benchmark_widget_display" id="ams-cache-benchmark-widget-display-option-both" value="both" 
 			<?php checked( $option_benchmark_widget_display, 'both' ); ?>>
-		<label for="cache-master-benchmark-widget-display-option-both">
-			<?php _e( 'Both', 'cache-master' ); ?>
+		<label for="ams-cache-benchmark-widget-display-option-both">
+			<?php _e( 'Both', 'ams-cache' ); ?>
 		<label>
 	</div>	
 </div>
-<p><em><?php _e( 'Would you like to use text or an icon as the label name when displaying benchmark results?', 'cache-master' ); ?></em></p>
-<p><em><?php _e( 'Example', 'cache-master' ); ?>:</em></p>
+<p><em><?php _e( 'Would you like to use text or an icon as the label name when displaying benchmark results?', 'ams-cache' ); ?></em></p>
+<p><em><?php _e( 'Example', 'ams-cache' ); ?>:</em></p>
 <div class="scm-option-example">
 	<img id="img-widget-example" src="">
 </div>

@@ -34,7 +34,7 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 require $_tests_dir . '/includes/bootstrap.php';
 
 // Remove previous tests.
-$dir = WP_CONTENT_DIR . '/uploads/cache-master';
+$dir = WP_CONTENT_DIR . '/uploads/ams-cache';
 
 if ( is_dir( $dir ) ) {
 	$it    = new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS );

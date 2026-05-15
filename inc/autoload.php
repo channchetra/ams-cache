@@ -1,8 +1,8 @@
 <?php
 /**
- * Cache Master Class autoloader.
+ * AMS Cache Class autoloader.
  *
- * @package   Cache Master
+ * @package   AMS Cache
  * @author    Terry Lin <terrylinooo>
  * @license   GPLv3 (or later)
  * @link      https://terryl.in

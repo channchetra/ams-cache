@@ -5,7 +5,7 @@
  * @author Terry Lin
  * @link https://terryl.in/
  *
- * @package Cache Master
+ * @package AMS Cache
  * @since 1.5.0
  * @version 1.5.0
  */
@@ -26,11 +26,11 @@ class SCM_Benchmark_Widget extends WP_Widget {
 
 		$widget_ops = array(
 			'classname'                   => 'widget_scm_benchmark',
-			'description'                 => __( 'Display the benchmark report before and after caching by Cache Master.', 'cache-master' ),
+			'description'                 => __( 'Display the benchmark report before and after caching by AMS Cache.', 'ams-cache' ),
 			'customize_selective_refresh' => true,
 		);
 
-		parent::__construct( 'scm_benchmark', __( 'Benchmark Report', 'cache-master' ), $widget_ops );
+		parent::__construct( 'scm_benchmark', __( 'Benchmark Report', 'ams-cache' ), $widget_ops );
 	}
 
 	/**
@@ -40,19 +40,19 @@ class SCM_Benchmark_Widget extends WP_Widget {
 
 		echo $args['before_widget'];
 
-		echo '<div class="cache-master-plugin-widget-wrapper" style="display: none">';
+		echo '<div class="ams-cache-plugin-widget-wrapper" style="display: none">';
 
 		if ( ! empty( $instance['title'] ) ) {
 			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
 		}
 
 		?>
-			<div class="cache-master-plugin-widget">
+			<div class="ams-cache-plugin-widget">
 				<div class="scm-table">
 					<div class="scm-tr">
 						<div class="scm-td">
-							<span class="scm-img scm-img-1" title="<?php echo esc_attr__( 'Cache status powered by Cache Master plugin', 'cache-master' ); ?>"><?php echo scm_get_svg_icon( 'status' ); ?></span>
-							<span class="scm-text"><?php _e( 'Cache status', 'cache-master' ); ?></span>
+							<span class="scm-img scm-img-1" title="<?php echo esc_attr__( 'Cache status powered by AMS Cache plugin', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'status' ); ?></span>
+							<span class="scm-text"><?php _e( 'Cache status', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-cache-status">-</span>
@@ -60,8 +60,8 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					</div>
 					<div class="scm-tr">
 						<div class="scm-td">
-							<span class="scm-img scm-img-2" title="<?php echo esc_attr__( 'Memory usage', 'cache-master' ); ?>"><?php echo scm_get_svg_icon( 'memory' ); ?></span>
-							<span class="scm-text"><?php _e( 'Memory usage', 'cache-master' ); ?></span>
+							<span class="scm-img scm-img-2" title="<?php echo esc_attr__( 'Memory usage', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'memory' ); ?></span>
+							<span class="scm-text"><?php _e( 'Memory usage', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-memory-usage">-</span> MB
@@ -69,8 +69,8 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					</div>
 					<div class="scm-tr">
 						<div class="scm-td">
-							<span class="scm-img scm-img-3" title="<?php echo esc_attr__( 'SQL queries', 'cache-master' ); ?>"><?php echo scm_get_svg_icon( 'database' ); ?></span>
-							<span class="scm-text"><?php _e( 'SQL queries', 'cache-master' ); ?></span>
+							<span class="scm-img scm-img-3" title="<?php echo esc_attr__( 'SQL queries', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'database' ); ?></span>
+							<span class="scm-text"><?php _e( 'SQL queries', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-sql-queries">-</span>
@@ -78,11 +78,11 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					</div>
 					<div class="scm-tr">
 						<div class="scm-td">
-							<span class="scm-img scm-img-4" title="<?php echo esc_attr__( 'Page generation time', 'cache-master' ); ?>"><?php echo scm_get_svg_icon( 'speed' ); ?></span>
-							<span class="scm-text"><?php _e( 'Page generation time', 'cache-master' ); ?></span>
+							<span class="scm-img scm-img-4" title="<?php echo esc_attr__( 'Page generation time', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'speed' ); ?></span>
+							<span class="scm-text"><?php _e( 'Page generation time', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
-							<span class="scm-field-page-generation-time">-</span> (<?php _e( 'sec', 'cache-master' ); ?>)
+							<span class="scm-field-page-generation-time">-</span> (<?php _e( 'sec', 'ams-cache' ); ?>)
 						</div>
 					</div>
 				</div>
@@ -102,7 +102,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 	 * @param array $instance Previously saved values from database.
 	 */
 	public function form( $instance ) {
-		$title = __( 'Cache Master', 'cache-master' );
+		$title = __( 'AMS Cache', 'ams-cache' );
 
 		if ( isset( $instance['title'] ) ) {
 			$title = $instance['title'];

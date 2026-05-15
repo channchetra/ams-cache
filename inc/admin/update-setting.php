@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Master - Update setting.
+ * AMS Cache - Update setting.
  *
  * @author Terry Lin
  * @link https://terryl.in/
@@ -20,6 +20,11 @@ $register_general_action = array(
 	'scm_option_expert_mode_status',
 	'scm_option_clear_cache',
 	'scm_option_html_debug_comment',
+	'scm_option_cache_key_prefix',
+	'scm_option_cache_max_entries',
+	'scm_option_nginx_direct_cache_status',
+	'scm_option_preload_cache',
+	'scm_option_preload_homepage_links',
 );
 
 
@@ -38,6 +43,7 @@ $register_clear_cache_action = array(
 	'scm_option_benchmark_widget_display',
 	'scm_option_benchmark_footer_text',
 	'scm_option_benchmark_footer_text_display',
+	'scm_option_page_optimization',
 );
 
 foreach ( $register_clear_cache_action as $option ) {
@@ -69,6 +75,22 @@ foreach ( $register_exclusion_action as $option ) {
 	add_action( 'update_option_' . $option, 'scm_update_exclusion' );
 }
 
+// Sync runtime config for Expert Mode.
+$register_runtime_config_action = array(
+	'scm_option_advanced_driver_file',
+	'scm_option_advanced_driver_memcached',
+	'scm_option_advanced_driver_redis',
+	'scm_option_advanced_driver_mongodb',
+	'scm_option_advanced_driver_memcached_connection_type',
+	'scm_option_advanced_driver_redis_connection_type',
+	'scm_option_advanced_driver_mongodb_connection_type',
+	'scm_option_preload_limit',
+);
+
+foreach ( $register_runtime_config_action as $option ) {
+	add_action( 'update_option_' . $option, 'scm_update_runtime_config' );
+}
+
 /**
  * Rebuild data schema.
  *
@@ -97,18 +119,33 @@ function scm_update_scm_option_driver() {
 		}
 	}
 
-	$advanced_settings = array();
+	scm_update_runtime_config();
+}
 
-	if ( 'memcached' === $driver_type ) {
-		$advanced_settings = get_option( 'scm_option_advanced_driver_memcached' );
-	} elseif ( 'redis' === $driver_type ) {
-		$advanced_settings = get_option( 'scm_option_advanced_driver_redis' );
-	} elseif ( 'mongo' === $driver_type ) {
-		$advanced_settings = get_option( 'scm_option_advanced_driver_mongodb' );
-	}
+/**
+ * Update runtime config consumed by normal and Expert Mode cache readers.
+ *
+ * @return void
+ */
+function scm_update_runtime_config() {
+	$driver_type      = get_option( 'scm_option_driver', 'file' );
+	$connection_type  = scm_get_driver_connection_type( $driver_type );
+	$advanced_setting = scm_normalize_driver_settings(
+		scm_get_driver_advanced_settings( $driver_type ),
+		$connection_type
+	);
 
 	$setting['cache_driver']             = $driver_type;
-	$setting['driver_advanced_settings'] = $advanced_settings;
+	$setting['cache_key_prefix']         = scm_get_cache_key_prefix();
+	$setting['driver_advanced_settings'] = $advanced_setting;
+	$setting['driver_connection_type']   = $connection_type;
+	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
+	$setting['preload']                  = array(
+		'enable' => scm_is_preload_enabled(),
+		'limit'  => (int) get_option( 'scm_option_preload_limit', 50 ),
+		'crawl_homepage_links' => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
+	);
+	$setting['cache_max_entries']        = scm_get_cache_max_entries();
 
 	scm_update_config( $setting );
 }
@@ -131,6 +168,7 @@ function scm_check_permalink_structure() {
  */
 function scm_update_scm_option_expert_mode_status() {
 	$checkpoint = scm_get_upload_dir() . '/expert.lock';
+	scm_update_runtime_config();
 
 	if ( 'enable' === get_option( 'scm_option_expert_mode_status' ) ) {
 		file_put_contents( $checkpoint, 'VOTE!' );
@@ -162,57 +200,75 @@ function scm_update_scm_option_html_debug_comment() {
 }
 
 /**
+ * Update cache namespace.
+ *
+ * @return void
+ */
+function scm_update_scm_option_cache_key_prefix() {
+	scm_update_runtime_config();
+	scm_clear_all_cache();
+}
+
+/**
+ * Update maximum cache entry count.
+ *
+ * @return void
+ */
+function scm_update_scm_option_cache_max_entries() {
+	scm_update_runtime_config();
+	scm_enforce_cache_entry_limit();
+}
+
+/**
+ * Update Nginx direct cache status.
+ *
+ * @return void
+ */
+function scm_update_scm_option_nginx_direct_cache_status() {
+	scm_update_runtime_config();
+	scm_clear_nginx_static_cache();
+	scm_preload_critical_urls();
+	scm_preload_homepage_priority_urls();
+}
+
+/**
+ * Update cache preload status.
+ *
+ * @return void
+ */
+function scm_update_scm_option_preload_cache() {
+	scm_update_runtime_config();
+	scm_preload_homepage_priority_urls();
+	scm_schedule_preload_cache();
+}
+
+/**
+ * Update homepage crawl preload option.
+ *
+ * @return void
+ */
+function scm_update_scm_option_preload_homepage_links() {
+	scm_update_runtime_config();
+	scm_preload_homepage_priority_urls();
+	scm_schedule_preload_cache();
+}
+
+/**
  * Perform clearing cache by specific option.
  *
  * @return void
  */
 function scm_update_scm_option_clear_cache() {
 	$cache_type = get_option( 'scm_option_clear_cache' );
-	$driver     = scm_driver_factory( get_option( 'scm_option_driver' ) );
-
-	if ( ! $driver ) {
-		return;
-	}
-
-	$list = scm_get_cache_type_list( true );
 
 	update_option( 'scm_option_clear_cache', '' );
 
 	if ( 'all' === $cache_type ) {
-		$driver->clear();
-
-		foreach ( $list as $cache_type ) {
-			$dir = scm_get_stats_dir( $cache_type );
-
-			if ( is_dir( $dir ) ) {
-				foreach ( new DirectoryIterator( $dir ) as $file ) {
-					if ( $file->isFile() && $file->getExtension() === 'json' ) {
-						$filename = $file->getFilename();
-						$key      = strstr( $filename, '.', true );
-
-						$driver->delete( $key );
-						unlink( $file->getPathname() );
-					}
-				}
-			}
-		}
-	} else {
-		if ( in_array( $cache_type, $list, true ) ) {
-			$dir = scm_get_stats_dir( $cache_type );
-
-			if ( is_dir( $dir ) ) {
-				foreach ( new DirectoryIterator( $dir ) as $file ) {
-					if ( $file->isFile() && $file->getExtension() === 'json' ) {
-						$filename = $file->getFilename();
-						$key      = strstr( $filename, '.', true );
-
-						$driver->delete( $key );
-						unlink( $file->getPathname() );
-					}
-				}
-			}
-		}
+		scm_clear_all_cache();
+		return;
 	}
+
+	scm_clear_cache_type( $cache_type );
 }
 
 /**
@@ -235,6 +291,7 @@ function scm_update_exclusion() {
 
 	// Excluded list.
 	$exluded_list = get_option( 'scm_option_excluded_list' );
+	$exluded_list_filtered = get_option( 'scm_option_excluded_list_filtered' );
 
 	$exluded_list_arr = explode( "\n", $exluded_list );
 	$exluded_list_tmp = array();
@@ -246,9 +303,13 @@ function scm_update_exclusion() {
 		$exluded_list_tmp[] = $str;
 	}
 
-	$content = implode( "\n", $exluded_list_tmp );
+	if ( count( $exluded_list_tmp ) > 1 ) {
+		$content = implode( "\n", $exluded_list_tmp );
+	} else {
+		$content = implode( '', $exluded_list_tmp );
+	}
 
-	if ( $exluded_list !== $content ) {
+	if ( $exluded_list_filtered !== $content ) {
 		update_option( 'scm_option_excluded_list_filtered', $content );
 	}
 
