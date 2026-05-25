@@ -166,7 +166,7 @@ function scm_dashboard_get_stats_for_type( $type ) {
 }
 
 /**
- * Get all stats data for the Vue dashboard.
+ * Get all stats data for the React dashboard.
  *
  * @return array
  */
@@ -226,7 +226,9 @@ function scm_dashboard_normalize_optimization_reports( $reports ) {
 		$uri          = isset( $report['uri'] ) ? $report['uri'] : '/';
 		$before_bytes = isset( $report['beforeBytes'] ) ? (int) $report['beforeBytes'] : 0;
 		$after_bytes  = isset( $report['afterBytes'] ) ? (int) $report['afterBytes'] : 0;
-		$saved_bytes  = isset( $report['savedBytes'] ) ? (int) $report['savedBytes'] : 0;
+		$saved_bytes  = max( 0, isset( $report['savedBytes'] ) ? (int) $report['savedBytes'] : ( $before_bytes - $after_bytes ) );
+		$saved_percent = $before_bytes > 0 ? round( ( $saved_bytes / $before_bytes ) * 100, 2 ) : 0;
+		$expanded_bytes = max( 0, isset( $report['expandedBytes'] ) ? (int) $report['expandedBytes'] : ( $after_bytes - $before_bytes ) );
 
 		$latest[] = array(
 			'uri'           => $uri,
@@ -238,8 +240,11 @@ function scm_dashboard_normalize_optimization_reports( $reports ) {
 			'afterBytes'    => $after_bytes,
 			'afterLabel'    => isset( $report['afterLabel'] ) ? $report['afterLabel'] : size_format( $after_bytes, 2 ),
 			'savedBytes'    => $saved_bytes,
-			'savedLabel'    => isset( $report['savedLabel'] ) ? $report['savedLabel'] : size_format( $saved_bytes, 2 ),
-			'savedPercent'  => isset( $report['savedPercent'] ) ? (float) $report['savedPercent'] : 0,
+			'savedLabel'    => size_format( $saved_bytes, 2 ),
+			'savedPercent'  => max( 0, $saved_percent ),
+			'expandedBytes' => $expanded_bytes,
+			'expandedLabel' => size_format( $expanded_bytes, 2 ),
+			'expandedPercent' => $before_bytes > 0 ? round( ( $expanded_bytes / $before_bytes ) * 100, 2 ) : 0,
 			'appliedCount'  => isset( $report['appliedCount'] ) ? (int) $report['appliedCount'] : 0,
 			'overallStatus' => isset( $report['overallStatus'] ) ? $report['overallStatus'] : 'unknown',
 			'features'      => $features,
@@ -277,10 +282,15 @@ function scm_dashboard_get_optimization_report_summary() {
 	$summary_reports = scm_get_page_optimization_reports( 20 );
 	$initial_reports = array_slice( $summary_reports, 0, 5 );
 	$total_reports   = scm_count_page_optimization_reports();
+	$image_last      = get_option( 'scm_image_optimization_last', array() );
+	$image_queue     = get_option( 'scm_image_optimization_queue', array() );
+	$image_offloaded = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
 	$applied_pages  = 0;
 	$saved_bytes    = 0;
 	$ucss_saved     = 0;
 	$ucss_pages     = 0;
+	$external_ucss_saved = 0;
+	$external_ucss_pages = 0;
 	$js_analyzed    = 0;
 	$js_deferred    = 0;
 
@@ -296,6 +306,14 @@ function scm_dashboard_get_optimization_report_summary() {
 
 			if ( 'applied' === $report['features']['local_ucss']['status'] ) {
 				$ucss_pages++;
+			}
+		}
+
+		if ( ! empty( $report['features']['external_ucss']['metrics'] ) ) {
+			$external_ucss_saved += isset( $report['features']['external_ucss']['metrics']['savedBytes'] ) ? (int) $report['features']['external_ucss']['metrics']['savedBytes'] : 0;
+
+			if ( 'applied' === $report['features']['external_ucss']['status'] ) {
+				$external_ucss_pages++;
 			}
 		}
 
@@ -318,13 +336,259 @@ function scm_dashboard_get_optimization_report_summary() {
 		'ucssSavedBytes' => $ucss_saved,
 		'ucssSavedLabel' => size_format( $ucss_saved, 2 ),
 		'ucssAppliedPages' => $ucss_pages,
+		'externalUcssSavedBytes' => $external_ucss_saved,
+		'externalUcssSavedLabel' => size_format( $external_ucss_saved, 2 ),
+		'externalUcssAppliedPages' => $external_ucss_pages,
 		'jsAnalyzed'    => $js_analyzed,
 		'jsDeferred'    => $js_deferred,
+		'imageLast'      => is_array( $image_last ) ? $image_last : array(),
+		'imageQueue'     => is_array( $image_queue ) ? count( $image_queue ) : 0,
+		'imageOffloaded' => $image_offloaded,
 	);
 }
 
 /**
- * Build status payload for the Vue dashboard.
+ * Check if a cache driver looks available without opening external connections.
+ *
+ * @param string $driver Driver key.
+ *
+ * @return bool
+ */
+function scm_dashboard_is_driver_available( $driver ) {
+	switch ( $driver ) {
+		case 'file':
+			return true;
+		case 'redis':
+			return extension_loaded( 'redis' );
+		case 'memcache':
+			return extension_loaded( 'memcache' );
+		case 'memcached':
+			return extension_loaded( 'memcached' );
+		case 'apc':
+			return extension_loaded( 'apc' );
+		case 'apcu':
+			return extension_loaded( 'apcu' );
+		case 'wincache':
+			return extension_loaded( 'wincache' );
+		case 'mongo':
+			return extension_loaded( 'mongodb' );
+		case 'mysql':
+			return extension_loaded( 'mysqli' ) || extension_loaded( 'pdo_mysql' );
+		case 'sqlite':
+			return extension_loaded( 'sqlite3' ) || extension_loaded( 'pdo_sqlite' );
+		default:
+			return false;
+	}
+}
+
+/**
+ * Get dashboard-ready driver settings.
+ *
+ * @return array
+ */
+function scm_dashboard_get_driver_advanced_settings_data() {
+	$file = wp_parse_args(
+		(array) get_option( 'scm_option_advanced_driver_file', array() ),
+		array(
+			'compress'           => 'no',
+			'compress_threshold' => 4096,
+			'compress_level'     => 1,
+		)
+	);
+
+	$redis = wp_parse_args(
+		(array) get_option( 'scm_option_advanced_driver_redis', array() ),
+		array(
+			'host'               => '127.0.0.1',
+			'port'               => 6379,
+			'user'               => '',
+			'pass'               => '',
+			'database'           => 0,
+			'unix_socket'        => '',
+			'compress'           => 'yes',
+			'compress_threshold' => 1024,
+			'compress_level'     => 6,
+		)
+	);
+
+	$memcached = wp_parse_args(
+		(array) get_option( 'scm_option_advanced_driver_memcached', array() ),
+		array(
+			'host'        => '127.0.0.1',
+			'port'        => 11211,
+			'unix_socket' => '',
+		)
+	);
+
+	$mongodb = wp_parse_args(
+		(array) get_option( 'scm_option_advanced_driver_mongodb', array() ),
+		array(
+			'host'        => '127.0.0.1',
+			'port'        => 27017,
+			'user'        => '',
+			'pass'        => '',
+			'dbname'      => 'test',
+			'collection'  => 'cache_data',
+			'unix_socket' => '',
+		)
+	);
+
+	return array(
+		'file'       => $file,
+		'redis'      => $redis,
+		'memcache'   => $memcached,
+		'memcached'  => $memcached,
+		'mongodb'    => $mongodb,
+		'mongo'      => $mongodb,
+		'connection' => array(
+			'redis'     => get_option( 'scm_option_advanced_driver_redis_connection_type', 'tcp' ),
+			'memcache'  => get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' ),
+			'memcached' => get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' ),
+			'mongo'     => get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' ),
+			'mongodb'   => get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' ),
+		),
+	);
+}
+
+/**
+ * Build toggle list data.
+ *
+ * @param array $items   value => label list.
+ * @param array $enabled Enabled option map.
+ *
+ * @return array
+ */
+function scm_dashboard_build_toggle_items( $items, $enabled ) {
+	$enabled = is_array( $enabled ) ? $enabled : array();
+	$result  = array();
+
+	foreach ( $items as $value => $label ) {
+		$result[] = array(
+			'value'   => (string) $value,
+			'label'   => wp_strip_all_tags( $label ),
+			'enabled' => isset( $enabled[ $value ] ) && 'yes' === $enabled[ $value ] ? 'yes' : 'no',
+		);
+	}
+
+	return $result;
+}
+
+/**
+ * Build preload option lists.
+ *
+ * @return array
+ */
+function scm_dashboard_get_preload_options_data() {
+	$post_types = array(
+		'post' => __( 'Post', 'ams-cache' ),
+		'page' => __( 'Page', 'ams-cache' ),
+	);
+
+	$custom_post_types = get_post_types(
+		array(
+			'public'   => true,
+			'_builtin' => false,
+		),
+		'objects'
+	);
+
+	foreach ( $custom_post_types as $post_type ) {
+		$post_types[ $post_type->name ] = $post_type->label;
+	}
+
+	$archives = array(
+		'category' => __( 'Category', 'ams-cache' ),
+		'tag'      => __( 'Tag', 'ams-cache' ),
+		'date'     => __( 'Date', 'ams-cache' ),
+		'author'   => __( 'Author', 'ams-cache' ),
+	);
+
+	return array(
+		'postTypes' => scm_dashboard_build_toggle_items( $post_types, get_option( 'scm_option_post_types', array() ) ),
+		'homepage'  => get_option( 'scm_option_post_homepage', 'yes' ),
+		'archives'  => scm_dashboard_build_toggle_items( $archives, get_option( 'scm_option_post_archives', array() ) ),
+	);
+}
+
+/**
+ * Build settings payload for the React dashboard.
+ *
+ * @return array
+ */
+function scm_dashboard_get_settings_data() {
+	$optimization = scm_get_page_optimization_settings();
+	$drivers      = array(
+		array( 'value' => 'file', 'label' => __( 'File', 'ams-cache' ) ),
+		array( 'value' => 'redis', 'label' => __( 'Redis', 'ams-cache' ) ),
+		array( 'value' => 'memcache', 'label' => __( 'Memcache', 'ams-cache' ) ),
+		array( 'value' => 'memcached', 'label' => __( 'Memcached', 'ams-cache' ) ),
+		array( 'value' => 'apc', 'label' => __( 'APC', 'ams-cache' ) ),
+		array( 'value' => 'apcu', 'label' => __( 'APCu', 'ams-cache' ) ),
+		array( 'value' => 'wincache', 'label' => __( 'WinCache', 'ams-cache' ) ),
+		array( 'value' => 'mongo', 'label' => __( 'MongoDB', 'ams-cache' ) ),
+		array( 'value' => 'mysql', 'label' => __( 'MySQL', 'ams-cache' ) ),
+		array( 'value' => 'sqlite', 'label' => __( 'SQLite', 'ams-cache' ) ),
+	);
+	$drivers      = array_map(
+		function ( $driver ) {
+			$driver['available'] = scm_dashboard_is_driver_available( $driver['value'] );
+			return $driver;
+		},
+		$drivers
+	);
+	$preload_options = scm_dashboard_get_preload_options_data();
+
+	return array(
+		'cache'       => array(
+			'cachingStatus'    => get_option( 'scm_option_caching_status', 'disable' ),
+			'driver'           => get_option( 'scm_option_driver', 'file' ),
+			'ttl'              => (int) get_option( 'scm_option_ttl', 86400 ),
+			'ttlMechanism'     => get_option( 'scm_option_ttl_mechanism', 'enable' ),
+			'cacheKeyPrefix'   => scm_get_cache_key_prefix(),
+			'maxEntries'       => scm_get_cache_max_entries(),
+			'expertModeStatus' => get_option( 'scm_option_expert_mode_status', 'disable' ),
+			'nginxDirect'      => get_option( 'scm_option_nginx_direct_cache_status', 'no' ),
+			'debugComment'     => get_option( 'scm_option_html_debug_comment', 'yes' ),
+			'drivers'          => $drivers,
+			'driverAdvanced'   => scm_dashboard_get_driver_advanced_settings_data(),
+			'expertModeCode'   => scm_expert_mode_code_template(),
+			'expertModeReady'  => scm_is_expert_mode_code_ready(),
+		),
+		'preload'     => array(
+			'enabled'       => get_option( 'scm_option_preload_cache', 'no' ),
+			'limit'         => (int) get_option( 'scm_option_preload_limit', 50 ),
+			'crawlHomepage' => get_option( 'scm_option_preload_homepage_links', 'yes' ),
+			'postTypes'     => $preload_options['postTypes'],
+			'homepage'      => $preload_options['homepage'],
+			'archives'      => $preload_options['archives'],
+		),
+		'performance' => $optimization,
+		'rules'       => array(
+			'enabled'      => get_option( 'scm_option_exclusion_status', 'no' ),
+			'excludedList' => get_option( 'scm_option_excluded_list_filtered', get_option( 'scm_option_excluded_list', '' ) ),
+			'getVars'      => get_option( 'scm_option_excluded_get_vars', '' ),
+			'postVars'     => get_option( 'scm_option_excluded_post_vars', '' ),
+			'cookieVars'   => get_option( 'scm_option_excluded_cookie_vars', '' ),
+		),
+		'statistics'  => array(
+			'enabled' => get_option( 'scm_option_statistics_status', 'disable' ),
+		),
+		'benchmark'   => array(
+			'widget'        => get_option( 'scm_option_benchmark_widget', 'no' ),
+			'footer'        => get_option( 'scm_option_benchmark_footer_text', 'no' ),
+			'widgetDisplay' => get_option( 'scm_option_benchmark_widget_display', 'both' ),
+			'footerDisplay' => get_option( 'scm_option_benchmark_footer_text_display', 'text' ),
+		),
+		'woocommerce' => array(
+			'enabled'         => get_option( 'scm_option_woocommerce_status', 'no' ),
+			'paymentComplete' => get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ),
+			'active'          => function_exists( 'is_plugin_active' ) && is_plugin_active( 'woocommerce/woocommerce.php' ),
+		),
+	);
+}
+
+/**
+ * Build status payload for the React dashboard.
  *
  * @return array
  */
@@ -353,8 +617,10 @@ function scm_dashboard_get_status_data() {
 		'critical_images',
 		'preconnect_fonts',
 		'defer_js',
+		'external_ucss',
 		'local_ucss',
 		'js_analysis',
+		'image_optimization',
 	);
 
 	$enabled_features = 0;
@@ -405,6 +671,7 @@ function scm_dashboard_get_status_data() {
 		),
 		'optimization' => array(
 			'enabled'       => 'yes' === $optimization['status'],
+			'imageEnabled'  => 'yes' === $optimization['image_optimization'],
 			'enabledCount'  => $enabled_features,
 			'totalCount'    => count( $feature_keys ),
 			'progress'      => round( ( $enabled_features / count( $feature_keys ) ) * 100 ),
@@ -430,6 +697,7 @@ function scm_dashboard_get_status_data() {
 			'progress'       => $queue_total > 0 ? min( 100, round( ( $queue_processed / $queue_total ) * 100 ) ) : min( 100, round( ( max( $preload_count, $priority_count ) / $preload_limit ) * 100 ) ),
 		),
 		'stats'       => scm_dashboard_get_stats_summary(),
+		'settings'    => scm_dashboard_get_settings_data(),
 	);
 }
 
@@ -535,9 +803,77 @@ function scm_test_driver( $type = '' ) {
 		}
 	} catch ( \Exception $e ) {
 		// Nothing here.
+	} catch ( \Throwable $e ) {
+		// Nothing here.
 	}
 
 	return false;
+}
+
+/**
+ * Build a dashboard-safe driver connection test response.
+ *
+ * @param string $type Driver key.
+ *
+ * @return array
+ */
+function scm_dashboard_test_driver_connection( $type ) {
+	$type = sanitize_key( (string) $type );
+
+	if ( '' === $type ) {
+		$type = get_option( 'scm_option_driver', 'file' );
+	}
+
+	$labels = array(
+		'file'      => __( 'File', 'ams-cache' ),
+		'redis'     => __( 'Redis', 'ams-cache' ),
+		'memcache'  => __( 'Memcache', 'ams-cache' ),
+		'memcached' => __( 'Memcached', 'ams-cache' ),
+		'apc'       => __( 'APC', 'ams-cache' ),
+		'apcu'      => __( 'APCu', 'ams-cache' ),
+		'wincache'  => __( 'WinCache', 'ams-cache' ),
+		'mongo'     => __( 'MongoDB', 'ams-cache' ),
+		'mysql'     => __( 'MySQL', 'ams-cache' ),
+		'sqlite'    => __( 'SQLite', 'ams-cache' ),
+	);
+
+	if ( ! isset( $labels[ $type ] ) ) {
+		return array(
+			'passed'  => false,
+			'driver'  => $type,
+			'message' => __( 'Unknown cache driver.', 'ams-cache' ),
+		);
+	}
+
+	if ( ! scm_dashboard_is_driver_available( $type ) ) {
+		return array(
+			'passed'  => false,
+			'driver'  => $type,
+			'message' => sprintf(
+				/* translators: %s: cache driver label. */
+				__( '%s PHP extension is not available.', 'ams-cache' ),
+				$labels[ $type ]
+			),
+		);
+	}
+
+	$passed = scm_test_driver( $type );
+
+	return array(
+		'passed'  => $passed,
+		'driver'  => $type,
+		'message' => $passed
+			? sprintf(
+				/* translators: %s: cache driver label. */
+				__( '%s connection test passed.', 'ams-cache' ),
+				$labels[ $type ]
+			)
+			: sprintf(
+				/* translators: %s: cache driver label. */
+				__( '%s connection test failed. Save settings, then verify host, port, database, and credentials.', 'ams-cache' ),
+				$labels[ $type ]
+			),
+	);
 }
 
 /**

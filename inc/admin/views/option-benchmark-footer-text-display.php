@@ -1,11 +1,11 @@
 <?php
 /**
- * AMS Cache - Uninstall option.
+ * AMS Cache - Benchmark footer display option.
  *
  * @author Terry Lin
  * @link https://terryl.in/
  * @since 1.3.0
- * @version 1.3.0
+ * @version 2.8.0
  */
 
 if ( ! defined( 'SCM_INC' ) ) {
@@ -13,57 +13,42 @@ if ( ! defined( 'SCM_INC' ) ) {
 }
 
 $option_benchmark_footer_text_display = get_option( 'scm_option_benchmark_footer_text_display', 'text' );
+$choices                              = array(
+	'text' => array(
+		'label'       => __( 'Text', 'ams-cache' ),
+		'description' => __( 'Show Khmer labels with each footer metric.', 'ams-cache' ),
+		'preview'     => 'ស្ថានភាពឃ្លាំង: មាន',
+	),
+	'icon' => array(
+		'label'       => __( 'Icon', 'ams-cache' ),
+		'description' => __( 'Show compact icons only.', 'ams-cache' ),
+		'preview'     => '✓ 0.42 វិនាទី',
+	),
+	'both' => array(
+		'label'       => __( 'Both', 'ams-cache' ),
+		'description' => __( 'Show icon and Khmer label together.', 'ams-cache' ),
+		'preview'     => '✓ ពេលបង្កើតទំព័រ: 0.42 វិនាទី',
+	),
+);
 
 ?>
 
-<div>
-	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_footer_text_display" id="ams-cache-benchmark-footer-text-display-option-text" value="text" 
-			<?php checked( $option_benchmark_footer_text_display, 'text' ); ?>>
-		<label for="ams-cache-benchmark-footer-text-display-option-text">
-			<?php _e( 'Text', 'ams-cache' ); ?><br />
-		<label>
-	</div>
-	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_footer_text_display" id="ams-cache-benchmark-footer-text-display-option-icon" value="icon" 
-			<?php checked( $option_benchmark_footer_text_display, 'icon' ); ?>>
-		<label for="ams-cache-benchmark-footer-text-display-option-icon">
-			<?php _e( 'Icon', 'ams-cache' ); ?>
-		<label>
-	</div>
-	<div class="scm-option-item">
-		<input type="radio" name="scm_option_benchmark_footer_text_display" id="ams-cache-benchmark-footer-text-display-option-icon" value="both" 
-			<?php checked( $option_benchmark_footer_text_display, 'both' ); ?>>
-		<label for="ams-cache-benchmark-footer-text-display-option-both">
-			<?php _e( 'Both', 'ams-cache' ); ?>
-		<label>
-	</div>	
+<div class="ams-display-choice-grid">
+	<?php foreach ( $choices as $value => $choice ) : ?>
+		<label class="ams-display-choice" for="ams-cache-benchmark-footer-text-display-option-<?php echo esc_attr( $value ); ?>">
+			<input
+				type="radio"
+				name="scm_option_benchmark_footer_text_display"
+				id="ams-cache-benchmark-footer-text-display-option-<?php echo esc_attr( $value ); ?>"
+				value="<?php echo esc_attr( $value ); ?>"
+				<?php checked( $option_benchmark_footer_text_display, $value ); ?>
+			>
+			<span class="ams-display-choice-card">
+				<strong><?php echo esc_html( $choice['label'] ); ?></strong>
+				<small><?php echo esc_html( $choice['description'] ); ?></small>
+				<code><?php echo esc_html( $choice['preview'] ); ?></code>
+			</span>
+		</label>
+	<?php endforeach; ?>
 </div>
-<p><em><?php _e( 'Would you like to use text or an icon as the label name when displaying benchmark results?', 'ams-cache' ); ?></em></p>
-<p><em><?php _e( 'Example', 'ams-cache' ); ?>:</em></p>
-<div class="scm-option-example">
-	<img id="img-footer-example" src="">
-</div>
-
-
-<script>
-	(function($) {
-		$(function() {
-			var img_footer_example = [];
-			img_footer_example['text'] = '<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/sample-benchmark-footer-1.png';
-			img_footer_example['icon'] = '<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/sample-benchmark-footer-2.png';
-			img_footer_example['both'] = '<?php echo SCM_PLUGIN_URL; ?>inc/assets/images/sample-benchmark-footer-3.png';
-
-			function check_footer_option() {
-				var option = $('input[name=scm_option_benchmark_footer_text_display]:checked').val();
-				$('#img-footer-example').attr('src', img_footer_example[option]);
-			}
-
-			$('input[name=scm_option_benchmark_footer_text_display]').change(function() {
-				check_footer_option();
-			});
-
-			check_footer_option();
-		});
-	})(jQuery);
-</script>
+<p><em><?php _e( 'Choose how the footer benchmark label appears on guest pages.', 'ams-cache' ); ?></em></p>

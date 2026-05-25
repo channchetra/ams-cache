@@ -1,5 +1,100 @@
 # Changelog
 
+## [3.0.4] - 2026-05-23
+
+### Changed
+- Release build.
+
+## [3.0.3] - 2026-05-23
+
+### Changed
+- Release build.
+
+## [3.0.2] - 2026-05-23
+
+### Changed
+- Release build.
+
+## [3.0.1] - 2026-05-23
+
+### Added
+- Add `bin/release.ps1` for one-command version sync, automatic patch/minor/major bumping, changelog entry creation, asset build, and release zip generation.
+
+### Fixed
+- Fix automatic upload image optimization for AJAX and metadata-update upload paths by registering core upload hooks before the AJAX branch.
+- Add a `wp_update_attachment_metadata` fallback so the selected primary WebP/AVIF upload format is applied before late offload listeners sync files.
+- Add bottom dashboard spacer below the global save bar so the last card keeps visual breathing room above the WordPress footer.
+
+## [3.0.0] - 2026-05-23
+
+### Added
+- Add upload-only single image optimization retry queue so new uploads can retry conversion without entering the manual batch queue.
+- Add cache driver connection test action in the React console with extension readiness feedback.
+- Add MongoDB driver fields for user, password, database, and collection.
+
+### Changed
+- Run upload-time image optimization before Advanced Media Offloader and hand optimized attachments back to offloading after retry.
+- Keep Performance reports and summary cards inside the Overview tab only.
+- Stretch dashboard cards consistently, make Expert Mode a 30/70 layout, and make the Expert Mode configure block click-to-copy.
+
+### Fixed
+- Prevent automatic upload optimization from filling the manual image batch queue.
+- Keep compatible offload metadata timing for Advanced Media Offloader and WP Offload Media.
+- Move WordPress admin footer below the AMS Cache console and preserve rounded card bottoms.
+
+## [2.8.1] - 2026-05-22
+
+### Added
+- Rebuild the AMS Cache admin console with React, HeroUI components, lucide icons, and Tailwind CSS 4.3.
+- Add a compact React settings payload and authenticated AJAX save bridge for cache, preload, performance, rules, statistics, benchmark, WooCommerce, and image optimizer settings.
+- Add React driver cards, preload option groups, Expert Mode code preview, and primary upload image format selection.
+
+### Changed
+- Replace the previous Vue console shell with a single React mount and Vite React entry.
+- Move optional `sharp` image conversion to `optionalDependencies` so release installs can use `npm ci --omit=dev` without shipping `node_modules`.
+- Add `--Bump` (major/minor/patch) and `--SetVersion` flags to `bin/build-release.ps1` with automatic plugin-header version update and README.txt Stable tag sync.
+- Exclude agent files, local graph output, design notes, source admin assets, and scraped audit JSON from release packaging.
+
+### Fixed
+- Generate WebP/AVIF variants during upload before offload plugins read attachment metadata, and promote the chosen primary variant to the attachment file for new uploads.
+- Persist generated variant metadata into WordPress attachment `sources` so HTML rewriting and compatible offload plugins can discover the new files.
+- Restore full-width dashboard alignment, reduce AMS sidebar height so the WordPress menu stays normal, and rebuild Cache, Preload, Expert Mode, Benchmark, and About surfaces around card layouts.
+- Remove the obsolete Vue fallback script and table-transformer bridge from the runtime.
+- Fix README.txt stable-tag syncing in the release script.
+
+## [2.8.0] - 2026-05-21
+
+### Added
+- Add npm/Vite build tooling with bundled Vue 3, Tailwind CSS 4.3 admin entry points, generated build manifest support, and release-script enforcement for built assets.
+- Add optional Node `sharp` image optimizer fallback for WebP/AVIF generation, with a server-side `npm run image:check` verification command.
+- Add External UCSS Generation for same-site local stylesheet files, with max-file-size guardrails, relative asset URL rewriting, PurgeCSS safelist support, and fail-open behavior that keeps the original stylesheet when optimization fails.
+- Add Image Optimization settings for WebP/AVIF generation, upload-time queueing, background batch processing, and safe WordPress attachment HTML rewriting through generated variant metadata.
+- Add a safe cached-HTML image rewrite pass for raw `<img>` tags that WordPress can map back to attachments with generated WebP/AVIF variants.
+- Add Performance dashboard cards for External UCSS savings and image optimizer queue/status.
+- Add Queue Images dashboard action that queues the 200 newest JPEG/PNG/WebP attachments for background optimization.
+
+### Security
+- Keep Node image optimization constrained to validated source and output paths inside the WordPress uploads directory before invoking the npm optimizer.
+- Restrict image optimizer writes to existing files inside the WordPress uploads directory, preserve original files, skip unsupported file types, cap queued attachment work, and keep remote/offloaded URL rewriting disabled unless explicitly enabled.
+- Skip External UCSS for cross-origin, SRI, crossorigin, disabled, preload, alternate, and importing stylesheets.
+
+### Fixed
+- Add horizontal Performance tabs for Overview, Requirements, and Optimization settings.
+- Redesign the Rules console into tabbed URL/request/cookie panels and reshape Settings API rows into card/list blocks instead of table-style fields.
+- Redesign Benchmark display choices as card selectors for Text, Icon, and Both modes.
+- Restyle frontend benchmark footer and widget output with Khmer metric labels and compact card/pill layouts.
+- Clamp page optimization report savings to zero when inline optimization grows cached HTML, show the growth separately, and stop replacing inline CSS blocks when minification or Local UCSS output is larger than the original.
+- Protect WordPress dropdown menus, Slider Revolution, Slick, Swiper, and common checkout scripts from automatic defer/JS Analysis, and keep their dynamic CSS states in the UCSS safelist for better guest frontend compatibility.
+- Keep Expert Mode compatible with early `wp-config.php` loading by delaying WordPress hook registration until `add_filter()` and `add_action()` exist.
+- Align dashboard toolbar icons and move secondary actions to compact icon buttons.
+- Restore Dashicons after the dashboard font override and add icons to Performance summary cards.
+- Center console navigation icons, flatten progress bars, align Statistics row actions, and expand the About page to a full-width card layout.
+- Redesign the About page with a WordPress-style hero, section navigation, feature cards, and credits while keeping the `DESIGN.md` dashboard system.
+
+### Changed
+- Load Vite-built admin CSS/JS when `inc/assets/build/.vite/manifest.json` is present, with the legacy admin assets as a fallback.
+- Re-skin the admin console with the `DESIGN.md` dashboard system: narrow icon sidebar, card-based surfaces, DM Sans/Outfit typography, tokenized colors, pill controls, and hatched progress bars.
+
 ## [2.7.2] - 2026-05-15
 
 ### Added

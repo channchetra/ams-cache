@@ -28,6 +28,33 @@ const riskyPatterns = [
 	{
 		name: 'parser-sensitive current node',
 		pattern: /\bdocument\.(?:scripts|body|head)\b/i
+	},
+	{
+		name: 'jQuery runtime binding',
+		pattern: /\b(?:jQuery|\$)\s*(?:\(|\.)/i
+	},
+	{
+		name: 'menu or slider initializer',
+		pattern: /\.(?:slick|dropdown|collapse|carousel|modal|tooltip|popover|superfish|smartmenus)\s*\(|\bnew\s+Swiper\b|\bSwiper\s*\(/i
+	},
+	{
+		name: 'interactive menu or slider DOM',
+		pattern: /\bquerySelector(?:All)?\s*\([^)]*(?:menu|nav|dropdown|slider|slick|swiper|revslider|sr7)/i
+	},
+	{
+		name: 'early interaction handler',
+		pattern: /\baddEventListener\s*\(\s*['"](?:click|mouseenter|mouseover|touchstart|pointerenter|keydown|resize)/i
+	}
+];
+
+const riskySourcePatterns = [
+	{
+		name: 'Slider Revolution script',
+		pattern: /(?:revslider|rev_slider|rs6|sr7|themepunch|rbtools|slider-revolution|revolution)/i
+	},
+	{
+		name: 'menu or slider script',
+		pattern: /(?:slick|swiper|owl\.carousel|smartmenus|superfish|bootstrap|dropdown|menu|navigation|hoverintent)/i
 	}
 ];
 
@@ -43,12 +70,16 @@ try {
 const scripts = Array.isArray(payload.scripts) ? payload.scripts : [];
 const result = scripts.map((script) => {
 	const content = String(script.content || '');
-	const reasons = riskyPatterns
+	const src = String(script.src || '');
+	const reasons = riskySourcePatterns
+		.filter((entry) => entry.pattern.test(src))
+		.map((entry) => entry.name)
+		.concat(riskyPatterns
 		.filter((entry) => entry.pattern.test(content))
-		.map((entry) => entry.name);
+		.map((entry) => entry.name));
 
 	return {
-		src: String(script.src || ''),
+		src,
 		safeToDefer: content.trim() !== '' && reasons.length === 0,
 		reasons
 	};

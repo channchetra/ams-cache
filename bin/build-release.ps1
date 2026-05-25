@@ -1,24 +1,91 @@
 <#
 .SYNOPSIS
-Build a WordPress-ready AMS Cache release zip.
+Build a WordPress-ready AMS Cache release zip with version management.
 
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1
 
 .EXAMPLE
-powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1 -Version 2.2.0 -KeepStage
+powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1 -Version 3.0.0 -KeepStage
+
+.EXAMPLE
+powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1 -Bump patch
+
+.EXAMPLE
+powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1 -Bump minor -SetVersion
 #>
 
 [CmdletBinding()]
 param(
     [string] $Version = '',
+    [ValidateSet('major', 'minor', 'patch')]
+    [string] $Bump = '',
+    [switch] $SetVersion,
     [string] $OutDir = 'dist',
     [switch] $IncludeTests,
-    [switch] $KeepStage
+    [switch] $KeepStage,
+    [switch] $SkipNpmBuild
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function Write-Utf8NoBom {
+    param(
+        [string] $Path,
+        [string] $Value
+    )
+
+    $encoding = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $Value, $encoding)
+}
+
+function Invoke-NativeCommand {
+    param(
+        [string] $FilePath,
+        [string[]] $Arguments
+    )
+
+    & $FilePath @Arguments
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FilePath $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
+    }
+}
+
+function Bump-Version {
+    param(
+        [string] $VersionString,
+        [string] $Component
+    )
+
+    $parts = $VersionString -split '\.'
+
+    if ($parts.Count -lt 3) {
+        throw "Version '$VersionString' does not follow MAJOR.MINOR.PATCH format for bumping. Use -Version to specify manually."
+    }
+
+    $major = [int]$parts[0]
+    $minor = [int]$parts[1]
+    $patch = [int]$parts[2]
+
+    switch ($Component) {
+        'major' {
+            $major++
+            $minor = 0
+            $patch = 0
+        }
+        'minor' {
+            $minor++
+            $patch = 0
+        }
+        'patch' {
+            $patch++
+        }
+    }
+
+    return "$major.$minor.$patch"
+}
 
 $pluginSlug = 'ams-cache'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
@@ -31,15 +98,84 @@ if (-not (Test-Path -LiteralPath $mainFile)) {
 $mainFileContent = Get-Content -LiteralPath $mainFile -Raw
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
-    if ($mainFileContent -notmatch '(?m)^\s*\*\s*Version:\s*([^\r\n]+)\s*$') {
-        throw 'Cannot read plugin Version from cache-master.php'
-    }
+    if ($Bump) {
+        if ($mainFileContent -notmatch '(?m)^\s*\*\s*Version:\s*([^\r\n]+)\s*$') {
+            throw 'Cannot read plugin Version from cache-master.php for bump.'
+        }
 
-    $Version = $Matches[1].Trim()
+        $currentVersion = $Matches[1].Trim()
+        $Version = Bump-Version -VersionString $currentVersion -Component $Bump
+        Write-Host "Bumped $Bump : $currentVersion -> $Version"
+    }
+    else {
+        if ($mainFileContent -notmatch '(?m)^\s*\*\s*Version:\s*([^\r\n]+)\s*$') {
+            throw 'Cannot read plugin Version from cache-master.php'
+        }
+
+        $Version = $Matches[1].Trim()
+    }
 }
 
 if ($Version -notmatch '^[0-9A-Za-z._-]+$') {
     throw "Invalid version '$Version'. Use numbers, letters, dot, underscore, or dash."
+}
+
+if ($SetVersion) {
+    $updatedContent = $mainFileContent -replace '(?m)^(\s*\*\s*Version:\s*)[^\r\n]+(\s*)$', "`${1}$Version`${2}"
+    Write-Utf8NoBom -Path $mainFile -Value $updatedContent
+    Write-Host "Updated cache-master.php header version to $Version"
+
+    $readmePath = Join-Path $root 'README.txt'
+
+    if (Test-Path -LiteralPath $readmePath) {
+        $readmeContent = Get-Content -LiteralPath $readmePath -Raw
+        $stableTagPattern = [regex]'(?m)^(\s*Stable tag:\s*)[^\r\n]+(\s*)$'
+        $updatedReadme = $stableTagPattern.Replace(
+            $readmeContent,
+            [System.Text.RegularExpressions.MatchEvaluator] {
+                param($match)
+                return $match.Groups[1].Value + $Version + $match.Groups[2].Value
+            },
+            1
+        )
+
+        Write-Utf8NoBom -Path $readmePath -Value $updatedReadme
+        Write-Host "Updated README.txt Stable tag to $Version"
+    }
+}
+
+if (-not $SkipNpmBuild -and (Test-Path -LiteralPath (Join-Path $root 'package.json'))) {
+    Push-Location -LiteralPath $root
+
+    try {
+        if (Test-Path -LiteralPath (Join-Path $root 'package-lock.json')) {
+            Invoke-NativeCommand -FilePath 'npm' -Arguments @('ci')
+        } else {
+            Invoke-NativeCommand -FilePath 'npm' -Arguments @('install')
+        }
+
+        Invoke-NativeCommand -FilePath 'npm' -Arguments @('run', 'build')
+    } finally {
+        Pop-Location
+    }
+}
+
+$manifestPath = Join-Path $root 'inc/assets/build/.vite/manifest.json'
+
+if (-not (Test-Path -LiteralPath $manifestPath)) {
+    throw 'Release missing Vite manifest. Run npm run build or pass -SkipNpmBuild only when built assets already exist.'
+}
+
+$manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+$entryNames = @('assets/src/admin.jsx', 'assets/src/admin.js', 'admin.js')
+$adminEntry = $manifest.PSObject.Properties | Where-Object { $entryNames -contains $_.Name } | Select-Object -First 1
+
+if (-not $adminEntry -or -not $adminEntry.Value.file) {
+    throw 'Release manifest does not contain the React admin entry.'
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $root ('inc/assets/build/' + $adminEntry.Value.file)))) {
+    throw "Release missing built admin script $($adminEntry.Value.file)."
 }
 
 $distDir = Join-Path $root $OutDir
@@ -69,8 +205,14 @@ function Test-ReleaseExclude {
         '.git/',
         '.github/',
         '.vscode/',
+        '.agents/',
+        '.code-review-graph/',
+        ".opencode/",
+        '.understand-anything/',
         "$OutDir/",
+        'assets/',
         'bin/',
+        'graphify-out/',
         'node_modules/',
         'vendor/bin/',
         'vendor/composer/tmp-',
@@ -100,15 +242,22 @@ function Test-ReleaseExclude {
         'phpcs.xml',
         'sample.txt',
         'composer.lock',
-        'package-lock.json',
         'yarn.lock',
         'pnpm-lock.yaml',
+        'npm-debug.log',
         '.phpunit.result.cache',
         'vendor/shieldon/simple-cache/.gitignore',
         'vendor/shieldon/simple-cache/.travis.yml',
         'vendor/shieldon/simple-cache/.scrutinizer.yml',
         'vendor/shieldon/simple-cache/phpunit.xml',
-        'vendor/psr/simple-cache/.editorconfig'
+        'vendor/psr/simple-cache/.editorconfig',
+        'graphify-out',
+        'AGENTS.md',
+        'SESSION_MEMORY.md',
+        'DESIGN.md',
+        'skills-lock.json',
+        'vite.config.js',
+        'economy.ams.com.kh-20260521T162807.json'
     )
 
     if ($excludedNames -contains $path) {
@@ -180,7 +329,7 @@ if (Test-Path -LiteralPath $zipPath) {
 }
 
 $releaseNotes = Get-LatestChangelogSection -RepoRoot $root -ReleaseVersion $Version
-Set-Content -LiteralPath $notesPath -Value $releaseNotes -Encoding UTF8
+Write-Utf8NoBom -Path $notesPath -Value $releaseNotes
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem

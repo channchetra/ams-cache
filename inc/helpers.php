@@ -697,14 +697,24 @@ function scm_get_default_page_optimization_settings() {
 		'critical_images'      => 'yes',
 		'preconnect_fonts'     => 'yes',
 		'defer_js'             => 'no',
+		'external_ucss'        => 'no',
 		'local_ucss'           => 'no',
 		'js_analysis'          => 'no',
 		'node_path'            => 'node',
 		'purgecss_path'        => 'purgecss',
-		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item-has-children\nwoocommerce\nwp-block\nalignwide\nalignfull",
+		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item\nmenu-item-has-children\ncurrent-menu-item\ncurrent-menu-parent\ncurrent-menu-ancestor\nsub-menu\ndropdown\ndropdown-menu\ndropdown-toggle\nsfHover\nis-open\nis-visible\nslick\nslick-active\nslick-current\nslick-initialized\nswiper\nswiper-slide\nswiper-wrapper\nswiper-button-next\nswiper-button-prev\nrevslider\nrev_slider\nrs-module\nrs-layer\nrs-slide\nsr7\ntp-caption\nwoocommerce\nwp-block\nalignwide\nalignfull",
 		'critical_image_count' => 1,
+		'external_ucss_max_file_size' => 307200,
+		'image_optimization'  => 'no',
+		'image_optimize_on_upload' => 'yes',
+		'image_rewrite_html'  => 'yes',
+		'image_remote_rewrite' => 'no',
+		'image_formats'       => array( 'webp' ),
+		'image_primary_format' => 'webp',
+		'image_quality'       => 82,
+		'image_batch_size'    => 5,
 		'media_exclusions'     => "logo\navatar\ncaptcha",
-		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal",
+		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal\nrevslider\nrev_slider\nrs6\nsr7\nthemepunch\nrbtools\nslider-revolution\nrevolution\nslick\nswiper\nowl.carousel\nsmartmenus\nsuperfish\nbootstrap\ndropdown\nmenu-image\nmenu\nnavigation\nhoverIntent",
 	);
 }
 
@@ -720,8 +730,124 @@ function scm_get_page_optimization_settings() {
 	$settings['critical_image_count'] = max( 0, min( 5, (int) $settings['critical_image_count'] ) );
 	$settings['node_path']            = trim( (string) $settings['node_path'] );
 	$settings['purgecss_path']        = trim( (string) $settings['purgecss_path'] );
+	$settings['external_ucss_max_file_size'] = max( 51200, min( 1048576, (int) $settings['external_ucss_max_file_size'] ) );
+	$settings['image_quality']        = max( 1, min( 100, (int) $settings['image_quality'] ) );
+	$settings['image_batch_size']     = max( 1, min( 20, (int) $settings['image_batch_size'] ) );
+	$settings['image_formats']        = scm_normalize_image_optimizer_formats( $settings['image_formats'] );
+	$settings['image_primary_format'] = in_array( sanitize_key( (string) $settings['image_primary_format'] ), $settings['image_formats'], true ) ? sanitize_key( (string) $settings['image_primary_format'] ) : reset( $settings['image_formats'] );
+	$settings['ucss_safelist']        = scm_merge_textarea_lines( $settings['ucss_safelist'], scm_get_protected_ucss_safelist() );
+	$settings['js_exclusions']        = scm_merge_textarea_lines( $settings['js_exclusions'], scm_get_protected_js_exclusions() );
 
 	return $settings;
+}
+
+/**
+ * Get CSS selectors/classes that stay protected for interactive frontends.
+ *
+ * @return array
+ */
+function scm_get_protected_ucss_safelist() {
+	return array(
+		'active',
+		'open',
+		'show',
+		'is-active',
+		'is-open',
+		'is-visible',
+		'current',
+		'menu-item',
+		'menu-item-has-children',
+		'current-menu-item',
+		'current-menu-parent',
+		'current-menu-ancestor',
+		'sub-menu',
+		'dropdown',
+		'dropdown-menu',
+		'dropdown-toggle',
+		'sfHover',
+		'slick',
+		'slick-active',
+		'slick-current',
+		'slick-initialized',
+		'slick-slide',
+		'swiper',
+		'swiper-slide',
+		'swiper-wrapper',
+		'swiper-button-next',
+		'swiper-button-prev',
+		'revslider',
+		'rev_slider',
+		'rs-module',
+		'rs-layer',
+		'rs-slide',
+		'sr7',
+		'tp-caption',
+	);
+}
+
+/**
+ * Get script keywords that should never be deferred automatically.
+ *
+ * @return array
+ */
+function scm_get_protected_js_exclusions() {
+	return array(
+		'jquery',
+		'wp-includes/js/jquery',
+		'woocommerce',
+		'cart',
+		'checkout',
+		'googletagmanager',
+		'gtm',
+		'recaptcha',
+		'stripe',
+		'paypal',
+		'revslider',
+		'rev_slider',
+		'rs6',
+		'sr7',
+		'themepunch',
+		'rbtools',
+		'slider-revolution',
+		'revolution',
+		'slick',
+		'swiper',
+		'owl.carousel',
+		'smartmenus',
+		'superfish',
+		'bootstrap',
+		'dropdown',
+		'menu-image',
+		'menu',
+		'navigation',
+		'hoverIntent',
+	);
+}
+
+/**
+ * Normalize configured image optimizer formats.
+ *
+ * @param array|string $formats Raw formats.
+ *
+ * @return array
+ */
+function scm_normalize_image_optimizer_formats( $formats ) {
+	if ( ! is_array( $formats ) ) {
+		$formats = preg_split( '/[\s,]+/', (string) $formats );
+	}
+
+	$allowed = array( 'webp', 'avif' );
+	$clean   = array();
+
+	foreach ( $formats as $format ) {
+		$format = strtolower( sanitize_key( (string) $format ) );
+
+		if ( in_array( $format, $allowed, true ) && ! in_array( $format, $clean, true ) ) {
+			$clean[] = $format;
+		}
+	}
+
+	return ! empty( $clean ) ? $clean : array( 'webp' );
 }
 
 /**
@@ -955,6 +1081,17 @@ function scm_build_page_optimization_report( $before, $after, $settings, $uri = 
 			)
 	);
 
+	$features['external_ucss'] = scm_build_page_optimization_feature_report(
+		'yes' === $settings['external_ucss'],
+		'yes' !== $settings['external_ucss']
+			? 'disabled'
+			: ( isset( $runtime['external_ucss']['status'] ) ? $runtime['external_ucss']['status'] : 'failed' ),
+		'yes' === $settings['external_ucss']
+			? ( isset( $runtime['external_ucss']['detail'] ) ? $runtime['external_ucss']['detail'] : __( 'External UCSS engine did not return a result.', 'ams-cache' ) )
+			: __( 'Disabled.', 'ams-cache' ),
+		isset( $runtime['external_ucss']['metrics'] ) ? $runtime['external_ucss']['metrics'] : array()
+	);
+
 	$features['local_ucss'] = scm_build_page_optimization_feature_report(
 		'yes' === $settings['local_ucss'],
 		'yes' !== $settings['local_ucss']
@@ -985,6 +1122,9 @@ function scm_build_page_optimization_report( $before, $after, $settings, $uri = 
 		}
 	}
 
+	$saved_bytes    = max( 0, $before_bytes - $after_bytes );
+	$expanded_bytes = max( 0, $after_bytes - $before_bytes );
+
 	return array(
 		'uri'            => scm_normalize_cache_uri( $uri ),
 		'dataType'       => $data_type,
@@ -994,9 +1134,12 @@ function scm_build_page_optimization_report( $before, $after, $settings, $uri = 
 		'beforeLabel'    => size_format( $before_bytes, 2 ),
 		'afterBytes'     => $after_bytes,
 		'afterLabel'     => size_format( $after_bytes, 2 ),
-		'savedBytes'     => max( 0, $before_bytes - $after_bytes ),
-		'savedLabel'     => size_format( max( 0, $before_bytes - $after_bytes ), 2 ),
-		'savedPercent'   => $before_bytes > 0 ? round( ( ( $before_bytes - $after_bytes ) / $before_bytes ) * 100, 2 ) : 0,
+		'savedBytes'     => $saved_bytes,
+		'savedLabel'     => size_format( $saved_bytes, 2 ),
+		'savedPercent'   => $before_bytes > 0 ? round( ( $saved_bytes / $before_bytes ) * 100, 2 ) : 0,
+		'expandedBytes'  => $expanded_bytes,
+		'expandedLabel'  => size_format( $expanded_bytes, 2 ),
+		'expandedPercent' => $before_bytes > 0 ? round( ( $expanded_bytes / $before_bytes ) * 100, 2 ) : 0,
 		'appliedCount'   => $applied_count,
 		'overallStatus'  => ! scm_is_page_optimization_enabled() ? 'disabled' : ( $applied_count > 0 ? 'applied' : 'no_change' ),
 		'features'       => $features,
@@ -1149,6 +1292,41 @@ function scm_get_lines_from_textarea( $value ) {
 	$lines = array_map( 'trim', $lines );
 
 	return array_values( array_filter( $lines ) );
+}
+
+/**
+ * Merge textarea lines while preserving user order.
+ *
+ * @param string|array $value Existing value.
+ * @param array        $extra Extra protected lines.
+ *
+ * @return string
+ */
+function scm_merge_textarea_lines( $value, $extra ) {
+	$lines = is_array( $value ) ? $value : scm_get_lines_from_textarea( $value );
+
+	foreach ( $extra as $line ) {
+		$line = trim( (string) $line );
+
+		if ( '' === $line ) {
+			continue;
+		}
+
+		$exists = false;
+
+		foreach ( $lines as $existing ) {
+			if ( 0 === strcasecmp( (string) $existing, $line ) ) {
+				$exists = true;
+				break;
+			}
+		}
+
+		if ( ! $exists ) {
+			$lines[] = $line;
+		}
+	}
+
+	return implode( "\n", array_values( array_filter( array_map( 'trim', $lines ) ) ) );
 }
 
 /**
@@ -1403,7 +1581,13 @@ function scm_minify_inline_css_blocks( $html ) {
 	return preg_replace_callback(
 		'#<style\b([^>]*)>(.*?)</style>#is',
 		function ( $match ) {
-			return '<style' . $match[1] . '>' . scm_minify_css( $match[2] ) . '</style>';
+			$minified = scm_minify_css( $match[2] );
+
+			if ( strlen( $minified ) >= strlen( (string) $match[2] ) ) {
+				return $match[0];
+			}
+
+			return '<style' . $match[1] . '>' . $minified . '</style>';
 		},
 		$html
 	);
@@ -1417,6 +1601,7 @@ function scm_minify_inline_css_blocks( $html ) {
  * @return string
  */
 function scm_minify_html( $html ) {
+	$original = (string) $html;
 	$protected = array();
 
 	$html = preg_replace_callback(
@@ -1434,7 +1619,9 @@ function scm_minify_html( $html ) {
 	$html = preg_replace( '/[ \t]+/', ' ', $html );
 	$html = trim( $html );
 
-	return strtr( $html, $protected );
+	$html = strtr( $html, $protected );
+
+	return strlen( $html ) < strlen( $original ) ? $html : $original;
 }
 
 /**
@@ -1533,6 +1720,1364 @@ function scm_optimize_media_tags( $html, $settings ) {
 	}
 
 	return $html;
+}
+
+/**
+ * Check if image optimization is enabled.
+ *
+ * @return bool
+ */
+function scm_is_image_optimization_enabled() {
+	$settings = scm_get_page_optimization_settings();
+
+	return 'yes' === $settings['image_optimization'];
+}
+
+/**
+ * Get mime type for generated image format.
+ *
+ * @param string $format Image format.
+ *
+ * @return string
+ */
+function scm_get_image_optimizer_mime_type( $format ) {
+	return 'avif' === $format ? 'image/avif' : 'image/webp';
+}
+
+/**
+ * Check if WordPress image editor can save a format.
+ *
+ * @param string $format Image format.
+ *
+ * @return bool
+ */
+function scm_image_editor_supports_format( $format ) {
+	$mime = scm_get_image_optimizer_mime_type( $format );
+
+	if ( function_exists( 'wp_image_editor_supports' ) ) {
+		return wp_image_editor_supports(
+			array(
+				'mime_type' => $mime,
+			)
+		);
+	}
+
+	return true;
+}
+
+/**
+ * Get optional Node image optimizer script path.
+ *
+ * @return string
+ */
+function scm_get_node_image_optimizer_script() {
+	return SCM_PLUGIN_DIR . 'inc/assets/node/image-optimizer.mjs';
+}
+
+/**
+ * Check optional Node sharp image optimizer.
+ *
+ * @return array
+ */
+function scm_check_node_image_optimizer() {
+	static $check = null;
+
+	if ( null !== $check ) {
+		return $check;
+	}
+
+	$settings = scm_get_page_optimization_settings();
+	$script   = scm_get_node_image_optimizer_script();
+	$node     = scm_get_executable_command( $settings['node_path'] );
+
+	if ( '' === $node || ! file_exists( $script ) ) {
+		$check = array(
+			'passed' => false,
+			'detail' => __( 'Node optimizer script is not available.', 'ams-cache' ),
+		);
+		return $check;
+	}
+
+	if ( ! scm_is_shell_exec_available() ) {
+		$check = array(
+			'passed' => false,
+			'detail' => __( 'shell_exec is disabled.', 'ams-cache' ),
+		);
+		return $check;
+	}
+
+	$result = scm_run_local_optimizer_command( $node . ' ' . escapeshellarg( $script ) . ' --check' );
+	$data   = json_decode( trim( (string) $result['output'] ), true );
+
+	if ( ! $result['passed'] || empty( $data['ok'] ) ) {
+		$check = array(
+			'passed' => false,
+			'detail' => '' !== trim( (string) $result['output'] ) ? strtok( trim( (string) $result['output'] ), "\r\n" ) : __( 'Install npm dependencies to enable sharp.', 'ams-cache' ),
+		);
+		return $check;
+	}
+
+	$formats = array();
+
+	if ( ! empty( $data['webp'] ) ) {
+		$formats[] = 'WebP';
+	}
+
+	if ( ! empty( $data['avif'] ) ) {
+		$formats[] = 'AVIF';
+	}
+
+	$check = array(
+		'passed' => ! empty( $formats ),
+		'detail' => sprintf(
+			/* translators: 1: sharp version, 2: formats. */
+			__( 'sharp %1$s; %2$s output.', 'ams-cache' ),
+			isset( $data['sharp'] ) ? $data['sharp'] : __( 'unknown', 'ams-cache' ),
+			! empty( $formats ) ? implode( ', ', $formats ) : __( 'no supported', 'ams-cache' )
+		),
+	);
+
+	return $check;
+}
+
+/**
+ * Convert an uploads file path to a relative uploads path.
+ *
+ * @param string $path File path.
+ *
+ * @return string
+ */
+function scm_get_upload_relative_file_path( $path ) {
+	$uploads = wp_get_upload_dir();
+	$base    = wp_normalize_path( $uploads['basedir'] );
+	$path    = wp_normalize_path( (string) $path );
+
+	if ( '' === $base || '' === $path ) {
+		return '';
+	}
+
+	$base = rtrim( $base, '/' ) . '/';
+
+	if ( 0 !== strpos( $path, $base ) ) {
+		return '';
+	}
+
+	return ltrim( substr( $path, strlen( $base ) ), '/' );
+}
+
+/**
+ * Detect if attachment is offloaded to external storage (WP Offload Media, etc.).
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return array
+ */
+function scm_get_attachment_offload_info( $attachment_id ) {
+	$info = array(
+		'offloaded'  => false,
+		'provider'   => '',
+		'remote_url' => '',
+	);
+
+	$s3_info = get_post_meta( $attachment_id, 'amazonS3_info', true );
+
+	if ( ! empty( $s3_info['bucket'] ) ) {
+		$info['offloaded'] = true;
+		$info['provider']  = 'WP Offload Media';
+
+		if ( ! empty( $s3_info['region'] ) && ! empty( $s3_info['key'] ) ) {
+			$info['remote_url'] = 'https://s3.' . $s3_info['region'] . '.amazonaws.com/' . $s3_info['bucket'] . '/' . ltrim( $s3_info['key'], '/' );
+		}
+	}
+
+	$as3cf_files = get_post_meta( $attachment_id, 'as3cf_files', true );
+
+	if ( ! empty( $as3cf_files ) && is_array( $as3cf_files ) ) {
+		$info['offloaded'] = true;
+		$info['provider']  = '' !== $info['provider'] ? $info['provider'] : 'Offload Media';
+	}
+
+	if ( ! $info['offloaded'] ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+
+		if ( ! empty( $metadata['file'] ) ) {
+			$local_path = trailingslashit( wp_get_upload_dir()['basedir'] ) . $metadata['file'];
+
+			if ( ! is_file( $local_path ) ) {
+				$source_url = wp_get_attachment_url( $attachment_id );
+
+				if ( ! empty( $source_url ) ) {
+					$upload_host = parse_url( wp_get_upload_dir()['baseurl'], PHP_URL_HOST );
+					$source_host = parse_url( $source_url, PHP_URL_HOST );
+
+					if ( $source_host && $upload_host && strtolower( $source_host ) !== strtolower( $upload_host ) ) {
+						$info['offloaded']  = true;
+						$info['provider']   = 'Remote CDN';
+						$info['remote_url'] = $source_url;
+					}
+				}
+			}
+		}
+	}
+
+	return $info;
+}
+
+/**
+ * Check whether a file can be optimized safely.
+ *
+ * @param string $path File path.
+ *
+ * @return bool
+ */
+function scm_is_safe_optimizable_image_file( $path ) {
+	$real_path = realpath( $path );
+	$uploads   = wp_get_upload_dir();
+	$base      = realpath( $uploads['basedir'] );
+
+	if ( false === $base ) {
+		return false;
+	}
+
+	$base = rtrim( wp_normalize_path( $base ), '/' ) . '/';
+
+	if ( false === $real_path ) {
+		$normalized = wp_normalize_path( $path );
+
+		if ( 0 !== strpos( $normalized, $base ) ) {
+			return false;
+		}
+
+		if ( ! is_file( $normalized ) || ! is_readable( $normalized ) ) {
+			return false;
+		}
+
+		$real_path = $normalized;
+	} else {
+		$real_path = wp_normalize_path( $real_path );
+
+		if ( 0 !== strpos( $real_path, $base ) ) {
+			return false;
+		}
+	}
+
+	if ( ! is_file( $real_path ) || ! is_readable( $real_path ) ) {
+		return false;
+	}
+
+	$extension = strtolower( pathinfo( $real_path, PATHINFO_EXTENSION ) );
+
+	if ( ! in_array( $extension, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
+		return false;
+	}
+
+	$filetype = wp_check_filetype( $real_path );
+
+	return ! empty( $filetype['type'] ) && in_array( $filetype['type'], array( 'image/jpeg', 'image/png', 'image/webp' ), true );
+}
+
+/**
+ * Build optimizer source list for an attachment.
+ *
+ * @param int   $attachment_id Attachment ID.
+ * @param array $metadata      Attachment metadata.
+ *
+ * @return array
+ */
+function scm_get_attachment_image_optimizer_sources( $attachment_id, $metadata = array() ) {
+	if ( empty( $metadata ) || ! is_array( $metadata ) ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+	}
+
+	if ( empty( $metadata['file'] ) ) {
+		return array();
+	}
+
+	$uploads     = wp_get_upload_dir();
+	$base_dir    = trailingslashit( $uploads['basedir'] );
+	$base_rel    = dirname( $metadata['file'] );
+	$sources     = array();
+	$seen        = array();
+	$offload_info = scm_get_attachment_offload_info( $attachment_id );
+
+	$items = array(
+		'full' => array(
+			'file'   => basename( $metadata['file'] ),
+			'width'  => isset( $metadata['width'] ) ? (int) $metadata['width'] : 0,
+			'height' => isset( $metadata['height'] ) ? (int) $metadata['height'] : 0,
+		),
+	);
+
+	if ( ! empty( $metadata['sizes'] ) && is_array( $metadata['sizes'] ) ) {
+		foreach ( $metadata['sizes'] as $size_key => $size ) {
+			if ( empty( $size['file'] ) ) {
+				continue;
+			}
+
+			$items[ $size_key ] = array(
+				'file'   => $size['file'],
+				'width'  => isset( $size['width'] ) ? (int) $size['width'] : 0,
+				'height' => isset( $size['height'] ) ? (int) $size['height'] : 0,
+			);
+		}
+	}
+
+	foreach ( $items as $key => $item ) {
+		$relative = ltrim( ( '.' === $base_rel ? '' : $base_rel . '/' ) . $item['file'], '/' );
+		$path     = wp_normalize_path( $base_dir . $relative );
+
+		if ( isset( $seen[ $relative ] ) ) {
+			continue;
+		}
+
+		if ( ! scm_is_safe_optimizable_image_file( $path ) ) {
+			if ( $offload_info['offloaded'] && is_file( $path ) ) {
+				// File exists locally but was moved by offload plugin
+				// This can happen for newly uploaded thumbnails
+			} else {
+				continue;
+			}
+		}
+
+		if ( ! is_file( $path ) ) {
+			continue;
+		}
+
+		$seen[ $relative ] = true;
+		$sources[]         = array(
+			'key'      => $key,
+			'file'     => $relative,
+			'path'     => $path,
+			'width'    => $item['width'],
+			'height'   => $item['height'],
+			'bytes'    => filesize( $path ),
+			'variants' => array(),
+		);
+	}
+
+	return $sources;
+}
+
+/**
+ * Generate one image variant through the optional Node sharp engine.
+ *
+ * @param array  $source      Source item.
+ * @param string $format      Target format.
+ * @param int    $quality     Image quality.
+ * @param string $target_path Target file path.
+ * @param string $mime        Target mime type.
+ *
+ * @return array
+ */
+function scm_generate_node_image_optimizer_variant( $source, $format, $quality, $target_path, $mime ) {
+	$settings    = scm_get_page_optimization_settings();
+	$node        = scm_get_executable_command( $settings['node_path'] );
+	$script      = scm_get_node_image_optimizer_script();
+	$uploads     = wp_get_upload_dir();
+	$uploads_dir = realpath( $uploads['basedir'] );
+	$source_path = realpath( $source['path'] );
+
+	if ( '' === $node || ! file_exists( $script ) || false === $uploads_dir || false === $source_path ) {
+		return array();
+	}
+
+	$target_dir  = dirname( $target_path );
+	$uploads_dir_full = rtrim( wp_normalize_path( $uploads_dir ), '/' ) . '/';
+	$source_path = wp_normalize_path( $source_path );
+
+	if ( 0 !== strpos( wp_normalize_path( $target_dir ), $uploads_dir_full ) || 0 !== strpos( $source_path, $uploads_dir_full ) ) {
+		return array();
+	}
+
+	if ( ! is_dir( $target_dir ) ) {
+		wp_mkdir_p( $target_dir );
+	}
+
+	$command = $node . ' ' . escapeshellarg( $script )
+		. ' --input ' . escapeshellarg( $source_path )
+		. ' --output ' . escapeshellarg( $target_path )
+		. ' --uploads ' . escapeshellarg( rtrim( $uploads_dir, '/' ) )
+		. ' --format ' . escapeshellarg( $format )
+		. ' --quality ' . (int) $quality;
+
+	$result = scm_run_local_optimizer_command( $command );
+	$data   = json_decode( trim( (string) $result['output'] ), true );
+
+	if ( ! $result['passed'] || empty( $data['ok'] ) || ! file_exists( $target_path ) ) {
+		return array();
+	}
+
+	$target_bytes = filesize( $target_path );
+
+	return array(
+		'file'       => scm_get_upload_relative_file_path( $target_path ),
+		'mime'       => $mime,
+		'bytes'      => $target_bytes,
+		'savedBytes' => max( 0, (int) $source['bytes'] - (int) $target_bytes ),
+		'reused'     => false,
+		'engine'     => 'node-sharp',
+	);
+}
+
+/**
+ * Generate one WebP/AVIF variant.
+ *
+ * @param array  $source Source item.
+ * @param string $format Target format.
+ * @param int    $quality Image quality.
+ *
+ * @return array
+ */
+function scm_generate_image_optimizer_variant( $source, $format, $quality ) {
+	$extension = strtolower( pathinfo( $source['path'], PATHINFO_EXTENSION ) );
+
+	if ( $extension === $format ) {
+		return array();
+	}
+
+	$mime        = scm_get_image_optimizer_mime_type( $format );
+	$target_path = preg_replace( '/\.[^.]+$/', '.' . $format, $source['path'] );
+	$target_dir  = dirname( $target_path );
+	$uploads     = wp_get_upload_dir();
+	$uploads_dir = realpath( $uploads['basedir'] );
+
+	if ( false === $uploads_dir ) {
+		return array();
+	}
+
+	$uploads_dir_full = rtrim( wp_normalize_path( $uploads_dir ), '/' ) . '/';
+	$target_dir       = wp_normalize_path( $target_dir );
+	$source_path      = realpath( $source['path'] );
+
+	if ( false === $source_path ) {
+		return array();
+	}
+
+	$source_path = wp_normalize_path( $source_path );
+
+	if ( 0 !== strpos( $target_dir, $uploads_dir_full ) || 0 !== strpos( $source_path, $uploads_dir_full ) ) {
+		return array();
+	}
+
+	if ( ! is_dir( $target_dir ) ) {
+		wp_mkdir_p( $target_dir );
+	}
+
+	if ( file_exists( $target_path ) && filesize( $target_path ) > 0 && filemtime( $target_path ) >= filemtime( $source['path'] ) ) {
+		$target_bytes = filesize( $target_path );
+
+		return array(
+			'file'       => scm_get_upload_relative_file_path( $target_path ),
+			'mime'       => $mime,
+			'bytes'      => $target_bytes,
+			'savedBytes' => max( 0, (int) $source['bytes'] - (int) $target_bytes ),
+			'reused'     => true,
+			'engine'     => 'existing',
+		);
+	}
+
+	$node_variant = scm_generate_node_image_optimizer_variant( $source, $format, $quality, $target_path, $mime );
+
+	if ( ! empty( $node_variant ) ) {
+		return $node_variant;
+	}
+
+	if ( ! scm_image_editor_supports_format( $format ) ) {
+		return array();
+	}
+
+	$editor = wp_get_image_editor( $source['path'] );
+
+	if ( is_wp_error( $editor ) ) {
+		return array();
+	}
+
+	if ( method_exists( $editor, 'set_quality' ) ) {
+		$editor->set_quality( $quality );
+	}
+
+	$saved = $editor->save( $target_path, $mime );
+
+	if ( is_wp_error( $saved ) || ! file_exists( $target_path ) ) {
+		return array();
+	}
+
+	$target_bytes = filesize( $target_path );
+
+	return array(
+		'file'       => scm_get_upload_relative_file_path( $target_path ),
+		'mime'       => $mime,
+		'bytes'      => $target_bytes,
+		'savedBytes' => max( 0, (int) $source['bytes'] - (int) $target_bytes ),
+		'reused'     => false,
+		'engine'     => 'wordpress',
+	);
+}
+
+/**
+ * Add generated image variants to WordPress attachment metadata.
+ *
+ * @param array $metadata Attachment metadata.
+ * @param array $summary  Optimizer summary.
+ *
+ * @return array
+ */
+function scm_apply_image_optimizer_summary_to_metadata( $metadata, $summary ) {
+	if ( empty( $metadata ) || ! is_array( $metadata ) || empty( $summary['sources'] ) || ! is_array( $summary['sources'] ) ) {
+		return is_array( $metadata ) ? $metadata : array();
+	}
+
+	foreach ( $summary['sources'] as $source ) {
+		if ( empty( $source['key'] ) || empty( $source['variants'] ) || ! is_array( $source['variants'] ) ) {
+			continue;
+		}
+
+		foreach ( $source['variants'] as $variant ) {
+			if ( empty( $variant['file'] ) || empty( $variant['mime'] ) ) {
+				continue;
+			}
+
+			$entry = array(
+				'file'      => wp_basename( $variant['file'] ),
+				'filesize'  => isset( $variant['bytes'] ) ? (int) $variant['bytes'] : 0,
+				'mime-type' => $variant['mime'],
+			);
+
+			if ( 'full' === $source['key'] ) {
+				if ( empty( $metadata['sources'] ) || ! is_array( $metadata['sources'] ) ) {
+					$metadata['sources'] = array();
+				}
+
+				$metadata['sources'][ $variant['mime'] ] = $entry;
+				continue;
+			}
+
+			if ( empty( $metadata['sizes'][ $source['key'] ] ) || ! is_array( $metadata['sizes'][ $source['key'] ] ) ) {
+				continue;
+			}
+
+			if ( empty( $metadata['sizes'][ $source['key'] ]['sources'] ) || ! is_array( $metadata['sizes'][ $source['key'] ]['sources'] ) ) {
+				$metadata['sizes'][ $source['key'] ]['sources'] = array();
+			}
+
+			$metadata['sizes'][ $source['key'] ]['sources'][ $variant['mime'] ] = $entry;
+		}
+	}
+
+	return $metadata;
+}
+
+/**
+ * Promote generated upload variants to WordPress attachment files.
+ *
+ * @param int    $attachment_id Attachment ID.
+ * @param array  $metadata      Attachment metadata.
+ * @param array  $summary       Optimizer summary.
+ * @param string $format        Primary target format.
+ *
+ * @return array
+ */
+function scm_apply_image_optimizer_primary_upload_format( $attachment_id, $metadata, &$summary, $format ) {
+	if ( empty( $metadata ) || ! is_array( $metadata ) || empty( $summary['sources'] ) || ! is_array( $summary['sources'] ) ) {
+		return is_array( $metadata ) ? $metadata : array();
+	}
+
+	$format = sanitize_key( (string) $format );
+
+	if ( ! in_array( $format, array( 'webp', 'avif' ), true ) ) {
+		return $metadata;
+	}
+
+	$original_metadata = $metadata;
+	$original_file     = isset( $metadata['file'] ) ? $metadata['file'] : '';
+	$converted         = false;
+
+	if ( '' !== $original_file && ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_file' ) ) {
+		update_post_meta( $attachment_id, '_ams_cache_image_original_file', $original_file );
+	}
+
+	if ( ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_metadata' ) ) {
+		update_post_meta( $attachment_id, '_ams_cache_image_original_metadata', $original_metadata );
+	}
+
+	foreach ( $summary['sources'] as $source ) {
+		if ( empty( $source['key'] ) || empty( $source['variants'][ $format ]['file'] ) || empty( $source['variants'][ $format ]['mime'] ) ) {
+			continue;
+		}
+
+		$variant = $source['variants'][ $format ];
+
+		if ( 'full' === $source['key'] ) {
+			$metadata['file'] = $variant['file'];
+			update_attached_file( $attachment_id, $variant['file'] );
+			wp_update_post(
+				array(
+					'ID'             => (int) $attachment_id,
+					'post_mime_type' => $variant['mime'],
+				)
+			);
+			$converted = true;
+			continue;
+		}
+
+		if ( isset( $metadata['sizes'][ $source['key'] ] ) && is_array( $metadata['sizes'][ $source['key'] ] ) ) {
+			$metadata['sizes'][ $source['key'] ]['file']      = wp_basename( $variant['file'] );
+			$metadata['sizes'][ $source['key'] ]['mime-type'] = $variant['mime'];
+			$metadata['sizes'][ $source['key'] ]['filesize']  = isset( $variant['bytes'] ) ? (int) $variant['bytes'] : 0;
+		}
+	}
+
+	$metadata['ams_cache_primary_format'] = $format;
+	$metadata['ams_cache_original_file']  = $original_file;
+	$summary['primaryFormat']            = $format;
+	$summary['primaryConverted']         = $converted;
+
+	return $metadata;
+}
+
+/**
+ * Optimize one attachment's generated image files.
+ *
+ * @param int    $attachment_id Attachment ID.
+ * @param array  $metadata      Optional fresh attachment metadata.
+ * @param string $mode          Context label.
+ *
+ * @return array
+ */
+function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $mode = 'queue' ) {
+	$settings = scm_get_page_optimization_settings();
+	$mode_key = sanitize_key( (string) $mode );
+
+	if ( 'yes' !== $settings['image_optimization'] ) {
+		return array();
+	}
+
+	if ( empty( $metadata ) || ! is_array( $metadata ) ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+	}
+
+	$sources      = scm_get_attachment_image_optimizer_sources( $attachment_id, $metadata );
+	$formats      = $settings['image_formats'];
+	$offload_info = scm_get_attachment_offload_info( $attachment_id );
+
+	$summary = array(
+		'generatedAt'  => time(),
+		'formats'      => $formats,
+		'sources'      => array(),
+		'sourceBytes'  => 0,
+		'variantBytes' => 0,
+		'savedBytes'   => 0,
+		'generated'    => 0,
+		'reused'       => 0,
+		'failed'       => 0,
+		'skipped'      => 0,
+		'offloaded'    => $offload_info['offloaded'],
+		'offloadProvider' => $offload_info['provider'],
+		'mode'         => $mode_key,
+	);
+
+	if ( empty( $sources ) ) {
+		if ( $offload_info['offloaded'] ) {
+			$summary['skipped'] = 1;
+			$summary['skipReason'] = sprintf(
+				'Offloaded by %s. Use "Download & optimize" to pull images locally first.',
+				$offload_info['provider']
+			);
+		} else {
+			$summary['skipped'] = 1;
+			$summary['skipReason'] = 'No optimizable source files found for this attachment.';
+		}
+
+		update_post_meta( $attachment_id, '_ams_cache_image_optimization', $summary );
+
+		return $summary;
+	}
+
+	foreach ( $sources as $source ) {
+		$source_summary = $source;
+		$source_summary['variants'] = array();
+		$summary['sourceBytes'] += (int) $source['bytes'];
+
+		foreach ( $formats as $format ) {
+			$variant = scm_generate_image_optimizer_variant( $source, $format, $settings['image_quality'] );
+
+			if ( empty( $variant['file'] ) ) {
+				$summary['failed']++;
+				continue;
+			}
+
+			$source_summary['variants'][ $format ] = $variant;
+			$summary['variantBytes'] += (int) $variant['bytes'];
+			$summary['savedBytes'] += (int) $variant['savedBytes'];
+
+			if ( ! empty( $variant['reused'] ) ) {
+				$summary['reused']++;
+			} else {
+				$summary['generated']++;
+			}
+		}
+
+		$summary['sources'][] = $source_summary;
+	}
+
+	$summary['metadata'] = scm_apply_image_optimizer_summary_to_metadata( $metadata, $summary );
+
+	if ( in_array( $mode_key, array( 'upload', 'manual' ), true ) ) {
+		$summary['metadata'] = scm_apply_image_optimizer_primary_upload_format( $attachment_id, $summary['metadata'], $summary, $settings['image_primary_format'] );
+	}
+
+	if ( 'upload' !== $mode_key && ! empty( $summary['metadata'] ) && is_array( $summary['metadata'] ) ) {
+		wp_update_attachment_metadata( $attachment_id, $summary['metadata'] );
+	}
+
+	$stored_summary      = $summary;
+	unset( $stored_summary['metadata'] );
+
+	update_post_meta( $attachment_id, '_ams_cache_image_optimization', $stored_summary );
+	update_option(
+		'scm_image_optimization_last',
+		array(
+			'attachmentId' => (int) $attachment_id,
+			'generatedAt'  => current_time( 'mysql' ),
+			'generated'    => $summary['generated'],
+			'reused'       => $summary['reused'],
+			'failed'       => $summary['failed'],
+			'skipped'      => $summary['skipped'],
+			'offloaded'    => $summary['offloaded'] ? 'yes' : 'no',
+			'savedBytes'   => $summary['savedBytes'],
+			'savedLabel'   => size_format( $summary['savedBytes'], 2 ),
+			'primaryFormat' => isset( $summary['primaryFormat'] ) ? $summary['primaryFormat'] : '',
+			'primaryConverted' => ! empty( $summary['primaryConverted'] ) ? 'yes' : 'no',
+		),
+		false
+	);
+
+	return $summary;
+}
+
+/**
+ * Add attachment to image optimization queue.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_enqueue_image_optimization( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	$queue = get_option( 'scm_image_optimization_queue', array() );
+	$queue = is_array( $queue ) ? array_map( 'intval', $queue ) : array();
+
+	if ( ! in_array( $attachment_id, $queue, true ) ) {
+		$queue[] = $attachment_id;
+	}
+
+	$queue = array_slice( array_values( array_unique( $queue ) ), -500 );
+	update_option( 'scm_image_optimization_queue', $queue, false );
+
+	if ( ! wp_next_scheduled( 'scm_process_image_optimization_queue' ) ) {
+		wp_schedule_single_event( time() + 30, 'scm_process_image_optimization_queue' );
+	}
+}
+
+/**
+ * Clear single-upload optimization retry state.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_clear_single_image_optimization_pending( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	delete_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending' );
+
+	$queue = get_option( 'scm_image_upload_optimization_queue', array() );
+	$queue = is_array( $queue ) ? array_map( 'intval', $queue ) : array();
+	$queue = array_values( array_diff( $queue, array( $attachment_id ) ) );
+
+	update_option( 'scm_image_upload_optimization_queue', $queue, false );
+}
+
+/**
+ * Schedule a single-upload optimization retry without touching the manual batch queue.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_schedule_single_image_optimization( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+
+	$queue = get_option( 'scm_image_upload_optimization_queue', array() );
+	$queue = is_array( $queue ) ? array_map( 'intval', $queue ) : array();
+
+	if ( ! in_array( $attachment_id, $queue, true ) ) {
+		$queue[] = $attachment_id;
+	}
+
+	$queue = array_slice( array_values( array_unique( $queue ) ), -200 );
+	update_option( 'scm_image_upload_optimization_queue', $queue, false );
+
+	if ( ! wp_next_scheduled( 'scm_process_single_image_optimization', array( $attachment_id ) ) ) {
+		wp_schedule_single_event( time() + 30, 'scm_process_single_image_optimization', array( $attachment_id ) );
+	}
+}
+
+/**
+ * Queue fresh image uploads for background optimization.
+ *
+ * @param array $metadata      Attachment metadata.
+ * @param int   $attachment_id Attachment ID.
+ *
+ * @return array
+ */
+function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' === $settings['image_optimization'] && 'yes' === $settings['image_optimize_on_upload'] ) {
+		update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+
+		$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
+
+		if ( ! empty( $result['metadata'] ) && is_array( $result['metadata'] ) ) {
+			$metadata = $result['metadata'];
+
+			// Advanced Media Offloader reads metadata from DB during its later
+			// wp_generate_attachment_metadata callback, so persist variants early.
+			update_post_meta( $attachment_id, '_wp_attachment_metadata', $metadata );
+		}
+
+		if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) ) {
+			scm_schedule_single_image_optimization( $attachment_id );
+		} else {
+			scm_clear_single_image_optimization_pending( $attachment_id );
+		}
+	}
+
+	return $metadata;
+}
+
+/**
+ * Fallback for upload paths that write metadata without the generation filter.
+ *
+ * Runs before offload plugins that listen late to wp_update_attachment_metadata,
+ * so the selected primary WebP/AVIF file is visible before remote sync starts.
+ *
+ * @param array $metadata      Attachment metadata.
+ * @param int   $attachment_id Attachment ID.
+ *
+ * @return array
+ */
+function scm_optimize_image_metadata_on_update( $metadata, $attachment_id ) {
+	static $processing = array();
+
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 || empty( $metadata ) || ! is_array( $metadata ) || ! empty( $metadata['ams_cache_primary_format'] ) ) {
+		return $metadata;
+	}
+
+	if ( ! empty( $processing[ $attachment_id ] ) ) {
+		return $metadata;
+	}
+
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' !== $settings['image_optimization'] || 'yes' !== $settings['image_optimize_on_upload'] ) {
+		return $metadata;
+	}
+
+	$mime = get_post_mime_type( $attachment_id );
+
+	if ( ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/webp' ), true ) ) {
+		return $metadata;
+	}
+
+	$processing[ $attachment_id ] = true;
+	update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+
+	$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
+
+	if ( ! empty( $result['metadata'] ) && is_array( $result['metadata'] ) ) {
+		$metadata = $result['metadata'];
+	}
+
+	if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) ) {
+		scm_schedule_single_image_optimization( $attachment_id );
+	} else {
+		scm_clear_single_image_optimization_pending( $attachment_id );
+	}
+
+	unset( $processing[ $attachment_id ] );
+
+	return $metadata;
+}
+
+/**
+ * Keep local files when image optimization still needs them.
+ *
+ * @param int $delete_rule   Offloader local deletion rule.
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return int
+ */
+function scm_preserve_local_images_for_pending_optimization( $delete_rule, $attachment_id ) {
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' !== $settings['image_optimization'] ) {
+		return $delete_rule;
+	}
+
+	$queue = get_option( 'scm_image_optimization_queue', array() );
+	$queue = is_array( $queue ) ? array_map( 'intval', $queue ) : array();
+
+	$upload_queue = get_option( 'scm_image_upload_optimization_queue', array() );
+	$upload_queue = is_array( $upload_queue ) ? array_map( 'intval', $upload_queue ) : array();
+
+	if ( in_array( (int) $attachment_id, $queue, true ) || in_array( (int) $attachment_id, $upload_queue, true ) || get_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', true ) ) {
+		return 0;
+	}
+
+	return $delete_rule;
+}
+
+/**
+ * Delay Advanced Media Offloader while a new upload still needs a single retry.
+ *
+ * @param bool $should_offload Whether offloader should upload.
+ * @param int  $attachment_id  Attachment ID.
+ *
+ * @return bool
+ */
+function scm_should_delay_advanced_media_offload_for_image_optimization( $should_offload, $attachment_id ) {
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' !== $settings['image_optimization'] || 'yes' !== $settings['image_optimize_on_upload'] ) {
+		return $should_offload;
+	}
+
+	if ( get_post_meta( (int) $attachment_id, '_ams_cache_image_upload_retry_pending', true ) ) {
+		return false;
+	}
+
+	return $should_offload;
+}
+
+/**
+ * Start Advanced Media Offloader after a deferred upload optimization retry.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_maybe_start_advanced_media_offload_after_image_optimization( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 || ! function_exists( 'advmo' ) || ! class_exists( 'Advanced_Media_Offloader\\Services\\CloudAttachmentUploader' ) ) {
+		return;
+	}
+
+	try {
+		$advanced_media_offloader = advmo();
+
+		if (
+			empty( $advanced_media_offloader->container ) ||
+			! method_exists( $advanced_media_offloader->container, 'has' ) ||
+			! $advanced_media_offloader->container->has( 'cloud_provider' )
+		) {
+			return;
+		}
+
+		$cloud_provider = $advanced_media_offloader->container->get( 'cloud_provider' );
+
+		if ( empty( $cloud_provider ) ) {
+			return;
+		}
+
+		$uploader = new \Advanced_Media_Offloader\Services\CloudAttachmentUploader( $cloud_provider );
+		$uploader->uploadAttachment( $attachment_id );
+	} catch ( \Throwable $e ) {
+		error_log( sprintf( '[AMS Cache] Advanced Media Offloader handoff failed for attachment %d: %s', $attachment_id, $e->getMessage() ) );
+	}
+}
+
+/**
+ * Process queued image optimization work.
+ *
+ * @return void
+ */
+function scm_process_image_optimization_queue() {
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' !== $settings['image_optimization'] ) {
+		return;
+	}
+
+	$queue = get_option( 'scm_image_optimization_queue', array() );
+	$queue = is_array( $queue ) ? array_values( array_map( 'intval', $queue ) ) : array();
+
+	if ( empty( $queue ) ) {
+		return;
+	}
+
+	$batch = array_splice( $queue, 0, $settings['image_batch_size'] );
+	$remaining = array();
+
+	foreach ( $batch as $attachment_id ) {
+		$result = scm_optimize_attachment_images( $attachment_id, array(), 'manual' );
+
+		if ( ! empty( $result['offloaded'] ) && $result['generated'] === 0 && $result['reused'] === 0 ) {
+			$skip_count = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
+			update_option( 'scm_image_optimization_offloaded_count', $skip_count + 1, false );
+
+			if ( ! isset( $result['skipReason'] ) ) {
+				$result['skipReason'] = 'Offloaded attachment — no local files to optimize.';
+			}
+
+			continue;
+		}
+	}
+
+	$queue = array_merge( $remaining, $queue );
+	update_option( 'scm_image_optimization_queue', $queue, false );
+
+	if ( ! empty( $queue ) && ! wp_next_scheduled( 'scm_process_image_optimization_queue' ) ) {
+		wp_schedule_single_event( time() + 60, 'scm_process_image_optimization_queue' );
+	}
+}
+
+/**
+ * Process one upload retry without using the manual batch queue.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_process_single_image_optimization( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	$settings = scm_get_page_optimization_settings();
+	$metadata = array();
+
+	if ( 'yes' === $settings['image_optimization'] && 'yes' === $settings['image_optimize_on_upload'] ) {
+		$result = scm_optimize_attachment_images( $attachment_id, array(), 'upload' );
+
+		if ( ! empty( $result['metadata'] ) && is_array( $result['metadata'] ) ) {
+			$metadata = $result['metadata'];
+		}
+	}
+
+	scm_clear_single_image_optimization_pending( $attachment_id );
+
+	if ( ! empty( $metadata ) ) {
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+	}
+
+	scm_maybe_start_advanced_media_offload_after_image_optimization( $attachment_id );
+}
+
+/**
+ * Find variant metadata for a rendered source URL.
+ *
+ * @param int    $attachment_id Attachment ID.
+ * @param string $url           Image URL.
+ * @param string $format        Target format.
+ *
+ * @return array
+ */
+function scm_find_image_variant_for_url( $attachment_id, $url, $format ) {
+	$summary = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
+
+	if ( empty( $summary['sources'] ) || ! is_array( $summary['sources'] ) ) {
+		return array();
+	}
+
+	$path = parse_url( html_entity_decode( (string) $url, ENT_QUOTES, 'UTF-8' ), PHP_URL_PATH );
+	$name = basename( rawurldecode( (string) $path ) );
+
+	if ( '' === $name ) {
+		return array();
+	}
+
+	foreach ( $summary['sources'] as $source ) {
+		if ( empty( $source['file'] ) || basename( $source['file'] ) !== $name ) {
+			continue;
+		}
+
+		if ( ! empty( $source['variants'][ $format ]['file'] ) ) {
+			return $source['variants'][ $format ];
+		}
+	}
+
+	return array();
+}
+
+/**
+ * Build a public variant URL from a rendered image URL.
+ *
+ * @param string $source_url Source image URL.
+ * @param array  $variant    Variant metadata.
+ * @param array  $settings   Page optimization settings.
+ *
+ * @return string
+ */
+function scm_build_image_variant_url( $source_url, $variant, $settings ) {
+	if ( empty( $variant['file'] ) ) {
+		return '';
+	}
+
+	$uploads = wp_get_upload_dir();
+	$baseurl = trailingslashit( $uploads['baseurl'] );
+	$variant_file = wp_normalize_path( ltrim( $variant['file'], '/' ) );
+
+	if ( '' === $variant_file || false !== strpos( $variant_file, '..' ) ) {
+		return '';
+	}
+
+	$local_variant = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . $variant_file );
+	$source_host = parse_url( $source_url, PHP_URL_HOST );
+	$upload_host = parse_url( $baseurl, PHP_URL_HOST );
+
+	if ( ! is_file( $local_variant ) ) {
+		return '';
+	}
+
+	if ( empty( $source_host ) || strtolower( (string) $source_host ) === strtolower( (string) $upload_host ) ) {
+		return $baseurl . $variant_file;
+	}
+
+	if ( 'yes' !== $settings['image_remote_rewrite'] ) {
+		return '';
+	}
+
+	$source_path = parse_url( $source_url, PHP_URL_PATH );
+
+	if ( empty( $source_path ) ) {
+		return '';
+	}
+
+	return str_replace( basename( $source_path ), basename( $variant['file'] ), $source_url );
+}
+
+/**
+ * Convert one srcset to a variant srcset.
+ *
+ * @param string $srcset        Source srcset.
+ * @param int    $attachment_id Attachment ID.
+ * @param string $format        Target format.
+ * @param array  $settings      Settings.
+ *
+ * @return string
+ */
+function scm_build_image_variant_srcset( $srcset, $attachment_id, $format, $settings ) {
+	$items = array_filter( array_map( 'trim', explode( ',', (string) $srcset ) ) );
+	$out   = array();
+
+	foreach ( $items as $item ) {
+		$parts = preg_split( '/\s+/', $item );
+		$url   = isset( $parts[0] ) ? $parts[0] : '';
+
+		if ( '' === $url ) {
+			continue;
+		}
+
+		$variant_url = scm_build_image_variant_url( $url, scm_find_image_variant_for_url( $attachment_id, $url, $format ), $settings );
+
+		if ( '' === $variant_url ) {
+			continue;
+		}
+
+		$parts[0] = $variant_url;
+		$out[]    = implode( ' ', $parts );
+	}
+
+	return implode( ', ', $out );
+}
+
+/**
+ * Wrap WordPress attachment images with AVIF/WebP sources when variants exist.
+ *
+ * @param string       $html          Image HTML.
+ * @param int          $attachment_id Attachment ID.
+ * @param string|array $size          Image size.
+ * @param bool         $icon          Whether icon.
+ * @param array        $attr          Attributes.
+ *
+ * @return string
+ */
+function scm_filter_attachment_image_html( $html, $attachment_id, $size, $icon, $attr ) {
+	$settings = scm_get_page_optimization_settings();
+
+	if ( is_admin() || 'yes' !== $settings['image_optimization'] || 'yes' !== $settings['image_rewrite_html'] || $icon || false !== strpos( $html, '<picture' ) ) {
+		return $html;
+	}
+
+	$src    = scm_html_get_attribute( $html, 'src' );
+	$srcset = scm_html_get_attribute( $html, 'srcset' );
+	$sizes  = scm_html_get_attribute( $html, 'sizes' );
+
+	if ( '' === $src ) {
+		return $html;
+	}
+
+	$sources = '';
+
+	foreach ( array( 'avif', 'webp' ) as $format ) {
+		if ( ! in_array( $format, $settings['image_formats'], true ) ) {
+			continue;
+		}
+
+		$variant_srcset = '' !== $srcset ? scm_build_image_variant_srcset( $srcset, $attachment_id, $format, $settings ) : '';
+		$variant_src    = scm_build_image_variant_url( $src, scm_find_image_variant_for_url( $attachment_id, $src, $format ), $settings );
+
+		if ( '' === $variant_srcset && '' === $variant_src ) {
+			continue;
+		}
+
+		$sources .= '<source type="' . esc_attr( scm_get_image_optimizer_mime_type( $format ) ) . '"';
+		$sources .= ' srcset="' . esc_attr( '' !== $variant_srcset ? $variant_srcset : $variant_src ) . '"';
+
+		if ( '' !== $sizes ) {
+			$sources .= ' sizes="' . esc_attr( $sizes ) . '"';
+		}
+
+		$sources .= '>';
+	}
+
+	if ( '' === $sources ) {
+		return $html;
+	}
+
+	return '<picture data-ams-cache-image-optimized="1">' . $sources . $html . '</picture>';
+}
+
+/**
+ * Resolve an attachment ID from an image tag URL.
+ *
+ * @param string $tag Image tag.
+ *
+ * @return int
+ */
+function scm_get_attachment_id_from_image_tag( $tag ) {
+	if ( ! function_exists( 'attachment_url_to_postid' ) ) {
+		return 0;
+	}
+
+	$urls   = array();
+	$src    = scm_html_get_attribute( $tag, 'src' );
+	$srcset = scm_html_get_attribute( $tag, 'srcset' );
+
+	if ( '' !== $src ) {
+		$urls[] = $src;
+	}
+
+	foreach ( array_filter( array_map( 'trim', explode( ',', (string) $srcset ) ) ) as $item ) {
+		$parts = preg_split( '/\s+/', $item );
+
+		if ( ! empty( $parts[0] ) ) {
+			$urls[] = $parts[0];
+		}
+	}
+
+	foreach ( array_unique( $urls ) as $url ) {
+		$attachment_id = attachment_url_to_postid( html_entity_decode( $url, ENT_QUOTES, 'UTF-8' ) );
+
+		if ( $attachment_id > 0 ) {
+			return (int) $attachment_id;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Rewrite raw cached image tags when they map to optimized attachment variants.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Page optimization settings.
+ *
+ * @return string
+ */
+function scm_rewrite_cached_attachment_images( $html, $settings ) {
+	if (
+		is_admin() ||
+		'yes' !== $settings['image_optimization'] ||
+		'yes' !== $settings['image_rewrite_html'] ||
+		false === stripos( $html, '<img' ) ||
+		false !== stripos( $html, '<picture' )
+	) {
+		return $html;
+	}
+
+	return preg_replace_callback(
+		'#<img\b[^>]*>#i',
+		function ( $match ) use ( $settings ) {
+			$tag = $match[0];
+
+			if ( false !== stripos( $tag, 'data-ams-cache-image-optimized' ) ) {
+				return $tag;
+			}
+
+			$attachment_id = scm_get_attachment_id_from_image_tag( $tag );
+
+			if ( $attachment_id <= 0 ) {
+				return $tag;
+			}
+
+			$src     = scm_html_get_attribute( $tag, 'src' );
+			$srcset  = scm_html_get_attribute( $tag, 'srcset' );
+			$sizes   = scm_html_get_attribute( $tag, 'sizes' );
+			$sources = '';
+
+			foreach ( array( 'avif', 'webp' ) as $format ) {
+				if ( ! in_array( $format, $settings['image_formats'], true ) ) {
+					continue;
+				}
+
+				$variant_srcset = '' !== $srcset ? scm_build_image_variant_srcset( $srcset, $attachment_id, $format, $settings ) : '';
+				$variant_src    = '' !== $src ? scm_build_image_variant_url( $src, scm_find_image_variant_for_url( $attachment_id, $src, $format ), $settings ) : '';
+
+				if ( '' === $variant_srcset && '' === $variant_src ) {
+					continue;
+				}
+
+				$sources .= '<source type="' . esc_attr( scm_get_image_optimizer_mime_type( $format ) ) . '"';
+				$sources .= ' srcset="' . esc_attr( '' !== $variant_srcset ? $variant_srcset : $variant_src ) . '"';
+
+				if ( '' !== $sizes ) {
+					$sources .= ' sizes="' . esc_attr( $sizes ) . '"';
+				}
+
+				$sources .= '>';
+			}
+
+			if ( '' === $sources ) {
+				return $tag;
+			}
+
+			return '<picture data-ams-cache-image-optimized="1">' . $sources . $tag . '</picture>';
+		},
+		$html
+	);
 }
 
 /**
@@ -1767,8 +3312,17 @@ function scm_apply_local_ucss( $html, $settings ) {
 			continue;
 		}
 
-		$purged_css   = file_get_contents( $output_file );
-		$after_bytes += strlen( (string) $purged_css );
+		$original_css = (string) $match[2];
+		$purged_css   = (string) file_get_contents( $output_file );
+
+		if ( '' === $purged_css || strlen( $purged_css ) >= strlen( $original_css ) ) {
+			$skipped_blocks++;
+			$after_bytes += strlen( $original_css );
+			$replacements[ $index ] = $match[0];
+			continue;
+		}
+
+		$after_bytes += strlen( $purged_css );
 		$replacements[ $index ] = '<style' . $match[1] . '>' . $purged_css . '</style>';
 	}
 
@@ -1777,11 +3331,17 @@ function scm_apply_local_ucss( $html, $settings ) {
 		scm_set_page_optimization_runtime(
 			'local_ucss',
 			array(
-				'status' => 'failed',
+				'status' => '' !== $failure_detail ? 'failed' : 'no_change',
 				'detail' => '' !== $failure_detail
 					? $failure_detail
-					: scm_get_local_optimizer_error_detail( $result['output'], __( 'PurgeCSS failed.', 'ams-cache' ) ),
-				'metrics' => array(),
+					: __( 'Local UCSS found no smaller inline CSS output.', 'ams-cache' ),
+				'metrics' => array(
+					'beforeBytes'   => $before_bytes,
+					'afterBytes'    => $before_bytes,
+					'savedBytes'    => 0,
+					'blocks'        => count( $matches ),
+					'skippedBlocks' => $skipped_blocks,
+				),
 			)
 		);
 		return $html;
@@ -1825,6 +3385,389 @@ function scm_apply_local_ucss( $html, $settings ) {
 				'savedBytes'    => max( 0, $before_bytes - $after_bytes ),
 				'blocks'        => count( $matches ),
 				'skippedBlocks' => $skipped_blocks,
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
+ * Check if a stylesheet link is safe for external UCSS.
+ *
+ * @param string $tag HTML link tag.
+ *
+ * @return bool
+ */
+function scm_is_external_ucss_candidate( $tag ) {
+	$rel = strtolower( scm_html_get_attribute( $tag, 'rel' ) );
+
+	if ( '' === $rel || false === strpos( $rel, 'stylesheet' ) ) {
+		return false;
+	}
+
+	if (
+		false !== strpos( $rel, 'alternate' ) ||
+		false !== strpos( $rel, 'preload' ) ||
+		scm_html_has_attribute( $tag, 'disabled' ) ||
+		scm_html_has_attribute( $tag, 'integrity' ) ||
+		scm_html_has_attribute( $tag, 'crossorigin' )
+	) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Normalize URL path segments.
+ *
+ * @param string $path URL path.
+ *
+ * @return string
+ */
+function scm_normalize_url_path_segments( $path ) {
+	$parts = explode( '/', (string) $path );
+	$out   = array();
+
+	foreach ( $parts as $part ) {
+		if ( '' === $part || '.' === $part ) {
+			continue;
+		}
+
+		if ( '..' === $part ) {
+			array_pop( $out );
+			continue;
+		}
+
+		$out[] = $part;
+	}
+
+	return '/' . implode( '/', $out );
+}
+
+/**
+ * Resolve a CSS url() value against a stylesheet URL.
+ *
+ * @param string $url           Raw CSS URL.
+ * @param string $stylesheet_url Stylesheet URL.
+ *
+ * @return string
+ */
+function scm_resolve_css_url( $url, $stylesheet_url ) {
+	$url = trim( html_entity_decode( (string) $url, ENT_QUOTES, 'UTF-8' ) );
+
+	if (
+		'' === $url ||
+		0 === strpos( $url, '#' ) ||
+		0 === stripos( $url, 'data:' ) ||
+		0 === stripos( $url, 'http:' ) ||
+		0 === stripos( $url, 'https:' ) ||
+		0 === strpos( $url, '//' )
+	) {
+		return $url;
+	}
+
+	if ( 0 === strpos( $url, '/' ) ) {
+		return home_url( $url );
+	}
+
+	$base = html_entity_decode( (string) $stylesheet_url, ENT_QUOTES, 'UTF-8' );
+
+	if ( false === strpos( $base, '//' ) ) {
+		$base = home_url( '/' . ltrim( $base, '/' ) );
+	}
+
+	$parts = parse_url( $base );
+
+	if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+		return $url;
+	}
+
+	$base_path = isset( $parts['path'] ) ? $parts['path'] : '/';
+	$base_dir  = preg_replace( '#/[^/]*$#', '/', $base_path );
+	$path      = scm_normalize_url_path_segments( $base_dir . $url );
+	$port      = isset( $parts['port'] ) ? ':' . $parts['port'] : '';
+
+	return $parts['scheme'] . '://' . $parts['host'] . $port . $path;
+}
+
+/**
+ * Rewrite relative CSS url() values before external CSS is inlined.
+ *
+ * @param string $css           CSS content.
+ * @param string $stylesheet_url Stylesheet URL.
+ *
+ * @return string
+ */
+function scm_rewrite_css_relative_urls( $css, $stylesheet_url ) {
+	return preg_replace_callback(
+		'/url\(\s*([\'"]?)([^\'")]+)\1\s*\)/i',
+		function ( $match ) use ( $stylesheet_url ) {
+			$resolved = scm_resolve_css_url( $match[2], $stylesheet_url );
+
+			return 'url("' . esc_url_raw( $resolved ) . '")';
+		},
+		$css
+	);
+}
+
+/**
+ * Run PurgeCSS on same-site stylesheet files and inline the optimized output.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_external_ucss( $html, $settings ) {
+	if ( ! preg_match_all( '#<link\b[^>]*>#is', $html, $matches, PREG_SET_ORDER ) ) {
+		scm_set_page_optimization_runtime(
+			'external_ucss',
+			array(
+				'status' => 'no_change',
+				'detail' => __( 'No stylesheet links found.', 'ams-cache' ),
+				'metrics' => array(
+					'files'          => 0,
+					'optimizedFiles' => 0,
+					'skippedFiles'   => 0,
+					'beforeBytes'    => 0,
+					'afterBytes'     => 0,
+					'savedBytes'     => 0,
+				),
+			)
+		);
+
+		return $html;
+	}
+
+	$purgecss = scm_get_executable_command( $settings['purgecss_path'] );
+	$workspace = scm_create_page_optimization_workspace( 'external-ucss' );
+
+	if ( '' === $purgecss || '' === $workspace ) {
+		scm_set_page_optimization_runtime(
+			'external_ucss',
+			array(
+				'status'  => 'failed',
+				'detail'  => __( 'External UCSS engine could not start.', 'ams-cache' ),
+				'metrics' => array(),
+			)
+		);
+
+		return $html;
+	}
+
+	$content_file = trailingslashit( $workspace ) . 'content.html';
+	$output_dir   = trailingslashit( $workspace ) . 'output';
+	$max_size     = (int) $settings['external_ucss_max_file_size'];
+	$css_files    = array();
+	$entries      = array();
+	$before_bytes = 0;
+	$after_bytes  = 0;
+	$skipped      = 0;
+
+	wp_mkdir_p( $output_dir );
+	file_put_contents( $content_file, $html );
+
+	foreach ( $matches as $index => $match ) {
+		$tag = $match[0];
+
+		if ( ! scm_is_external_ucss_candidate( $tag ) ) {
+			continue;
+		}
+
+		$href = html_entity_decode( scm_html_get_attribute( $tag, 'href' ), ENT_QUOTES, 'UTF-8' );
+		$path = scm_local_asset_url_to_path( $href );
+
+		if (
+			'' === $href ||
+			'' === $path ||
+			! is_file( $path ) ||
+			! is_readable( $path ) ||
+			'css' !== strtolower( pathinfo( $path, PATHINFO_EXTENSION ) )
+		) {
+			$skipped++;
+			continue;
+		}
+
+		$file_size = filesize( $path );
+
+		if ( false === $file_size || $file_size <= 0 || $file_size > $max_size ) {
+			$skipped++;
+			continue;
+		}
+
+		$css = file_get_contents( $path );
+
+		if ( false === $css || '' === trim( $css ) ) {
+			$skipped++;
+			continue;
+		}
+
+		if ( preg_match( '/@import\b/i', $css ) ) {
+			$skipped++;
+			continue;
+		}
+
+		$css_file = 'stylesheet-' . count( $css_files ) . '.css';
+		file_put_contents( trailingslashit( $workspace ) . $css_file, $css );
+
+		$css_files[] = $css_file;
+		$entries[]   = array(
+			'index' => $index,
+			'tag'   => $tag,
+			'href'  => $href,
+			'media' => scm_html_get_attribute( $tag, 'media' ),
+			'file'  => $css_file,
+			'bytes' => strlen( $css ),
+		);
+		$before_bytes += strlen( $css );
+	}
+
+	if ( empty( $entries ) ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'external_ucss',
+			array(
+				'status' => 'no_change',
+				'detail' => __( 'No eligible same-site stylesheet files found.', 'ams-cache' ),
+				'metrics' => array(
+					'files'          => 0,
+					'optimizedFiles' => 0,
+					'skippedFiles'   => $skipped,
+					'beforeBytes'    => 0,
+					'afterBytes'     => 0,
+					'savedBytes'     => 0,
+				),
+			)
+		);
+
+		return $html;
+	}
+
+	$safelist        = scm_get_lines_from_textarea( $settings['ucss_safelist'] );
+	$command         = scm_build_local_ucss_command( $purgecss, $css_files, $safelist, 'output' );
+	$result          = scm_run_local_optimizer_command( $command, $workspace );
+	$batch_succeeded = $result['passed'];
+	$replacements    = array();
+	$optimized       = 0;
+	$failure_detail  = '';
+
+	foreach ( $entries as $entry ) {
+		$output_file = trailingslashit( $output_dir ) . $entry['file'];
+
+		if ( ! $batch_succeeded ) {
+			$block_output_dir = 'output-' . $entry['index'];
+			wp_mkdir_p( trailingslashit( $workspace ) . $block_output_dir );
+
+			$block_command = scm_build_local_ucss_command( $purgecss, array( $entry['file'] ), $safelist, $block_output_dir );
+			$block_result  = scm_run_local_optimizer_command( $block_command, $workspace );
+			$output_file   = trailingslashit( $workspace ) . $block_output_dir . '/' . $entry['file'];
+
+			if ( ! $block_result['passed'] ) {
+				$skipped++;
+				$after_bytes += $entry['bytes'];
+
+				if ( '' === $failure_detail ) {
+					$failure_detail = scm_get_local_optimizer_error_detail(
+						$block_result['output'],
+						__( 'PurgeCSS could not parse one stylesheet.', 'ams-cache' )
+					);
+				}
+
+				continue;
+			}
+		}
+
+		if ( ! file_exists( $output_file ) ) {
+			$skipped++;
+			$after_bytes += $entry['bytes'];
+
+			if ( '' === $failure_detail ) {
+				$failure_detail = __( 'PurgeCSS output was incomplete.', 'ams-cache' );
+			}
+
+			continue;
+		}
+
+		$purged_css = scm_rewrite_css_relative_urls( file_get_contents( $output_file ), $entry['href'] );
+		$purged_css = scm_minify_css( $purged_css );
+		$purged_len = strlen( $purged_css );
+
+		if ( '' === $purged_css || $purged_len >= $entry['bytes'] ) {
+			$skipped++;
+			$after_bytes += $entry['bytes'];
+			continue;
+		}
+
+		$style = '<style data-ams-cache-external-ucss="' . esc_attr( $entry['href'] ) . '"';
+
+		if ( '' !== $entry['media'] ) {
+			$style .= ' media="' . esc_attr( $entry['media'] ) . '"';
+		}
+
+		$style .= '>' . $purged_css . '</style>';
+
+		$replacements[ $entry['index'] ] = $style;
+		$after_bytes += $purged_len;
+		$optimized++;
+	}
+
+	if ( empty( $replacements ) ) {
+		scm_delete_page_optimization_workspace( $workspace );
+		scm_set_page_optimization_runtime(
+			'external_ucss',
+			array(
+				'status' => '' !== $failure_detail ? 'failed' : 'no_change',
+				'detail' => '' !== $failure_detail
+					? $failure_detail
+					: __( 'External UCSS found no smaller stylesheet output.', 'ams-cache' ),
+				'metrics' => array(
+					'files'          => count( $entries ),
+					'optimizedFiles' => 0,
+					'skippedFiles'   => $skipped,
+					'beforeBytes'    => $before_bytes,
+					'afterBytes'     => $before_bytes,
+					'savedBytes'     => 0,
+				),
+			)
+		);
+
+		return $html;
+	}
+
+	$link_index = 0;
+	$html = preg_replace_callback(
+		'#<link\b[^>]*>#is',
+		function ( $match ) use ( &$link_index, $replacements ) {
+			$replacement = isset( $replacements[ $link_index ] ) ? $replacements[ $link_index ] : $match[0];
+			$link_index++;
+
+			return $replacement;
+		},
+		$html
+	);
+
+	scm_delete_page_optimization_workspace( $workspace );
+	scm_set_page_optimization_runtime(
+		'external_ucss',
+		array(
+			'status' => 'applied',
+			'detail' => sprintf(
+				/* translators: 1: before size, 2: after size, 3: optimized files, 4: skipped files. */
+				__( '%1$s external CSS before, %2$s after; %3$s files optimized, %4$s skipped.', 'ams-cache' ),
+				size_format( $before_bytes, 2 ),
+				size_format( $after_bytes, 2 ),
+				number_format_i18n( $optimized ),
+				number_format_i18n( $skipped )
+			),
+			'metrics' => array(
+				'files'          => count( $entries ),
+				'optimizedFiles' => $optimized,
+				'skippedFiles'   => $skipped,
+				'beforeBytes'    => $before_bytes,
+				'afterBytes'     => $after_bytes,
+				'savedBytes'     => max( 0, $before_bytes - $after_bytes ),
 			),
 		)
 	);
@@ -2018,8 +3961,14 @@ function scm_optimize_html( $html ) {
 		$html = scm_optimize_media_tags( $html, $settings );
 	}
 
+	$html = scm_rewrite_cached_attachment_images( $html, $settings );
+
 	if ( 'yes' === $settings['preconnect_fonts'] ) {
 		$html = scm_add_font_preconnects( $html );
+	}
+
+	if ( 'yes' === $settings['external_ucss'] ) {
+		$html = scm_apply_external_ucss( $html, $settings );
 	}
 
 	if ( 'yes' === $settings['local_ucss'] ) {
@@ -2191,6 +4140,15 @@ function scm_get_page_optimization_requirements() {
 	$purgecss_check = scm_check_executable_version( $settings['purgecss_path'] );
 	$work_dir       = scm_get_page_optimization_work_dir();
 	$work_dir_ready = is_dir( $work_dir ) ? is_writable( $work_dir ) : wp_mkdir_p( $work_dir );
+	$image_support  = array();
+	$image_ready    = true;
+	$node_image_check = scm_check_node_image_optimizer();
+
+	foreach ( $settings['image_formats'] as $format ) {
+		$supported       = scm_image_editor_supports_format( $format );
+		$image_ready     = $image_ready && $supported;
+		$image_support[] = strtoupper( $format ) . ': ' . ( $supported ? __( 'supported', 'ams-cache' ) : __( 'not supported', 'ams-cache' ) );
+	}
 
 	return array(
 		'cache_status' => array(
@@ -2224,7 +4182,7 @@ function scm_get_page_optimization_requirements() {
 			'detail' => $node_check['detail'],
 		),
 		'purgecss'     => array(
-			'label'  => __( 'PurgeCSS CLI for Local UCSS', 'ams-cache' ),
+			'label'  => __( 'PurgeCSS CLI for Local and External UCSS', 'ams-cache' ),
 			'passed' => $purgecss_check['passed'],
 			'detail' => $purgecss_check['detail'],
 		),
@@ -2232,6 +4190,21 @@ function scm_get_page_optimization_requirements() {
 			'label'  => __( 'Local optimizer workspace', 'ams-cache' ),
 			'passed' => $work_dir_ready,
 			'detail' => $work_dir_ready ? __( 'Workspace is writable.', 'ams-cache' ) : __( 'Workspace is not writable.', 'ams-cache' ),
+		),
+		'image_editor' => array(
+			'label'  => __( 'Image editor for WebP/AVIF', 'ams-cache' ),
+			'passed' => $image_ready || $node_image_check['passed'],
+			'detail' => implode( ', ', $image_support ),
+		),
+		'node_image_optimizer' => array(
+			'label'  => __( 'Node image optimizer', 'ams-cache' ),
+			'passed' => $node_image_check['passed'],
+			'detail' => $node_image_check['detail'],
+		),
+		'uploads_writable' => array(
+			'label'  => __( 'Uploads directory for image variants', 'ams-cache' ),
+			'passed' => is_writable( wp_get_upload_dir()['basedir'] ),
+			'detail' => is_writable( wp_get_upload_dir()['basedir'] ) ? __( 'Uploads directory is writable.', 'ams-cache' ) : __( 'Uploads directory is not writable.', 'ams-cache' ),
 		),
 	);
 }
@@ -2650,13 +4623,13 @@ function scm_javascript() {
 			var scm_text_page_generation_time = "";
 
 			if ("before" in scm_report) {
-				scm_text_cache_status = "No";
+				scm_text_cache_status = "ទេ";
 				scm_text_memory_usage = scm_report["before"]["memory_usage"];
 				scm_text_sql_queries = scm_report["before"]["sql_queries"];
 				scm_text_page_generation_time = scm_report["before"]["page_generation_time"];
 			}
 			if ("after" in scm_report) {
-				scm_text_cache_status = "Yes";
+				scm_text_cache_status = "មាន";
 				scm_text_memory_usage = scm_report["after"]["memory_usage"];
 				scm_text_sql_queries = scm_report["after"]["sql_queries"];
 				scm_text_page_generation_time = scm_report["after"]["page_generation_time"];
@@ -3428,4 +5401,32 @@ function scm_process_preload_queue() {
 
 	return count( $batch );
 }
+
+/**
+ * Register WordPress hooks that are unsafe before WordPress core loads.
+ *
+ * Expert Mode includes helpers.php from wp-config.php before add_filter() exists,
+ * so hook registration must be delayed until the plugin runs inside WordPress.
+ *
+ * @return void
+ */
+function scm_register_wordpress_hooks() {
+	static $registered = false;
+
+	if ( $registered || ! function_exists( 'add_filter' ) || ! function_exists( 'add_action' ) ) {
+		return;
+	}
+
+	add_filter( 'wp_generate_attachment_metadata', 'scm_queue_image_optimization_on_upload', 1, 2 );
+	add_filter( 'wp_update_attachment_metadata', 'scm_optimize_image_metadata_on_update', 5, 2 );
+	add_action( 'scm_process_image_optimization_queue', 'scm_process_image_optimization_queue' );
+	add_action( 'scm_process_single_image_optimization', 'scm_process_single_image_optimization', 10, 1 );
+	add_filter( 'wp_get_attachment_image', 'scm_filter_attachment_image_html', 20, 5 );
+	add_filter( 'khs3data_local_deletion_rule', 'scm_preserve_local_images_for_pending_optimization', 20, 2 );
+	add_filter( 'khs3data_should_offload_attachment', 'scm_should_delay_advanced_media_offload_for_image_optimization', 5, 2 );
+
+	$registered = true;
+}
+
+scm_register_wordpress_hooks();
 

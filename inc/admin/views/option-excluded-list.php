@@ -18,7 +18,12 @@ $option_excluded_list = get_option( 'scm_option_excluded_list_filtered', '' );
 
 <div>
 	<div class="scm-option-item">
-		<textarea name="scm_option_excluded_list" class="scm-texatrea" rows="15" cols="70"><?php echo $option_excluded_list; ?></textarea>
+		<textarea
+			name="scm_option_excluded_list"
+			class="ams-rules-textarea"
+			rows="15"
+			placeholder="<?php esc_attr_e( '/custom-type/ — one URL per line', 'ams-cache' ); ?>"
+		><?php echo esc_textarea( $option_excluded_list ); ?></textarea>
 	</div>	
 </div>
 <p><em><?php _e( 'Please enter the <strong>begin with</strong> URLs you want them excluded from AMS Cache.', 'ams-cache' ); ?></em></p>

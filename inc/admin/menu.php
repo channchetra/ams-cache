@@ -139,7 +139,7 @@ function scm_about_page() {
 }
 
 /**
- * Resolve the initial Vue console view from the current admin URL.
+ * Resolve the initial React console view from the current admin URL.
  *
  * @return string
  */
@@ -244,6 +244,65 @@ function scm_plugin_extend_links( $links, $file ) {
 }
 
 /**
+ * Get built Vite admin asset manifest entry.
+ *
+ * @return array
+ */
+function scm_get_admin_build_asset_entry() {
+	static $entry = null;
+
+	if ( null !== $entry ) {
+		return $entry;
+	}
+
+	$entry = array();
+	$manifest_path = SCM_PLUGIN_DIR . 'inc/assets/build/.vite/manifest.json';
+
+	if ( ! file_exists( $manifest_path ) ) {
+		return $entry;
+	}
+
+	$manifest = json_decode( file_get_contents( $manifest_path ), true );
+
+	if ( ! is_array( $manifest ) ) {
+		return $entry;
+	}
+
+	foreach ( array( 'assets/src/admin.jsx', 'assets/src/admin.js', 'admin.js' ) as $key ) {
+		if ( ! empty( $manifest[ $key ] ) && is_array( $manifest[ $key ] ) ) {
+			$entry = $manifest[ $key ];
+			return $entry;
+		}
+	}
+
+	return $entry;
+}
+
+/**
+ * Build URL for a Vite output asset.
+ *
+ * @param string $file Asset path inside inc/assets/build.
+ *
+ * @return string
+ */
+function scm_get_admin_build_asset_url( $file ) {
+	return SCM_PLUGIN_URL . 'inc/assets/build/' . ltrim( $file, '/' );
+}
+
+/**
+ * Build cache-busting version for a Vite output asset.
+ *
+ * @param string $file Asset path inside inc/assets/build.
+ *
+ * @return string
+ */
+function scm_get_admin_build_asset_version( $file ) {
+	$path = SCM_PLUGIN_DIR . 'inc/assets/build/' . ltrim( $file, '/' );
+
+	return file_exists( $path ) ? (string) filemtime( $path ) : SCM_PLUGIN_VERSION;
+}
+
+/**
  * Load specfic CSS file for the AMS Cache setting page.
  */
 function scm_admin_enqueue_styles( $hook_suffix ) {
@@ -251,7 +310,24 @@ function scm_admin_enqueue_styles( $hook_suffix ) {
 	if ( false === strpos( $hook_suffix, 'ams-cache' ) ) {
 		return;
 	}
-	wp_enqueue_style( 'custom-wp-admin-css', SCM_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), SCM_PLUGIN_VERSION, 'all' );
+
+	$entry = scm_get_admin_build_asset_entry();
+	$css_files = array();
+
+	if ( ! empty( $entry['css'] ) && is_array( $entry['css'] ) ) {
+		$css_files = $entry['css'];
+	} elseif ( file_exists( SCM_PLUGIN_DIR . 'inc/assets/build/admin.css' ) ) {
+		$css_files = array( 'admin.css' );
+	}
+
+	if ( ! empty( $css_files ) ) {
+		foreach ( $css_files as $index => $css_file ) {
+			wp_enqueue_style( 'ams-cache-admin-built-' . $index, scm_get_admin_build_asset_url( $css_file ), array(), scm_get_admin_build_asset_version( $css_file ), 'all' );
+		}
+	} else {
+		wp_enqueue_style( 'custom-wp-admin-css', SCM_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), SCM_PLUGIN_VERSION, 'all' );
+	}
+
 	wp_enqueue_style( 'code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), SCM_PLUGIN_VERSION, 'all' );
 	wp_enqueue_style( 'wp-jquery-ui-dialog' );
 }
@@ -268,8 +344,14 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 	wp_enqueue_script( 'jquery-ui-dialog' );
 
 	if ( false !== strpos( $hook_suffix, 'ams-cache' ) ) {
-		wp_enqueue_script( 'vue3', apply_filters( 'scm_vue_cdn_url', 'https://unpkg.com/vue@3/dist/vue.global.prod.js' ), array(), '3', true );
-		wp_enqueue_script( 'ams-cache-dashboard', SCM_PLUGIN_URL . 'inc/assets/js/admin-dashboard.js', array( 'vue3' ), SCM_PLUGIN_VERSION, true );
+		$entry = scm_get_admin_build_asset_entry();
+
+		if ( empty( $entry['file'] ) ) {
+			return;
+		}
+
+		wp_enqueue_script( 'ams-cache-dashboard', scm_get_admin_build_asset_url( $entry['file'] ), array(), scm_get_admin_build_asset_version( $entry['file'] ), true );
+
 		wp_localize_script(
 			'ams-cache-dashboard',
 			'amsCacheDashboard',
@@ -284,7 +366,6 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 					'saving'  => __( 'Saving...', 'ams-cache' ),
 					'saved'   => __( 'Settings saved.', 'ams-cache' ),
 					'saveFail'=> __( 'Settings could not be saved.', 'ams-cache' ),
-					'vueFail' => __( 'AMS Cache dashboard could not load Vue 3. Check CDN access or override the scm_vue_cdn_url filter.', 'ams-cache' ),
 					'yes'     => __( 'Yes', 'ams-cache' ),
 					'no'      => __( 'No', 'ams-cache' ),
 					'views'   => array(
@@ -308,8 +389,10 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 						'critical_images'   => __( 'Critical images', 'ams-cache' ),
 						'preconnect_fonts'  => __( 'Font preconnect', 'ams-cache' ),
 						'defer_js'          => __( 'Defer JavaScript', 'ams-cache' ),
+						'external_ucss'     => __( 'External UCSS', 'ams-cache' ),
 						'local_ucss'        => __( 'Local UCSS', 'ams-cache' ),
 						'js_analysis'       => __( 'JS analysis', 'ams-cache' ),
+						'image_optimization' => __( 'Image optimization', 'ams-cache' ),
 					),
 					'statuses' => array(
 						'applied'        => __( 'Applied', 'ams-cache' ),
@@ -331,16 +414,6 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
  * @return void
  */
 function scm_show_settings_header() {
-	$git_url_core   = 'https://github.com/terrylinooo/simple-cache';
-	$git_url_plugin = 'https://ams.com.kh/';
-
-	echo '<div class="ams-cache-info-bar">';
-	echo '	<div class="logo-info"><img src="' . SCM_PLUGIN_URL . 'inc/assets/images/logo.png" class="ams-cache-logo"><div><h1>AMS Cache</h1><span>' . esc_html__( 'WordPress cache console', 'ams-cache' ) . '</span></div></div>';
-	echo '	<div class="version-info">';
-	echo '    Core: <a href="' . $git_url_core . '" target="_blank">' . SCM_CORE_VERSION . '</a>  ';
-	echo '    Plugin: <a href="' . $git_url_plugin . '" target="_blank">' . SCM_PLUGIN_VERSION . '</a>  ';
-	echo '  </div>';
-	echo '</div>';
 	echo '<div class="wrap scm-wrap">';
 
 	if ( '' === get_option( 'permalink_structure' ) ) {

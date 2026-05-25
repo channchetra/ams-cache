@@ -364,44 +364,35 @@ class Cache_Master {
 
 		if ( $is_widget || $is_footer ) {
 			$custom_css .= '
-				.scm-tr .scm-td:first-child {
-					width: 60%;
+				.scm-img {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					flex: 0 0 28px;
+					width: 28px;
+					height: 28px;
+					border: 0;
+					border-radius: 10px;
+					background: #eff6ff;
+					color: #3b82f6;
+					line-height: 1;
+					overflow: hidden;
 				}
-				.scm-tr .scm-td:last-child {
-					width: 40%;
+				.scm-img svg {
+					width: 16px;
+					height: 16px;
 				}
-				.scm-td svg {
-					width: 17px;
-					height: 17px;
+				.scm-img path {
+					fill: currentColor;
 				}
 				.scm-text {
+					color: #111827;
+					font-weight: 600;
 					vertical-align: middle;
-					padding-left: 5px;
 				}
-				.scm-img {
-					background-color: #ffffff;
-					border: 2px #cccccc solid;
-					border-radius: 50%;
-					width: 27px;
-					height: 27px;
-					line-height: 32px;
-					display: inline-block;
-					vertical-align: middle;
-					overflow: hidden;
-					text-align: center;
-					cursor: pointer;
-				}
-				.scm-img-1 path {
-					fill: #999999;
-				}
-				.scm-img-2 path {
-					fill: #999999;
-				}
-				.scm-img-3 path {
-					fill: #999999;
-				}
-				.scm-img-4 path {
-					fill: #999999;
+				.scm-value {
+					color: #111827;
+					font-weight: 700;
 				}
 			';
 		}
@@ -409,21 +400,35 @@ class Cache_Master {
 		if ( $is_widget ) {
 			$custom_css .= '
 				.ams-cache-plugin-widget {
-					
+					overflow: hidden;
+					border-radius: 16px;
+					background: #ffffff;
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 				}
 				.ams-cache-plugin-widget .scm-table {
-					display: table;                       
-					padding: 5px;
+					display: grid;
+					gap: 0;
 					width: 100%;
 				}
 				.ams-cache-plugin-widget .scm-tr {
-					display: table-row;
-					clear: both;
+					display: grid;
+					grid-template-columns: minmax(0, 1fr) auto;
+					gap: 12px;
+					align-items: center;
+					padding: 12px 14px;
+					border-top: 1px solid #e5e7eb;
+				}
+				.ams-cache-plugin-widget .scm-tr:first-child {
+					border-top: 0;
 				}
 				.ams-cache-plugin-widget .scm-td {
-					font-size: 14px;
-					padding: 3px 10px;
-					display: table-cell;         
+					display: inline-flex;
+					align-items: center;
+					gap: 8px;
+					min-width: 0;
+					padding: 0;
+					font-size: 13px;
+					line-height: 1.4;
 				}
 			';
 
@@ -440,11 +445,8 @@ class Cache_Master {
 					.ams-cache-plugin-widget .scm-text  {
 						display: none;
 					}
-					.ams-cache-plugin-widget .scm-tr .scm-td:first-child {
-						width: 15%;
-					}
-					.ams-cache-plugin-widget .scm-tr .scm-td:last-child {
-						width: 85%;
+					.ams-cache-plugin-widget .scm-tr {
+						grid-template-columns: 40px minmax(0, 1fr);
 					}
 				';
 			}
@@ -454,32 +456,37 @@ class Cache_Master {
 			$custom_css .= '
 				.ams-cache-benchmark-report {
 					clear: both;
-					display: block;
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;
+					justify-content: center;
+					gap: 8px;
 					width: 100%;
 					text-align: center;
 					font-size: 12px;
-					margin: 10px 0;
+					margin: 12px 0;
 				}
 				.ams-cache-benchmark-report .scm-td {
+					display: inline-flex;
+					align-items: center;
+					gap: 6px;
+					min-height: 34px;
+					padding: 5px 10px;
+					border: 1px solid #e5e7eb;
+					border-radius: 999px;
+					background: #ffffff;
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 					font-size: 13px;
-					display: inline-block;
-					position: relative;        
-				}
-				.ams-cache-benchmark-report .scm-value {
-					display: inline-block;
-					margin-right: 5px;
-					vertical-align: middle;
-					font-weight: 600;
 				}
 				.ams-cache-benchmark-report .scm-img {
 					width: 22px;
 					height: 22px;
+					flex-basis: 22px;
+					border-radius: 8px;
 				}
 				.ams-cache-benchmark-report .scm-td svg {
 					width: 14px;
 					height: 14px;
-					position: relative;
-					top: -4px;
 				}
 			';
 
@@ -754,30 +761,30 @@ class Cache_Master {
 			<div class="ams-cache-benchmark-report" style="display: none">
 				<div class="scm-td">
 					<span class="scm-img scm-img-1" title="' . esc_attr( __( 'Cache status powered by AMS Cache plugin', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'status' ) . '</span>
-					<span class="scm-text">' .  __( 'Cache status', 'ams-cache' ) . ': </span>
+					<span class="scm-text">' .  __( 'ស្ថានភាពឃ្លាំង', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-cache-status">-</span>
 					</span>
 				</div>
 				<div class="scm-td">
 					<span class="scm-img scm-img-2" title="' . esc_attr( __( 'Memory usage', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'memory' ) . '</span>
-					<span class="scm-text">' .  __( 'Memory usage', 'ams-cache' ) . ': </span>
+					<span class="scm-text">' .  __( 'អង្គចងចាំ', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-memory-usage">-</span> MB
 					</span>
 				</div>
 				<div class="scm-td">
 					<span class="scm-img scm-img-3" title="' . esc_attr( __( 'SQL queries', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'database' ) . '</span>
-					<span class="scm-text">' .  __( 'SQL queries', 'ams-cache' ) . ': </span>
+					<span class="scm-text">' .  __( 'សំណួរ SQL', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
 						<span class="scm-field-sql-queries">-</span>
 					</span>
 				</div>
 				<div class="scm-td">
 					<span class="scm-img scm-img-4" title="' . esc_attr( __( 'Page generation time', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'speed' ) . '</span>
-					<span class="scm-text">' .  __( 'Page generation time', 'ams-cache' ) . ': </span>
+					<span class="scm-text">' .  __( 'ពេលបង្កើតទំព័រ', 'ams-cache' ) . ': </span>
 					<span class="scm-value">
-						<span class="scm-field-page-generation-time">-</span> (' .  __( 'sec', 'ams-cache' ) . ')
+						<span class="scm-field-page-generation-time">-</span> (' .  __( 'វិនាទី', 'ams-cache' ) . ')
 					</span>
 				</div>
 			</div>';

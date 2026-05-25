@@ -6,6 +6,7 @@ build_release.sh
 composer.lock
 .vscode
 vendor
+node_modules/
 !vendor/psr
 !vendor/shieldon
 !vendor/autoload.php
@@ -13,3 +14,13 @@ vendor
 dist/
 *.zip
 sample.txt
+graphify-out/
+.agents/
+.opencode/
+.understand-anything/
+.code-review-graph/
+AGENTS.md
+DESIGN.md
+SESSION_MEMORY.md
+skills-lock.json
+economy*.json

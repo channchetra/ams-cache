@@ -24,6 +24,9 @@ add_action( 'wp_ajax_scm_action_dashboard_clear_cache_type', 'scm_ajax_dashboard
 add_action( 'wp_ajax_scm_action_dashboard_reports', 'scm_ajax_dashboard_reports_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_preload', 'scm_ajax_dashboard_preload_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_purge_homepage', 'scm_ajax_dashboard_purge_homepage_callback' );
+add_action( 'wp_ajax_scm_action_dashboard_queue_images', 'scm_ajax_dashboard_queue_images_callback' );
+add_action( 'wp_ajax_scm_action_dashboard_test_driver', 'scm_ajax_dashboard_test_driver_callback' );
+add_action( 'wp_ajax_scm_action_dashboard_save_settings', 'scm_ajax_dashboard_save_settings_callback' );
 
 /**
  * Validate dashboard AJAX request.
@@ -141,6 +144,287 @@ function scm_ajax_dashboard_status_callback() {
 	wp_send_json_success(
 		array(
 			'status' => scm_dashboard_get_status_data(),
+		)
+	);
+}
+
+/**
+ * Test the selected cache driver.
+ *
+ * @return void
+ */
+function scm_ajax_dashboard_test_driver_callback() {
+	scm_ajax_dashboard_guard();
+
+	$driver = isset( $_POST['driver'] ) ? sanitize_key( wp_unslash( $_POST['driver'] ) ) : get_option( 'scm_option_driver', 'file' );
+	$result = scm_dashboard_test_driver_connection( $driver );
+
+	$response = array(
+		'message'    => $result['message'],
+		'driverTest' => $result,
+		'status'     => scm_dashboard_get_status_data(),
+	);
+
+	if ( ! empty( $result['passed'] ) ) {
+		wp_send_json_success( $response );
+	}
+
+	wp_send_json_error( $response );
+}
+
+/**
+ * Normalize a yes/no setting value.
+ *
+ * @param mixed  $value   Incoming value.
+ * @param string $default Default value.
+ *
+ * @return string
+ */
+function scm_ajax_dashboard_yes_no( $value, $default = 'no' ) {
+	$value = is_bool( $value ) ? ( $value ? 'yes' : 'no' ) : sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'yes', 'no' ), true ) ? $value : $default;
+}
+
+/**
+ * Normalize an enable/disable setting value.
+ *
+ * @param mixed  $value   Incoming value.
+ * @param string $default Default value.
+ *
+ * @return string
+ */
+function scm_ajax_dashboard_enable_disable( $value, $default = 'disable' ) {
+	$value = is_bool( $value ) ? ( $value ? 'enable' : 'disable' ) : sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'enable', 'disable' ), true ) ? $value : $default;
+}
+
+/**
+ * Sanitize advanced driver connection type.
+ *
+ * @param mixed $value Incoming value.
+ *
+ * @return string
+ */
+function scm_ajax_dashboard_connection_type( $value ) {
+	$value = sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'tcp', 'socket' ), true ) ? $value : 'tcp';
+}
+
+/**
+ * Save yes/no toggle map from React list.
+ *
+ * @param array  $items      Toggle items.
+ * @param string $option_key Option key.
+ *
+ * @return void
+ */
+function scm_ajax_dashboard_save_toggle_map( $items, $option_key ) {
+	if ( ! is_array( $items ) ) {
+		return;
+	}
+
+	$value = array();
+
+	foreach ( $items as $item ) {
+		if ( ! is_array( $item ) || empty( $item['value'] ) ) {
+			continue;
+		}
+
+		if ( 'yes' === scm_ajax_dashboard_yes_no( isset( $item['enabled'] ) ? $item['enabled'] : 'no' ) ) {
+			$value[ sanitize_key( $item['value'] ) ] = 'yes';
+		}
+	}
+
+	update_option( $option_key, $value );
+}
+
+/**
+ * Save React dashboard settings.
+ *
+ * @return void
+ */
+function scm_ajax_dashboard_save_settings_callback() {
+	scm_ajax_dashboard_guard();
+
+	$raw      = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
+	$settings = json_decode( (string) $raw, true );
+
+	if ( ! is_array( $settings ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Settings payload is invalid.', 'ams-cache' ),
+			)
+		);
+	}
+
+	if ( isset( $settings['cache'] ) && is_array( $settings['cache'] ) ) {
+		$cache   = $settings['cache'];
+		$drivers = array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' );
+		$driver  = isset( $cache['driver'] ) ? sanitize_key( $cache['driver'] ) : get_option( 'scm_option_driver', 'file' );
+
+		update_option( 'scm_option_caching_status', scm_ajax_dashboard_enable_disable( isset( $cache['cachingStatus'] ) ? $cache['cachingStatus'] : get_option( 'scm_option_caching_status', 'disable' ) ) );
+		update_option( 'scm_option_driver', in_array( $driver, $drivers, true ) ? $driver : 'file' );
+		update_option( 'scm_option_ttl_mechanism', scm_ajax_dashboard_enable_disable( isset( $cache['ttlMechanism'] ) ? $cache['ttlMechanism'] : get_option( 'scm_option_ttl_mechanism', 'enable' ), 'enable' ) );
+		update_option( 'scm_option_ttl', max( 300, min( 2592000, absint( isset( $cache['ttl'] ) ? $cache['ttl'] : get_option( 'scm_option_ttl', 86400 ) ) ) ) );
+		update_option( 'scm_option_cache_key_prefix', sanitize_key( isset( $cache['cacheKeyPrefix'] ) ? $cache['cacheKeyPrefix'] : scm_get_cache_key_prefix() ) );
+		update_option( 'scm_option_cache_max_entries', max( 0, absint( isset( $cache['maxEntries'] ) ? $cache['maxEntries'] : scm_get_cache_max_entries() ) ) );
+		update_option( 'scm_option_expert_mode_status', scm_ajax_dashboard_enable_disable( isset( $cache['expertModeStatus'] ) ? $cache['expertModeStatus'] : get_option( 'scm_option_expert_mode_status', 'disable' ) ) );
+		update_option( 'scm_option_nginx_direct_cache_status', scm_ajax_dashboard_yes_no( isset( $cache['nginxDirect'] ) ? $cache['nginxDirect'] : get_option( 'scm_option_nginx_direct_cache_status', 'no' ) ) );
+		update_option( 'scm_option_html_debug_comment', scm_ajax_dashboard_yes_no( isset( $cache['debugComment'] ) ? $cache['debugComment'] : get_option( 'scm_option_html_debug_comment', 'yes' ), 'yes' ) );
+		update_option( 'scm_option_visibility_login_user', 'no' );
+		update_option( 'scm_option_visibility_guest', 'yes' );
+
+		if ( isset( $cache['driverAdvanced'] ) && is_array( $cache['driverAdvanced'] ) ) {
+			$advanced = $cache['driverAdvanced'];
+			$file     = isset( $advanced['file'] ) && is_array( $advanced['file'] ) ? $advanced['file'] : array();
+			$redis    = isset( $advanced['redis'] ) && is_array( $advanced['redis'] ) ? $advanced['redis'] : array();
+			$memcache = isset( $advanced['memcached'] ) && is_array( $advanced['memcached'] ) ? $advanced['memcached'] : ( isset( $advanced['memcache'] ) && is_array( $advanced['memcache'] ) ? $advanced['memcache'] : array() );
+			$mongodb  = isset( $advanced['mongodb'] ) && is_array( $advanced['mongodb'] ) ? $advanced['mongodb'] : ( isset( $advanced['mongo'] ) && is_array( $advanced['mongo'] ) ? $advanced['mongo'] : array() );
+			$conn     = isset( $advanced['connection'] ) && is_array( $advanced['connection'] ) ? $advanced['connection'] : array();
+
+			update_option(
+				'scm_option_advanced_driver_file',
+				array(
+					'compress'           => scm_ajax_dashboard_yes_no( isset( $file['compress'] ) ? $file['compress'] : 'no' ),
+					'compress_threshold' => max( 0, absint( isset( $file['compress_threshold'] ) ? $file['compress_threshold'] : 4096 ) ),
+					'compress_level'     => max( 1, min( 9, absint( isset( $file['compress_level'] ) ? $file['compress_level'] : 1 ) ) ),
+				)
+			);
+			update_option(
+				'scm_option_advanced_driver_redis',
+				array(
+					'host'               => sanitize_text_field( isset( $redis['host'] ) ? $redis['host'] : '127.0.0.1' ),
+					'port'               => max( 1, absint( isset( $redis['port'] ) ? $redis['port'] : 6379 ) ),
+					'user'               => sanitize_text_field( isset( $redis['user'] ) ? $redis['user'] : '' ),
+					'pass'               => sanitize_text_field( isset( $redis['pass'] ) ? $redis['pass'] : '' ),
+					'database'           => max( 0, min( 15, absint( isset( $redis['database'] ) ? $redis['database'] : 0 ) ) ),
+					'unix_socket'        => sanitize_text_field( isset( $redis['unix_socket'] ) ? $redis['unix_socket'] : '' ),
+					'compress'           => scm_ajax_dashboard_yes_no( isset( $redis['compress'] ) ? $redis['compress'] : 'yes', 'yes' ),
+					'compress_threshold' => max( 0, absint( isset( $redis['compress_threshold'] ) ? $redis['compress_threshold'] : 1024 ) ),
+					'compress_level'     => max( 1, min( 9, absint( isset( $redis['compress_level'] ) ? $redis['compress_level'] : 6 ) ) ),
+				)
+			);
+			update_option(
+				'scm_option_advanced_driver_memcached',
+				array(
+					'host'        => sanitize_text_field( isset( $memcache['host'] ) ? $memcache['host'] : '127.0.0.1' ),
+					'port'        => max( 1, absint( isset( $memcache['port'] ) ? $memcache['port'] : 11211 ) ),
+					'unix_socket' => sanitize_text_field( isset( $memcache['unix_socket'] ) ? $memcache['unix_socket'] : '' ),
+				)
+			);
+			update_option(
+				'scm_option_advanced_driver_mongodb',
+				array(
+					'host'        => sanitize_text_field( isset( $mongodb['host'] ) ? $mongodb['host'] : '127.0.0.1' ),
+					'port'        => max( 1, absint( isset( $mongodb['port'] ) ? $mongodb['port'] : 27017 ) ),
+					'user'        => sanitize_text_field( isset( $mongodb['user'] ) ? $mongodb['user'] : '' ),
+					'pass'        => sanitize_text_field( isset( $mongodb['pass'] ) ? $mongodb['pass'] : '' ),
+					'dbname'      => sanitize_text_field( isset( $mongodb['dbname'] ) ? $mongodb['dbname'] : ( isset( $mongodb['database'] ) ? $mongodb['database'] : 'test' ) ),
+					'collection'  => sanitize_text_field( isset( $mongodb['collection'] ) ? $mongodb['collection'] : 'cache_data' ),
+					'unix_socket' => sanitize_text_field( isset( $mongodb['unix_socket'] ) ? $mongodb['unix_socket'] : '' ),
+				)
+			);
+			update_option( 'scm_option_advanced_driver_redis_connection_type', scm_ajax_dashboard_connection_type( isset( $conn['redis'] ) ? $conn['redis'] : 'tcp' ) );
+			update_option( 'scm_option_advanced_driver_memcached_connection_type', scm_ajax_dashboard_connection_type( isset( $conn['memcached'] ) ? $conn['memcached'] : ( isset( $conn['memcache'] ) ? $conn['memcache'] : 'tcp' ) ) );
+			update_option( 'scm_option_advanced_driver_mongodb_connection_type', scm_ajax_dashboard_connection_type( isset( $conn['mongo'] ) ? $conn['mongo'] : ( isset( $conn['mongodb'] ) ? $conn['mongodb'] : 'tcp' ) ) );
+		}
+	}
+
+	if ( isset( $settings['preload'] ) && is_array( $settings['preload'] ) ) {
+		$preload = $settings['preload'];
+
+		update_option( 'scm_option_preload_cache', scm_ajax_dashboard_yes_no( isset( $preload['enabled'] ) ? $preload['enabled'] : get_option( 'scm_option_preload_cache', 'no' ) ) );
+		update_option( 'scm_option_preload_limit', max( 1, min( 1000, absint( isset( $preload['limit'] ) ? $preload['limit'] : get_option( 'scm_option_preload_limit', 50 ) ) ) ) );
+		update_option( 'scm_option_preload_homepage_links', scm_ajax_dashboard_yes_no( isset( $preload['crawlHomepage'] ) ? $preload['crawlHomepage'] : get_option( 'scm_option_preload_homepage_links', 'yes' ), 'yes' ) );
+		update_option( 'scm_option_post_homepage', scm_ajax_dashboard_yes_no( isset( $preload['homepage'] ) ? $preload['homepage'] : get_option( 'scm_option_post_homepage', 'yes' ), 'yes' ) );
+		scm_ajax_dashboard_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'scm_option_post_types' );
+		scm_ajax_dashboard_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'scm_option_post_archives' );
+	}
+
+	if ( isset( $settings['performance'] ) && is_array( $settings['performance'] ) ) {
+		$incoming = $settings['performance'];
+		$current  = scm_get_page_optimization_settings();
+		$defaults = scm_get_default_page_optimization_settings();
+		$boolean_keys = array(
+			'status',
+			'minify_html',
+			'remove_comments',
+			'minify_inline_css',
+			'lazy_media',
+			'critical_images',
+			'preconnect_fonts',
+			'defer_js',
+			'external_ucss',
+			'local_ucss',
+			'js_analysis',
+			'image_optimization',
+			'image_optimize_on_upload',
+			'image_rewrite_html',
+			'image_remote_rewrite',
+		);
+
+		foreach ( $boolean_keys as $key ) {
+			if ( array_key_exists( $key, $incoming ) ) {
+				$current[ $key ] = scm_ajax_dashboard_yes_no( $incoming[ $key ], isset( $defaults[ $key ] ) ? $defaults[ $key ] : 'no' );
+			}
+		}
+
+		$current['critical_image_count'] = max( 0, min( 5, absint( isset( $incoming['critical_image_count'] ) ? $incoming['critical_image_count'] : $current['critical_image_count'] ) ) );
+		$current['external_ucss_max_file_size'] = max( 51200, min( 1048576, absint( isset( $incoming['external_ucss_max_file_size'] ) ? $incoming['external_ucss_max_file_size'] : $current['external_ucss_max_file_size'] ) ) );
+		$current['node_path']            = sanitize_text_field( isset( $incoming['node_path'] ) ? $incoming['node_path'] : $current['node_path'] );
+		$current['purgecss_path']        = sanitize_text_field( isset( $incoming['purgecss_path'] ) ? $incoming['purgecss_path'] : $current['purgecss_path'] );
+		$current['ucss_safelist']        = sanitize_textarea_field( isset( $incoming['ucss_safelist'] ) ? $incoming['ucss_safelist'] : $current['ucss_safelist'] );
+		$current['media_exclusions']     = sanitize_textarea_field( isset( $incoming['media_exclusions'] ) ? $incoming['media_exclusions'] : $current['media_exclusions'] );
+		$current['js_exclusions']        = sanitize_textarea_field( isset( $incoming['js_exclusions'] ) ? $incoming['js_exclusions'] : $current['js_exclusions'] );
+		$current['image_quality']        = max( 1, min( 100, absint( isset( $incoming['image_quality'] ) ? $incoming['image_quality'] : $current['image_quality'] ) ) );
+		$current['image_batch_size']     = max( 1, min( 20, absint( isset( $incoming['image_batch_size'] ) ? $incoming['image_batch_size'] : $current['image_batch_size'] ) ) );
+		$current['image_formats']        = scm_normalize_image_optimizer_formats( isset( $incoming['image_formats'] ) ? (array) $incoming['image_formats'] : $current['image_formats'] );
+		$primary_format                  = isset( $incoming['image_primary_format'] ) ? sanitize_key( $incoming['image_primary_format'] ) : ( isset( $current['image_primary_format'] ) ? $current['image_primary_format'] : 'webp' );
+		$current['image_primary_format'] = in_array( $primary_format, $current['image_formats'], true ) ? $primary_format : reset( $current['image_formats'] );
+
+		update_option( 'scm_option_page_optimization', $current );
+	}
+
+	if ( isset( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
+		$rules = $settings['rules'];
+
+		update_option( 'scm_option_exclusion_status', scm_ajax_dashboard_yes_no( isset( $rules['enabled'] ) ? $rules['enabled'] : get_option( 'scm_option_exclusion_status', 'no' ) ) );
+		update_option( 'scm_option_excluded_list', sanitize_textarea_field( isset( $rules['excludedList'] ) ? $rules['excludedList'] : get_option( 'scm_option_excluded_list', '' ) ) );
+		update_option( 'scm_option_excluded_get_vars', sanitize_textarea_field( isset( $rules['getVars'] ) ? $rules['getVars'] : get_option( 'scm_option_excluded_get_vars', '' ) ) );
+		update_option( 'scm_option_excluded_post_vars', sanitize_textarea_field( isset( $rules['postVars'] ) ? $rules['postVars'] : get_option( 'scm_option_excluded_post_vars', '' ) ) );
+		update_option( 'scm_option_excluded_cookie_vars', sanitize_textarea_field( isset( $rules['cookieVars'] ) ? $rules['cookieVars'] : get_option( 'scm_option_excluded_cookie_vars', '' ) ) );
+	}
+
+	if ( isset( $settings['statistics'] ) && is_array( $settings['statistics'] ) ) {
+		update_option( 'scm_option_statistics_status', scm_ajax_dashboard_enable_disable( isset( $settings['statistics']['enabled'] ) ? $settings['statistics']['enabled'] : get_option( 'scm_option_statistics_status', 'disable' ) ) );
+	}
+
+	if ( isset( $settings['benchmark'] ) && is_array( $settings['benchmark'] ) ) {
+		$benchmark = $settings['benchmark'];
+		$display   = array( 'text', 'icon', 'both' );
+		$widget_display = isset( $benchmark['widgetDisplay'] ) ? sanitize_key( $benchmark['widgetDisplay'] ) : '';
+		$footer_display = isset( $benchmark['footerDisplay'] ) ? sanitize_key( $benchmark['footerDisplay'] ) : '';
+
+		update_option( 'scm_option_benchmark_widget', scm_ajax_dashboard_yes_no( isset( $benchmark['widget'] ) ? $benchmark['widget'] : get_option( 'scm_option_benchmark_widget', 'no' ) ) );
+		update_option( 'scm_option_benchmark_footer_text', scm_ajax_dashboard_yes_no( isset( $benchmark['footer'] ) ? $benchmark['footer'] : get_option( 'scm_option_benchmark_footer_text', 'no' ) ) );
+		update_option( 'scm_option_benchmark_widget_display', in_array( $widget_display, $display, true ) ? $widget_display : 'both' );
+		update_option( 'scm_option_benchmark_footer_text_display', in_array( $footer_display, $display, true ) ? $footer_display : 'text' );
+	}
+
+	if ( isset( $settings['woocommerce'] ) && is_array( $settings['woocommerce'] ) ) {
+		$woocommerce = $settings['woocommerce'];
+
+		update_option( 'scm_option_woocommerce_status', scm_ajax_dashboard_yes_no( isset( $woocommerce['enabled'] ) ? $woocommerce['enabled'] : get_option( 'scm_option_woocommerce_status', 'no' ) ) );
+		update_option( 'scm_option_woocommerce_event_payment_complete', scm_ajax_dashboard_yes_no( isset( $woocommerce['paymentComplete'] ) ? $woocommerce['paymentComplete'] : get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ) ) );
+	}
+
+	wp_send_json_success(
+		array(
+			'message' => __( 'Settings saved.', 'ams-cache' ),
+			'status'  => scm_dashboard_get_status_data(),
 		)
 	);
 }
@@ -270,6 +554,73 @@ function scm_ajax_dashboard_purge_homepage_callback() {
 				__( 'Homepage cache purged. %s priority preload URLs queued.', 'ams-cache' ),
 				$count
 			),
+			'status'  => scm_dashboard_get_status_data(),
+		)
+	);
+}
+
+/**
+ * Dashboard image optimizer queue callback.
+ *
+ * @return void
+ */
+function scm_ajax_dashboard_queue_images_callback() {
+	scm_ajax_dashboard_guard();
+
+	$settings = scm_get_page_optimization_settings();
+
+	if ( 'yes' !== $settings['image_optimization'] ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Image optimization is disabled.', 'ams-cache' ),
+			)
+		);
+	}
+
+	$attachments = get_posts(
+		array(
+			'post_type'      => 'attachment',
+			'post_mime_type' => array( 'image/jpeg', 'image/png', 'image/webp' ),
+			'post_status'    => 'inherit',
+			'fields'         => 'ids',
+			'posts_per_page' => 200,
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+			'no_found_rows'  => true,
+		)
+	);
+
+	$offloaded_count = 0;
+
+	foreach ( $attachments as $attachment_id ) {
+		$offload_info = scm_get_attachment_offload_info( $attachment_id );
+
+		if ( $offload_info['offloaded'] ) {
+			$offloaded_count++;
+		}
+
+		scm_enqueue_image_optimization( $attachment_id );
+	}
+
+	scm_process_image_optimization_queue();
+
+	$message = sprintf(
+		/* translators: %s is the number of queued attachments. */
+		__( '%s recent image attachments queued for optimization. First batch processed.', 'ams-cache' ),
+		number_format_i18n( count( $attachments ) )
+	);
+
+	if ( $offloaded_count > 0 ) {
+		$message .= ' ' . sprintf(
+			/* translators: %s is the number of offloaded attachments. */
+			__( '%s are offloaded — processing may skip these without local files.', 'ams-cache' ),
+			number_format_i18n( $offloaded_count )
+		);
+	}
+
+	wp_send_json_success(
+		array(
+			'message' => $message,
 			'status'  => scm_dashboard_get_status_data(),
 		)
 	);
