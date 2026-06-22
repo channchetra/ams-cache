@@ -363,6 +363,7 @@ function scm_ajax_dashboard_save_settings_callback() {
 			'image_optimization',
 			'image_optimize_on_upload',
 			'image_rewrite_html',
+			'image_placeholders',
 			'image_remote_rewrite',
 		);
 
@@ -374,16 +375,15 @@ function scm_ajax_dashboard_save_settings_callback() {
 
 		$current['critical_image_count'] = max( 0, min( 5, absint( isset( $incoming['critical_image_count'] ) ? $incoming['critical_image_count'] : $current['critical_image_count'] ) ) );
 		$current['external_ucss_max_file_size'] = max( 51200, min( 1048576, absint( isset( $incoming['external_ucss_max_file_size'] ) ? $incoming['external_ucss_max_file_size'] : $current['external_ucss_max_file_size'] ) ) );
-		$current['node_path']            = sanitize_text_field( isset( $incoming['node_path'] ) ? $incoming['node_path'] : $current['node_path'] );
+		$current['bun_path']             = sanitize_text_field( isset( $incoming['bun_path'] ) ? $incoming['bun_path'] : $current['bun_path'] );
 		$current['purgecss_path']        = sanitize_text_field( isset( $incoming['purgecss_path'] ) ? $incoming['purgecss_path'] : $current['purgecss_path'] );
 		$current['ucss_safelist']        = sanitize_textarea_field( isset( $incoming['ucss_safelist'] ) ? $incoming['ucss_safelist'] : $current['ucss_safelist'] );
 		$current['media_exclusions']     = sanitize_textarea_field( isset( $incoming['media_exclusions'] ) ? $incoming['media_exclusions'] : $current['media_exclusions'] );
 		$current['js_exclusions']        = sanitize_textarea_field( isset( $incoming['js_exclusions'] ) ? $incoming['js_exclusions'] : $current['js_exclusions'] );
 		$current['image_quality']        = max( 1, min( 100, absint( isset( $incoming['image_quality'] ) ? $incoming['image_quality'] : $current['image_quality'] ) ) );
 		$current['image_batch_size']     = max( 1, min( 20, absint( isset( $incoming['image_batch_size'] ) ? $incoming['image_batch_size'] : $current['image_batch_size'] ) ) );
-		$current['image_formats']        = scm_normalize_image_optimizer_formats( isset( $incoming['image_formats'] ) ? (array) $incoming['image_formats'] : $current['image_formats'] );
-		$primary_format                  = isset( $incoming['image_primary_format'] ) ? sanitize_key( $incoming['image_primary_format'] ) : ( isset( $current['image_primary_format'] ) ? $current['image_primary_format'] : 'webp' );
-		$current['image_primary_format'] = in_array( $primary_format, $current['image_formats'], true ) ? $primary_format : reset( $current['image_formats'] );
+		$current['image_formats']        = array( 'webp' );
+		$current['image_primary_format'] = 'webp';
 
 		update_option( 'scm_option_page_optimization', $current );
 	}

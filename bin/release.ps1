@@ -21,7 +21,7 @@ param(
     [string] $OutDir = 'dist',
     [switch] $IncludeTests,
     [switch] $KeepStage,
-    [switch] $SkipNpmBuild
+    [switch] $SkipBunBuild
 )
 
 Set-StrictMode -Version Latest
@@ -228,7 +228,6 @@ Update-RegexFile `
     -Replace { param($match) $match.Groups[1].Value + $Version + $match.Groups[2].Value }
 
 Update-FirstVersionFields -Path (Join-Path $root 'package.json') -Count 1 -Version $Version
-Update-FirstVersionFields -Path (Join-Path $root 'package-lock.json') -Count 2 -Version $Version
 
 Update-RegexFile `
     -Path (Join-Path $root 'assets/src/admin.jsx') `
@@ -254,8 +253,8 @@ if ($KeepStage) {
     $buildArgs += '-KeepStage'
 }
 
-if ($SkipNpmBuild) {
-    $buildArgs += '-SkipNpmBuild'
+if ($SkipBunBuild) {
+    $buildArgs += '-SkipBunBuild'
 }
 
 & powershell @buildArgs

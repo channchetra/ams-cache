@@ -26,7 +26,7 @@ const riskyPatterns = [
 		pattern: /\bdocument\.readyState\b/i
 	},
 	{
-		name: 'parser-sensitive current node',
+		name: 'parser-sensitive current element',
 		pattern: /\bdocument\.(?:scripts|body|head)\b/i
 	},
 	{

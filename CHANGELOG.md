@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.0.5] - 2026-05-25
+
+### Changed
+- Release build.
+
+## Unreleased
+
+### Changed
+- Replace the optional Sharp image conversion path with Bun Image for local WebP generation and native placeholder metadata.
+- Add Bun path and Image placeholders controls to the React Performance Image settings.
+- Update image optimizer requirements so selected formats pass only when Bun or the WordPress image editor can actually create them.
+- Route JS Analysis through Bun so the optimizer pipeline no longer needs a separate JS runtime.
+- Remove secondary image output support and force image optimization to WebP only.
+- Switch package and release commands to Bun with Bun lockfile flow.
+
+### Fixed
+- Fix a blank Performance Images tab caused by a stale built React bundle calling a removed list component.
+
+### Security
+- Keep Bun image conversion constrained to real upload-directory paths and restrict generated placeholder data URLs before they are written into cached HTML.
+
 ## [3.0.4] - 2026-05-23
 
 ### Changed
@@ -22,7 +43,7 @@
 
 ### Fixed
 - Fix automatic upload image optimization for AJAX and metadata-update upload paths by registering core upload hooks before the AJAX branch.
-- Add a `wp_update_attachment_metadata` fallback so the selected primary WebP/AVIF upload format is applied before late offload listeners sync files.
+- Add a `wp_update_attachment_metadata` fallback so the selected primary WebP upload format is applied before late offload listeners sync files.
 - Add bottom dashboard spacer below the global save bar so the last card keeps visual breathing room above the WordPress footer.
 
 ## [3.0.0] - 2026-05-23
@@ -51,12 +72,12 @@
 
 ### Changed
 - Replace the previous Vue console shell with a single React mount and Vite React entry.
-- Move optional `sharp` image conversion to `optionalDependencies` so release installs can use `npm ci --omit=dev` without shipping `node_modules`.
+- Move optional `sharp` image conversion to optional dependencies so release installs can avoid shipping dependency folders.
 - Add `--Bump` (major/minor/patch) and `--SetVersion` flags to `bin/build-release.ps1` with automatic plugin-header version update and README.txt Stable tag sync.
 - Exclude agent files, local graph output, design notes, source admin assets, and scraped audit JSON from release packaging.
 
 ### Fixed
-- Generate WebP/AVIF variants during upload before offload plugins read attachment metadata, and promote the chosen primary variant to the attachment file for new uploads.
+- Generate image variants during upload before offload plugins read attachment metadata, and promote the chosen primary variant to the attachment file for new uploads.
 - Persist generated variant metadata into WordPress attachment `sources` so HTML rewriting and compatible offload plugins can discover the new files.
 - Restore full-width dashboard alignment, reduce AMS sidebar height so the WordPress menu stays normal, and rebuild Cache, Preload, Expert Mode, Benchmark, and About surfaces around card layouts.
 - Remove the obsolete Vue fallback script and table-transformer bridge from the runtime.
@@ -65,16 +86,16 @@
 ## [2.8.0] - 2026-05-21
 
 ### Added
-- Add npm/Vite build tooling with bundled Vue 3, Tailwind CSS 4.3 admin entry points, generated build manifest support, and release-script enforcement for built assets.
-- Add optional Node `sharp` image optimizer fallback for WebP/AVIF generation, with a server-side `npm run image:check` verification command.
+- Add Vite build tooling with bundled Vue 3, Tailwind CSS 4.3 admin entry points, generated build manifest support, and release-script enforcement for built assets.
+- Add optional `sharp` image optimizer fallback for image variant generation, with a server-side image-check verification command.
 - Add External UCSS Generation for same-site local stylesheet files, with max-file-size guardrails, relative asset URL rewriting, PurgeCSS safelist support, and fail-open behavior that keeps the original stylesheet when optimization fails.
-- Add Image Optimization settings for WebP/AVIF generation, upload-time queueing, background batch processing, and safe WordPress attachment HTML rewriting through generated variant metadata.
-- Add a safe cached-HTML image rewrite pass for raw `<img>` tags that WordPress can map back to attachments with generated WebP/AVIF variants.
+- Add Image Optimization settings for image variant generation, upload-time queueing, background batch processing, and safe WordPress attachment HTML rewriting through generated variant metadata.
+- Add a safe cached-HTML image rewrite pass for raw `<img>` tags that WordPress can map back to attachments with generated variants.
 - Add Performance dashboard cards for External UCSS savings and image optimizer queue/status.
 - Add Queue Images dashboard action that queues the 200 newest JPEG/PNG/WebP attachments for background optimization.
 
 ### Security
-- Keep Node image optimization constrained to validated source and output paths inside the WordPress uploads directory before invoking the npm optimizer.
+- Keep image optimization constrained to validated source and output paths inside the WordPress uploads directory before invoking the local optimizer.
 - Restrict image optimizer writes to existing files inside the WordPress uploads directory, preserve original files, skip unsupported file types, cap queued attachment work, and keep remote/offloaded URL rewriting disabled unless explicitly enabled.
 - Skip External UCSS for cross-origin, SRI, crossorigin, disabled, preload, alternate, and importing stylesheets.
 
@@ -113,7 +134,7 @@
 
 ### Added
 - Real Local UCSS Generation for inline page CSS through PurgeCSS, with configurable safelist support.
-- Real JS Analysis engine through local Node.js that defers only readable same-site scripts classified safe.
+- Real JS Analysis engine through local JS analysis tooling that defers only readable same-site scripts classified safe.
 - Writable local optimizer workspace requirement check and runtime feature reporting for applied, no change, or failed jobs.
 
 ## [2.6.6] - 2026-05-15
@@ -237,13 +258,13 @@
 ### Changed
 
 - Critical homepage preload now runs blocking after cache clear so Homepage stats repopulate immediately.
-- Node.js and PurgeCSS checks now use common web-user PATH locations and fail command-not-found output correctly.
+- Local optimizer and PurgeCSS checks now use common web-user PATH locations and fail command-not-found output correctly.
 
 ## [2.4.0] - 2026-05-14
 
 ### Added
 
-- Local UCSS Generation and JS Analysis options with Node.js, PurgeCSS, and `shell_exec` requirement checks.
+- Local UCSS Generation and JS Analysis options with local optimizer, PurgeCSS, and `shell_exec` requirement checks.
 - Homepage-first preload crawling that extracts same-site links from homepage HTML before falling back to configured post/archive URL lists.
 - Scoped homepage/archive purge for published or deleted posts.
 

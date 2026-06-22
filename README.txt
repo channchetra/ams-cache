@@ -4,7 +4,7 @@ Contributors: terrylin
 Tags: cache, redis, mongodb, memcached, apc, apcu
 Requires at least: 5.8
 Tested up to: 6.9.4
-Stable tag: 3.0.4
+Stable tag: 3.0.5
 Requires PHP: 7.1.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl.html
@@ -28,7 +28,7 @@ First release date: October, 1, 2020
 * Optional Redis and File cache compression.
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
-* Optional WebP/AVIF image optimizer for WordPress uploads with background queueing and offload-safe controls.
+* Optional WebP image optimizer for WordPress uploads with background queueing and offload-safe controls.
 * Admin bar purge controls for clearing all cache or only the current page.
 * Compatible with the WooCommerce plugin.
 * And more...
@@ -51,20 +51,20 @@ The AMS Cache admin console uses native WordPress admin screens, Vite-built asse
 
 Build assets with:
 
-`npm install`
-`npm run build`
+`bun install`
+`bun run build`
 
 Build a release zip with:
 
-`npm run build:release`
+`bun run build:release`
 
 One-command version bump and release:
 
-`npm run release`
-`npm run release:minor`
+`bun run release`
+`bun run release:minor`
 `powershell -ExecutionPolicy Bypass -File .\bin\release.ps1 -Version 3.1.0 -Note "Release dashboard polish."`
 
-`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, `package-lock.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`.
+`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs Bun install/build and verifies the Vite manifest before packaging.
 
 The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, image optimizer status, and feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine.
 
@@ -74,33 +74,31 @@ Built assets are required for the React console. The release script verifies the
 
 == Local UCSS, External UCSS, and JS Analysis ==
 
-AMS Cache can run local UCSS generation, External UCSS generation, and JS analysis from the Optimization tab. The requirement pass checks PHP shell_exec, Node.js, PurgeCSS CLI, and a writable optimizer workspace. Install and configure the tools on your server, then set the executable paths in AMS Cache.
+AMS Cache can run local UCSS generation, External UCSS generation, and JS analysis from the Optimization tab. The requirement pass checks PHP shell_exec, Bun, PurgeCSS CLI, and a writable optimizer workspace. Install and configure the tools on your server, then set the executable paths in AMS Cache.
 
 Ubuntu/Debian:
 
-`curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -`
-`sudo apt-get install -y nodejs`
-`sudo npm install -g purgecss`
+`curl -fsSL https://bun.sh/install | bash`
+`~/.bun/bin/bun add --global purgecss`
 
 CentOS/RHEL/AlmaLinux:
 
-`curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -`
-`sudo yum install -y nodejs`
-`sudo npm install -g purgecss`
+`curl -fsSL https://bun.sh/install | bash`
+`~/.bun/bin/bun add --global purgecss`
 
 Verify:
 
-`node --version`
+`bun --version`
 `purgecss --version`
-`which node`
+`which bun`
 `which purgecss`
 
 Windows:
 
-`where node`
+`where bun`
 `where purgecss`
 
-On Windows, use the full `node.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
+On Windows, use the full `bun.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
 
 If PHP open_basedir blocks those binaries, create symlinks inside an allowed directory and use those paths in AMS Cache.
 
@@ -110,13 +108,16 @@ Use the UCSS safelist for dynamic classes JavaScript adds after load. Local UCSS
 
 == Image Optimization ==
 
-AMS Cache can generate WebP and AVIF variants for WordPress image attachments. Enable Image Optimization in the Performance settings, choose output formats, set the primary upload format, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when Optimize images on upload is enabled.
+AMS Cache can generate WebP variants for WordPress image attachments. Enable Image Optimization in the Performance settings, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when Optimize images on upload is enabled.
 
-Output formats decide which variant files AMS Cache creates beside the source image, for example .webp, .avif, or both. Primary upload format decides which generated format becomes the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to the selected primary format after successful conversion.
+AMS Cache now uses WebP as the only output and primary upload format. The generated .webp file can become the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to WebP after successful conversion.
 
-The image engine tries the optional npm sharp optimizer first when npm ci --omit=dev or npm install --omit=dev has been run in the plugin directory. If the Node optimizer is not available, AMS Cache falls back to the native WordPress image editor. Verify the Node image library with:
+The image engine uses Bun Image for local WebP generation and tiny loading placeholders. If Bun cannot create WebP, AMS Cache falls back to the native WordPress image editor. Use an absolute Bun binary path in the Performance settings if PHP cannot see bun in its PATH. Verify the image optimizer with:
 
-`npm run image:check`
+`bun --version`
+`bun run image:check`
+
+Image placeholders store a short, safe data:image/...;base64 preview in attachment optimization metadata. When Image placeholders is enabled, AMS Cache adds that preview as an inline background while the real WebP image loads.
 
 Safety rules:
 
@@ -125,13 +126,13 @@ Safety rules:
 * GIF, SVG, unknown mime types, and files outside uploads are skipped.
 * Background batches are capped to avoid long admin or cron requests.
 * HTML rewrite only happens when generated variant metadata exists.
-* The Node optimizer receives only upload-directory source and output paths, and the PHP side validates those paths before execution.
+* The Bun optimizer receives only upload-directory source and output paths, validates real paths before writing, and generated placeholder data URLs are length and mime-type restricted before HTML output.
 
 Offload compatibility:
 
 * Default mode is safe for WP Offload Media and Advanced Offload Media because remote/offloaded URL rewriting is disabled.
-* If your offload plugin syncs generated .webp and .avif files to the same remote path, you may enable Allow offloaded remote URL rewrite.
-* Original image files stay intact; new-upload attachment metadata can point to the selected primary WebP/AVIF file after successful conversion.
+* If your offload plugin syncs generated .webp files to the same remote path, you may enable Allow offloaded remote URL rewrite.
+* Original image files stay intact; new-upload attachment metadata can point to the generated WebP file after successful conversion.
 
 Notice:
 
@@ -194,7 +195,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 = 3.0.0 (5/23/2026) =
 
 * Add upload-only single image optimization retry queue so new uploads can convert automatically without touching the manual batch queue.
-* Convert upload metadata to the selected primary WebP/AVIF format before offload plugins read the attachment.
+* Convert upload metadata to the selected primary WebP format before offload plugins read the attachment.
 * Hand deferred upload retries back to Advanced Media Offloader and keep normal wp_update_attachment_metadata flow for WP Offload Media.
 * Add cache driver connection tests plus restored MongoDB user, password, database, and collection settings.
 * Move Performance reports back into the Overview tab with summary cards.
@@ -203,7 +204,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 = 2.8.0 (5/21/2026) =
 
 * Add External UCSS Generation for same-site local stylesheet files with max-size guardrails, PurgeCSS safelist support, and fail-open behavior.
-* Add WebP/AVIF Image Optimization settings, upload-time queueing, background batch processing, and safe attachment HTML rewriting.
+* Add WebP Image Optimization settings, upload-time queueing, background batch processing, and safe attachment HTML rewriting.
 * Add Performance dashboard cards for External UCSS savings and image optimizer queue/status.
 * Add Queue Images action for the 200 newest JPEG/PNG/WebP attachments.
 * Restrict image writes to uploads, preserve originals, skip unsupported types, and keep remote/offloaded URL rewriting disabled unless explicitly enabled.
@@ -211,7 +212,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 = 2.7.0 (5/15/2026) =
 
 * Add real Local UCSS Generation for inline page CSS using PurgeCSS with configurable safelist support.
-* Add real JS Analysis engine using local Node.js to defer only readable same-site scripts classified safe.
+* Add real JS Analysis engine using local Bun to defer only readable same-site scripts classified safe.
 * Add writable optimizer workspace checks and runtime report states for applied, no change, or failed engine jobs.
 
 = 2.6.6 (5/15/2026) =
@@ -286,7 +287,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 * Make critical homepage preload blocking after cache clear so Homepage stats repopulate immediately.
 * Add Purge Current Page admin bar action for Administrators and Editors.
-* Improve Node.js and PurgeCSS checks by using common web-user PATH locations and failing command-not-found output correctly.
+* Improve Bun and PurgeCSS checks by using common web-user PATH locations and failing command-not-found output correctly.
 
 = 2.4.0 (5/14/2026) =
 
@@ -294,7 +295,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 * Add stricter cacheable document checks to avoid caching query URLs, static assets, and logged-in requests.
 * Normalize cache keys and de-duplicate stats rows for the same URI.
 * Add homepage-first preload crawling for same-site homepage links.
-* Add Local UCSS Generation and JS Analysis options with Node.js, PurgeCSS, and shell_exec requirement checks.
+* Add Local UCSS Generation and JS Analysis options with Bun, PurgeCSS, and shell_exec requirement checks.
 * Add scoped homepage/archive purge when posts are published or deleted.
 
 = 2.3.0 (5/14/2026) =

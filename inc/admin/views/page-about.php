@@ -19,7 +19,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 		<div class="ams-about-hero-copy">
 			<span class="ams-status-pill is-info"><?php echo esc_html( 'AMS Cache ' . SCM_PLUGIN_VERSION ); ?></span>
 			<h2 id="ams-about-title"><?php _e( 'Performance console for real WordPress pages.', 'ams-cache' ); ?></h2>
-			<p><?php _e( 'AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, JS analysis, npm image optimization, and a Vite-built WordPress admin experience.', 'ams-cache' ); ?></p>
+			<p><?php _e( 'AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, JS analysis, Bun image optimization, and a Vite-built WordPress admin experience.', 'ams-cache' ); ?></p>
 			<div class="ams-about-actions">
 				<a href="https://ams.com.kh/" target="_blank" rel="noopener noreferrer"><?php _e( 'AMS Technical Team', 'ams-cache' ); ?></a>
 				<a href="https://github.com/terrylinooo/simple-cache" target="_blank" rel="noopener noreferrer"><?php _e( 'Simple Cache Core', 'ams-cache' ); ?></a>
@@ -45,7 +45,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 					<span><?php _e( 'local engine', 'ams-cache' ); ?></span>
 				</div>
 				<div>
-					<strong>AVIF</strong>
+					<strong>WebP</strong>
 					<span><?php _e( 'image path', 'ams-cache' ); ?></span>
 				</div>
 			</div>
@@ -80,7 +80,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 		<article class="ams-about-card">
 			<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
 			<h4><?php _e( 'Image optimizer path', 'ams-cache' ); ?></h4>
-			<p><?php _e( 'WebP and AVIF variants are generated beside original uploads, with optional HTML rewriting only when a generated local variant exists.', 'ams-cache' ); ?></p>
+			<p><?php _e( 'WebP variants are generated beside original uploads, with optional HTML rewriting only when a generated local variant exists.', 'ams-cache' ); ?></p>
 		</article>
 	</section>
 

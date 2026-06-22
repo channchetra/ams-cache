@@ -19,7 +19,7 @@ AMS Cache is an extremely lightweight, high-performance cache plugin that speeds
 * Optional Redis and File cache compression.
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
-* Optional WebP/AVIF image optimizer for WordPress uploads with background queueing and offload-safe controls.
+* Optional WebP image optimizer for WordPress uploads with background queueing and offload-safe controls.
 * Admin bar purge controls for clearing all cache or only the current page.
 * Compatible with the WooCommerce plugin.
 * And more...
@@ -45,25 +45,25 @@ AMS Cache uses native WordPress admin pages plus a Vite-built admin asset pipeli
 Development build:
 
 ```bash
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 Release build:
 
 ```powershell
-npm run build:release
+bun run build:release
 ```
 
 One-command version bump and release:
 
 ```powershell
-npm run release
-npm run release:minor
+bun run release
+bun run release:minor
 powershell -ExecutionPolicy Bypass -File .\bin\release.ps1 -Version 3.1.0 -Note "Release dashboard polish."
 ```
 
-`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, `package-lock.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs `npm ci` or `npm install`, builds Vite assets into `inc/assets/build`, verifies the Vite manifest, then creates the WordPress zip in `dist/`. Pass `-SkipNpmBuild` only when built assets already exist.
+`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs `bun install --frozen-lockfile`, builds Vite assets into `inc/assets/build`, verifies the Vite manifest, then creates the WordPress zip in `dist/`. Pass `-SkipBunBuild` only when built assets already exist.
 
 The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, image optimizer status, and feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine. It loads five reports first and fetches more only when requested.
 
@@ -71,7 +71,7 @@ All settings forms save in place through authenticated WordPress AJAX requests w
 
 The console normalizes legacy controls into switch-style binary toggles or segmented multi-choice controls, keeps dense settings content aligned for faster scanning, and provides live Statistics lists with per-row cache clearing.
 
-`Applied` in a page report means that transform changed cached output. Local UCSS purges inline `<style>` blocks with PurgeCSS. External UCSS purges eligible same-site stylesheet files and inlines the optimized result into cached guest HTML. Both keep a configurable safelist for dynamic classes. JS Analysis runs a local Node.js analyzer and defers only readable same-site scripts classified safe. Report sizes use human-readable units and displayed URLs are decoded for easier review.
+`Applied` in a page report means that transform changed cached output. Local UCSS purges inline `<style>` blocks with PurgeCSS. External UCSS purges eligible same-site stylesheet files and inlines the optimized result into cached guest HTML. Both keep a configurable safelist for dynamic classes. JS Analysis runs a local Bun analyzer and defers only readable same-site scripts classified safe. Report sizes use human-readable units and displayed URLs are decoded for easier review.
 
 Built assets are required for the React console. The release script verifies the Vite manifest before packaging.
 
@@ -82,50 +82,51 @@ AMS Cache can run local UCSS generation, External UCSS generation, and JS analys
 Ubuntu/Debian:
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
-sudo apt-get install -y nodejs
-sudo npm install -g purgecss
+curl -fsSL https://bun.sh/install | bash
+~/.bun/bin/bun add --global purgecss
 ```
 
 CentOS/RHEL/AlmaLinux:
 
 ```bash
-curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
-sudo yum install -y nodejs
-sudo npm install -g purgecss
+curl -fsSL https://bun.sh/install | bash
+~/.bun/bin/bun add --global purgecss
 ```
 
 Verify:
 
 ```bash
-node --version
+bun --version
 purgecss --version
-which node
+which bun
 which purgecss
 ```
 
 Windows:
 
 ```powershell
-where node
+where bun
 where purgecss
 ```
 
-On Windows, use the full `node.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
+On Windows, use the full `bun.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
 
 If PHP `open_basedir` blocks those binaries, create symlinks inside an allowed directory and use those paths in AMS Cache. PHP `shell_exec` must be enabled, and the local optimizer workspace must be writable.
 
 ## Image Optimization
 
-AMS Cache can generate WebP and AVIF variants for WordPress image attachments. Enable Image Optimization in the Performance settings, choose output formats, set the primary upload format, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when "Optimize images on upload" is enabled.
+AMS Cache can generate WebP variants for WordPress image attachments. Enable Image Optimization in the Performance settings, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when "Optimize images on upload" is enabled.
 
-Output formats decide which variant files AMS Cache creates beside the source image, for example `.webp`, `.avif`, or both. Primary upload format decides which generated format becomes the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to the selected primary format after successful conversion.
+AMS Cache now uses WebP as the only output and primary upload format. The generated `.webp` file can become the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to WebP after successful conversion.
 
-The image engine tries the optional npm `sharp` optimizer first when `npm ci --omit=dev` or `npm install --omit=dev` has been run in the plugin directory. If the Node optimizer is not available, AMS Cache falls back to the native WordPress image editor. Use this command on the server to verify the Node image library:
+The image engine uses Bun Image for local WebP generation and tiny loading placeholders. If Bun cannot create WebP, AMS Cache falls back to the native WordPress image editor. Use an absolute Bun binary path in the Performance settings if PHP cannot see `bun` in its `PATH`.
 
 ```bash
-npm run image:check
+bun --version
+bun run image:check
 ```
+
+Image placeholders store a short, safe `data:image/...;base64` preview in attachment optimization metadata. When "Image placeholders" is enabled, AMS Cache adds that preview as an inline background while the real WebP image loads.
 
 Safety rules:
 
@@ -134,13 +135,13 @@ Safety rules:
 * GIF, SVG, unknown mime types, and files outside uploads are skipped.
 * Background batches are capped to avoid long admin or cron requests.
 * HTML rewrite only happens when generated variant metadata exists.
-* The Node optimizer receives only upload-directory source and output paths, and the PHP side validates those paths before execution.
+* The Bun optimizer receives only upload-directory source and output paths, validates real paths before writing, and generated placeholder data URLs are length and mime-type restricted before HTML output.
 
 Offload compatibility:
 
 * Default mode is safe for WP Offload Media and Advanced Offload Media because remote/offloaded URL rewriting is disabled.
-* If your offload plugin syncs generated `.webp` and `.avif` files to the same remote path, you may enable "Allow offloaded remote URL rewrite".
-* Original image files stay intact; new-upload attachment metadata can point to the selected primary WebP/AVIF file after successful conversion.
+* If your offload plugin syncs generated `.webp` files to the same remote path, you may enable "Allow offloaded remote URL rewrite".
+* Original image files stay intact; new-upload attachment metadata can point to the generated WebP file after successful conversion.
 
 If root can run `purgecss` but PHP cannot, PHP is probably using a smaller web-user `PATH`. Set the absolute path from `which purgecss`, commonly `/usr/local/bin/purgecss`, in the Optimization tab.
 

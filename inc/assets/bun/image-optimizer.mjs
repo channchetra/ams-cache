@@ -1,6 +1,5 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import sharp from 'sharp';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 function readArgs(argv) {
 	const args = {};
@@ -24,6 +23,18 @@ function readArgs(argv) {
 	}
 
 	return args;
+}
+
+function ensureBunRuntime() {
+	if (typeof Bun === 'undefined' || typeof Bun.file !== 'function') {
+		throw new Error('Bun runtime is required for AMS Cache image optimizer.');
+	}
+
+	const probe = Bun.file(process.argv[1] || '.');
+
+	if (typeof probe.image !== 'function' && typeof Bun.Image === 'undefined') {
+		throw new Error('Bun Image API is not available in this Bun version.');
+	}
 }
 
 async function realpathSafe(value) {
@@ -51,15 +62,22 @@ async function assertInsideUploads(input, output, uploads) {
 	}
 }
 
+async function buildImagePipeline(input, quality) {
+	return Bun.file(input).image().webp({ quality });
+}
+
 async function main() {
+	ensureBunRuntime();
 	const args = readArgs(process.argv.slice(2));
 
 	if (args.check) {
 		process.stdout.write(JSON.stringify({
 			ok: true,
-			sharp: sharp.versions.sharp,
-			webp: Boolean(sharp.format.webp?.output?.file),
-			avif: Boolean(sharp.format.heif?.output?.file && sharp.format.heif?.output?.alias?.includes('avif'))
+			engine: 'bun-image',
+			bun: Bun.version,
+			platform: process.platform,
+			webp: true,
+			placeholder: true
 		}));
 		return;
 	}
@@ -69,38 +87,41 @@ async function main() {
 	const uploads = String(args.uploads || '');
 	const format = String(args.format || '').toLowerCase();
 	const quality = Math.max(1, Math.min(100, Number.parseInt(args.quality || '82', 10) || 82));
+	const includePlaceholder = args.placeholder !== false && args.placeholder !== 'no';
 
-	if (!input || !output || !uploads || !['webp', 'avif'].includes(format)) {
-		throw new Error('Missing input, output, uploads, or valid format.');
+	if (!input || !output || !uploads || format !== 'webp') {
+		throw new Error('Missing input, output, uploads, or valid WebP format.');
 	}
 
-	await assertInsideUploads(input, output, uploads);
 	await fs.mkdir(path.dirname(output), { recursive: true });
+	await assertInsideUploads(input, output, uploads);
 
-	let pipeline = sharp(input, {
-		failOn: 'none',
-		limitInputPixels: 268402689
-	}).rotate();
-
-	if (format === 'webp') {
-		pipeline = pipeline.webp({ quality, effort: 4 });
-	} else {
-		pipeline = pipeline.avif({ quality, effort: 4 });
-	}
-
-	await pipeline.toFile(output);
+	const pipeline = await buildImagePipeline(input, quality);
+	await pipeline.write(output);
 
 	const [sourceStat, targetStat] = await Promise.all([
 		fs.stat(input),
 		fs.stat(output)
 	]);
 
+	let placeholder = '';
+
+	if (includePlaceholder) {
+		try {
+			placeholder = await Bun.file(input).image().placeholder();
+		} catch {
+			placeholder = '';
+		}
+	}
+
 	process.stdout.write(JSON.stringify({
 		ok: true,
+		engine: 'bun-image',
 		format,
 		sourceBytes: sourceStat.size,
 		targetBytes: targetStat.size,
-		savedBytes: Math.max(0, sourceStat.size - targetStat.size)
+		savedBytes: Math.max(0, sourceStat.size - targetStat.size),
+		placeholder
 	}));
 }
 

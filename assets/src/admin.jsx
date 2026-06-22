@@ -222,43 +222,6 @@ function DriverSelect({settings, update}) {
 	);
 }
 
-function FormatPicker({formats, onChange}) {
-	const selected = new Set(formats || []);
-	const toggle = (format) => {
-		const next = new Set(selected);
-		if (next.has(format)) {
-			next.delete(format);
-		} else {
-			next.add(format);
-		}
-		onChange(Array.from(next));
-	};
-
-	return (
-		<div className="ams-button-group" role="group" aria-label="Image output formats">
-			{['webp', 'avif'].map((format) => (
-				<AmsButton key={format} tone={selected.has(format) ? 'primary' : 'default'} size="sm" onPress={() => toggle(format)}>
-					{format.toUpperCase()}
-				</AmsButton>
-			))}
-		</div>
-	);
-}
-
-function SingleFormatPicker({value, formats = ['webp'], onChange}) {
-	const choices = Array.from(new Set([...(formats || []), 'webp', 'avif'])).filter(Boolean);
-
-	return (
-		<div className="ams-button-group" role="group" aria-label="Primary upload format">
-			{choices.map((format) => (
-				<AmsButton key={format} tone={value === format ? 'primary' : 'default'} size="sm" onPress={() => onChange(format)}>
-					{format.toUpperCase()}
-				</AmsButton>
-			))}
-		</div>
-	);
-}
-
 function MiniSelectRow({label, value, options, onChange}) {
 	return (
 		<div className="ams-setting-row">
@@ -649,7 +612,7 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 					))}
 					<TextFieldRow label="Critical image count" type="number" min="0" max="5" value={perf.critical_image_count} onChange={(value) => updatePerformance('critical_image_count', value)} />
 					<TextFieldRow label="External CSS max file size" type="number" min="51200" max="1048576" value={perf.external_ucss_max_file_size} onChange={(value) => updatePerformance('external_ucss_max_file_size', value)} />
-					<TextFieldRow label="Node.js path" value={perf.node_path} onChange={(value) => updatePerformance('node_path', value)} />
+					<TextFieldRow label="Bun path" value={perf.bun_path || 'bun'} onChange={(value) => updatePerformance('bun_path', value)} />
 					<TextFieldRow label="PurgeCSS path" value={perf.purgecss_path} onChange={(value) => updatePerformance('purgecss_path', value)} />
 					<TextAreaRow label="UCSS safelist" value={perf.ucss_safelist} onChange={(value) => updatePerformance('ucss_safelist', value)} />
 					<TextAreaRow label="JavaScript defer exclusions" value={perf.js_exclusions} onChange={(value) => updatePerformance('js_exclusions', value)} />
@@ -661,16 +624,10 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 					<SwitchRow label="Optimize images on upload" description="New uploads convert before offload when source files are local." checked={perf.image_optimize_on_upload === 'yes'} onChange={(checked) => updatePerformance('image_optimize_on_upload', checked ? 'yes' : 'no')} />
 					<SwitchRow label="Serve generated images in HTML" checked={perf.image_rewrite_html === 'yes'} onChange={(checked) => updatePerformance('image_rewrite_html', checked ? 'yes' : 'no')} />
 					<SwitchRow label="Allow remote URL rewrite" description="Keep disabled unless offload plugin syncs generated variants." checked={perf.image_remote_rewrite === 'yes'} onChange={(checked) => updatePerformance('image_remote_rewrite', checked ? 'yes' : 'no')} />
-					<div className="ams-setting-row">
-						<Label>Output formats</Label>
-						<FormatPicker formats={perf.image_formats} onChange={(value) => updatePerformance('image_formats', value)} />
-					</div>
-					<div className="ams-setting-row">
-						<Label>Primary upload format</Label>
-						<SingleFormatPicker value={perf.image_primary_format || (perf.image_formats || ['webp'])[0] || 'webp'} formats={perf.image_formats} onChange={(value) => updatePerformance('image_primary_format', value)} />
-					</div>
+					<FactList items={[{label: 'Output format', value: 'WebP'}, {label: 'Primary upload format', value: 'WebP'}]} />
 					<TextFieldRow label="Image quality" type="number" min="1" max="100" value={perf.image_quality} onChange={(value) => updatePerformance('image_quality', value)} />
 					<TextFieldRow label="Background batch size" type="number" min="1" max="20" value={perf.image_batch_size} onChange={(value) => updatePerformance('image_batch_size', value)} />
+					<SwitchRow label="Image placeholders" description="Store a tiny safe data URL and show it as a background while the final image loads." checked={perf.image_placeholders === 'yes'} onChange={(checked) => updatePerformance('image_placeholders', checked ? 'yes' : 'no')} />
 					<TextAreaRow label="Media exclusions" value={perf.media_exclusions} onChange={(value) => updatePerformance('media_exclusions', value)} />
 					<div className="ams-action-row">
 						<AmsButton icon={Image} tone="primary" busy={isBusy} onPress={queueImages}>Start Optimize</AmsButton>
@@ -797,7 +754,7 @@ function ExpertSettings({settings, update, save, isBusy}) {
 				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={settings.cache?.expertModeStatus === 'enable'} onChange={(checked) => update('cache', 'expertModeStatus', checked ? 'enable' : 'disable')} />
 			</Panel>
 			<Panel title="Configure Code Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={copyCode}>{copied ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
-				<p className="ams-muted">Paste this block into wp-config.php above Ã¢â‚¬Å“ThatÃ¢â‚¬â„¢s all, stop editingÃ¢â‚¬Â. It loads config before WordPress boots.</p>
+				<p className="ams-muted">Paste this block into wp-config.php above ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œThatÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s all, stop editingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â. It loads config before WordPress boots.</p>
 				<pre
 					className="ams-code-block ams-code-block--copyable"
 					role="button"
@@ -826,8 +783,8 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 			<SwitchRow label="Footer Text" checked={settings.benchmark?.footer === 'yes'} onChange={(checked) => update('benchmark', 'footer', checked ? 'yes' : 'no')} />
 			<MiniSelectRow label="Footer Display" value={settings.benchmark?.footerDisplay || 'text'} options={displays} onChange={(value) => update('benchmark', 'footerDisplay', value)} />
 			<div className="ams-benchmark-preview">
-				<span>Ã¡Å¾â€ºÃ¡Å¸â€™Ã¡Å¾â€Ã¡Å¾Â¿Ã¡Å¾â€œÃ¡Å¾Æ’Ã¡Å¸â€™Ã¡Å¾â€ºÃ¡Å¾Â¶Ã¡Å¸â€ Ã¡Å¾â€žÃ¡Å¾â€˜Ã¡Å¸â€ Ã¡Å¾â€“Ã¡Å¸ÂÃ¡Å¾Å¡</span>
-				<strong>Ã¡Å¾ËœÃ¡Å¾Â¶Ã¡Å¾â€œ | Ã¡Å¾â€“Ã¡Å¸ÂÃ¡Å¾â€ºÃ¡Å¾â€Ã¡Å¾â€žÃ¡Å¸â€™Ã¡Å¾â‚¬Ã¡Å¾Â¾Ã¡Å¾Â 0.42 Ã¡Å¾Å“Ã¡Å¾Â·Ã¡Å¾â€œÃ¡Å¾Â¶Ã¡Å¾â€˜Ã¡Å¾Â¸ | Ã¡Å¾Â¢Ã¡Å¾â€žÃ¡Å¸â€™Ã¡Å¾â€šÃ¡Å¾â€¦Ã¡Å¾â€žÃ¡Å¾â€¦Ã¡Å¾Â¶Ã¡Å¸â€  32 MB</strong>
+				<span>ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂÃƒÂ¡Ã…Â¾Ã‚Â¿ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ÃƒÂ¡Ã…Â¾Ã†â€™ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¸Ã¢â‚¬Â ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¾Ã¢â‚¬ËœÃƒÂ¡Ã…Â¸Ã¢â‚¬Â ÃƒÂ¡Ã…Â¾Ã¢â‚¬â€œÃƒÂ¡Ã…Â¸Ã‚ÂÃƒÂ¡Ã…Â¾Ã…Â¡</span>
+				<strong>ÃƒÂ¡Ã…Â¾Ã‹Å“ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ | ÃƒÂ¡Ã…Â¾Ã¢â‚¬â€œÃƒÂ¡Ã…Â¸Ã‚ÂÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â€šÂ¬ÃƒÂ¡Ã…Â¾Ã‚Â¾ÃƒÂ¡Ã…Â¾Ã‚Â 0.42 ÃƒÂ¡Ã…Â¾Ã…â€œÃƒÂ¡Ã…Â¾Ã‚Â·ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¾Ã¢â‚¬ËœÃƒÂ¡Ã…Â¾Ã‚Â¸ | ÃƒÂ¡Ã…Â¾Ã‚Â¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¡ÃƒÂ¡Ã…Â¾Ã¢â‚¬Â¦ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¾Ã¢â‚¬Â¦ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¸Ã¢â‚¬Â  32 MB</strong>
 			</div>
 		</Panel>
 	);
@@ -838,7 +795,7 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.0.4</Pill>
+					<Pill tone="info">AMS Cache 3.0.5</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, JS analysis, and image conversion in one clean WordPress admin experience.</p>
 					<div className="ams-action-row">
@@ -851,24 +808,24 @@ function AboutPage({data}) {
 					<div className="ams-mini-metric"><strong>{data.optimization?.reqPassed || 0} / {data.optimization?.reqTotal || 0}</strong><span>requirements</span></div>
 					<div className="ams-mini-metric"><strong>Guest</strong><span>safe cache</span></div>
 					<div className="ams-mini-metric"><strong>UCSS</strong><span>local engine</span></div>
-					<div className="ams-mini-metric"><strong>AVIF</strong><span>image path</span></div>
+					<div className="ams-mini-metric"><strong>WebP</strong><span>image path</span></div>
 					<div className="ams-progress"><span style={{width: '82%'}} /></div>
 					<div className="ams-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
 			<div className="ams-about-tabs">
-				<button type="button" className="is-active">WhatÃ¢â‚¬â„¢s New</button>
+				<button type="button" className="is-active">WhatÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s New</button>
 				<button type="button">Performance</button>
 				<button type="button">Security</button>
 				<button type="button">Credits</button>
 			</div>
-			<Panel title="Welcome to AMS Cache 3.0.4" className="ams-full-width">
+			<Panel title="Welcome to AMS Cache 3.0.5" className="ams-full-width">
 				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, safer upload-time image conversion before offload, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-3">
 				<Panel title="Cache-first Pages"><p>Preload starts from homepage links, selected post types, and archives so guests get warm cache before first visit.</p></Panel>
 				<Panel title="External UCSS"><p>Eligible same-site CSS files are tested with PurgeCSS and only inlined into cached HTML when result is smaller.</p></Panel>
-				<Panel title="Image Optimizer Path"><p>New uploads can become WebP or AVIF metadata before offload plugins read and move files.</p></Panel>
+				<Panel title="Image Optimizer Path"><p>New uploads can become WebP metadata before offload plugins read and move files.</p></Panel>
 			</div>
 		</div>
 	);
@@ -955,7 +912,7 @@ function App() {
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.4">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.5">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label}>

@@ -1,21 +1,18 @@
 {
   "name": "ams-cache",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "private": true,
   "type": "module",
-  "description": "Build tooling and optional Node optimizers for the AMS Cache WordPress plugin.",
+  "description": "Build tooling and optional local optimizers for the AMS Cache WordPress plugin.",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "build:release": "npm run build && powershell -ExecutionPolicy Bypass -File ./bin/build-release.ps1",
+    "dev": "bunx vite --host 127.0.0.1",
+    "build": "bunx vite build",
+    "build:release": "bun run build && powershell -ExecutionPolicy Bypass -File ./bin/build-release.ps1",
     "release": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump minor",
     "release:major": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump major",
-    "image:check": "node inc/assets/node/image-optimizer.mjs --check"
-  },
-  "optionalDependencies": {
-    "sharp": "0.34.5"
+    "image:check": "bun inc/assets/bun/image-optimizer.mjs --check"
   },
   "devDependencies": {
     "@heroui/react": "^3.0.5",

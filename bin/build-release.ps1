@@ -24,7 +24,7 @@ param(
     [string] $OutDir = 'dist',
     [switch] $IncludeTests,
     [switch] $KeepStage,
-    [switch] $SkipNpmBuild
+    [switch] $SkipBunBuild
 )
 
 Set-StrictMode -Version Latest
@@ -144,17 +144,12 @@ if ($SetVersion) {
     }
 }
 
-if (-not $SkipNpmBuild -and (Test-Path -LiteralPath (Join-Path $root 'package.json'))) {
+if (-not $SkipBunBuild -and (Test-Path -LiteralPath (Join-Path $root 'package.json'))) {
     Push-Location -LiteralPath $root
 
     try {
-        if (Test-Path -LiteralPath (Join-Path $root 'package-lock.json')) {
-            Invoke-NativeCommand -FilePath 'npm' -Arguments @('ci')
-        } else {
-            Invoke-NativeCommand -FilePath 'npm' -Arguments @('install')
-        }
-
-        Invoke-NativeCommand -FilePath 'npm' -Arguments @('run', 'build')
+        Invoke-NativeCommand -FilePath 'bun' -Arguments @('install', '--frozen-lockfile')
+        Invoke-NativeCommand -FilePath 'bun' -Arguments @('run', 'build')
     } finally {
         Pop-Location
     }
@@ -163,7 +158,7 @@ if (-not $SkipNpmBuild -and (Test-Path -LiteralPath (Join-Path $root 'package.js
 $manifestPath = Join-Path $root 'inc/assets/build/.vite/manifest.json'
 
 if (-not (Test-Path -LiteralPath $manifestPath)) {
-    throw 'Release missing Vite manifest. Run npm run build or pass -SkipNpmBuild only when built assets already exist.'
+    throw 'Release missing Vite manifest. Run bun run build or pass -SkipBunBuild only when built assets already exist.'
 }
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
@@ -242,9 +237,9 @@ function Test-ReleaseExclude {
         'phpcs.xml',
         'sample.txt',
         'composer.lock',
+        'bun.lock',
+        'bun.lockb',
         'yarn.lock',
-        'pnpm-lock.yaml',
-        'npm-debug.log',
         '.phpunit.result.cache',
         'vendor/shieldon/simple-cache/.gitignore',
         'vendor/shieldon/simple-cache/.travis.yml',
