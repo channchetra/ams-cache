@@ -591,12 +591,17 @@ function scm_ajax_dashboard_queue_images_callback() {
 	);
 
 	$offloaded_count = 0;
+	$kho_count       = 0;
 
 	foreach ( $attachments as $attachment_id ) {
 		$offload_info = scm_get_attachment_offload_info( $attachment_id );
 
 		if ( $offload_info['offloaded'] ) {
 			$offloaded_count++;
+
+			if ( false !== stripos( $offload_info['provider'], 'KH Offloader' ) ) {
+				$kho_count++;
+			}
 		}
 
 		scm_enqueue_image_optimization( $attachment_id );
@@ -611,11 +616,20 @@ function scm_ajax_dashboard_queue_images_callback() {
 	);
 
 	if ( $offloaded_count > 0 ) {
-		$message .= ' ' . sprintf(
-			/* translators: %s is the number of offloaded attachments. */
-			__( '%s are offloaded — processing may skip these without local files.', 'ams-cache' ),
-			number_format_i18n( $offloaded_count )
-		);
+		if ( $kho_count > 0 ) {
+			$message .= ' ' . sprintf(
+				/* translators: %1$s is the total offloaded count, %2$s is the KH Offloader count. */
+				__( '%1$s are offloaded (%2$s via KH Offloader). AMS Cache will download, optimize to WebP, and re-offload these automatically.', 'ams-cache' ),
+				number_format_i18n( $offloaded_count ),
+				number_format_i18n( $kho_count )
+			);
+		} else {
+			$message .= ' ' . sprintf(
+				/* translators: %s is the number of offloaded attachments. */
+				__( '%s are offloaded. AMS Cache will attempt to download and optimize these.', 'ams-cache' ),
+				number_format_i18n( $offloaded_count )
+			);
+		}
 	}
 
 	wp_send_json_success(

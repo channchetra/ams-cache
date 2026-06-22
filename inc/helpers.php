@@ -1898,8 +1898,30 @@ function scm_get_attachment_offload_info( $attachment_id ) {
 		'offloaded'  => false,
 		'provider'   => '',
 		'remote_url' => '',
+		'can_download' => false,
 	);
 
+	// KH Offloader detection.
+	$kho_offloaded = get_post_meta( $attachment_id, 'khs3data_offloaded', true );
+
+	if ( $kho_offloaded ) {
+		$info['offloaded']  = true;
+		$info['provider']   = 'KH Offloader';
+		$info['can_download'] = true;
+
+		$kho_provider = get_post_meta( $attachment_id, 'khs3data_provider', true );
+		$kho_bucket   = get_post_meta( $attachment_id, 'khs3data_bucket', true );
+
+		if ( ! empty( $kho_provider ) ) {
+			$info['provider'] = 'KH Offloader — ' . $kho_provider;
+		}
+
+		$info['remote_url'] = wp_get_attachment_url( $attachment_id );
+
+		return $info;
+	}
+
+	// WP Offload Media (amazonS3_info).
 	$s3_info = get_post_meta( $attachment_id, 'amazonS3_info', true );
 
 	if ( ! empty( $s3_info['bucket'] ) ) {
@@ -1911,6 +1933,7 @@ function scm_get_attachment_offload_info( $attachment_id ) {
 		}
 	}
 
+	// WP Offload Media v3+ (as3cf_files).
 	$as3cf_files = get_post_meta( $attachment_id, 'as3cf_files', true );
 
 	if ( ! empty( $as3cf_files ) && is_array( $as3cf_files ) ) {
@@ -1918,6 +1941,7 @@ function scm_get_attachment_offload_info( $attachment_id ) {
 		$info['provider']  = '' !== $info['provider'] ? $info['provider'] : 'Offload Media';
 	}
 
+	// Fallback: missing local file with different URL host.
 	if ( ! $info['offloaded'] ) {
 		$metadata = wp_get_attachment_metadata( $attachment_id );
 
@@ -1935,6 +1959,7 @@ function scm_get_attachment_offload_info( $attachment_id ) {
 						$info['offloaded']  = true;
 						$info['provider']   = 'Remote CDN';
 						$info['remote_url'] = $source_url;
+						$info['can_download'] = ! empty( $source_url );
 					}
 				}
 			}
@@ -1998,6 +2023,106 @@ function scm_is_safe_optimizable_image_file( $path ) {
 }
 
 /**
+ * Download an offloaded attachment file from cloud to a local temp location.
+ *
+ * The downloaded file is stored inside the attachment's upload directory so it is
+ * visible to the Bun image optimizer and KH Offloader's re-upload hooks.
+ *
+ * @param int    $attachment_id Attachment ID.
+ * @param string $relative_file Relative file path from metadata (e.g. "2024/05/photo.jpg").
+ * @param string $remote_url    Public cloud URL for the file.
+ *
+ * @return string|false Local file path on success, false on failure.
+ */
+function scm_download_offloaded_attachment_image( $attachment_id, $relative_file, $remote_url ) {
+	if ( empty( $remote_url ) || empty( $relative_file ) ) {
+		return false;
+	}
+
+	$uploads     = wp_get_upload_dir();
+	$target_path = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . ltrim( $relative_file, '/' ) );
+
+	// Already local.
+	if ( is_file( $target_path ) && filesize( $target_path ) > 0 ) {
+		return $target_path;
+	}
+
+	$target_dir = dirname( $target_path );
+
+	if ( ! is_dir( $target_dir ) ) {
+		wp_mkdir_p( $target_dir );
+	}
+
+	// Include WordPress HTTP helpers.
+	if ( ! function_exists( 'download_url' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	// Use wp_remote_get for better error handling than download_url.
+	$response = wp_remote_get(
+		$remote_url,
+		array(
+			'timeout'     => 60,
+			'redirection' => 5,
+			'stream'      => true,
+		)
+	);
+
+	if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		error_log( sprintf(
+			'[AMS Cache] Failed to download offloaded file for attachment %d from %s: %s',
+			$attachment_id,
+			$remote_url,
+			is_wp_error( $response ) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code( $response )
+		) );
+		return false;
+	}
+
+	$body = wp_remote_retrieve_body( $response );
+
+	if ( '' === $body ) {
+		// Fallback: try writing via stream copy if body is empty (stream mode).
+		$tmp = download_url( $remote_url, 60 );
+
+		if ( is_wp_error( $tmp ) ) {
+			error_log( sprintf(
+				'[AMS Cache] download_url fallback failed for attachment %d: %s',
+				$attachment_id,
+				$tmp->get_error_message()
+			) );
+			return false;
+		}
+
+		if ( ! copy( $tmp, $target_path ) ) {
+			@unlink( $tmp );
+			return false;
+		}
+
+		@unlink( $tmp );
+	} else {
+		$written = file_put_contents( $target_path, $body );
+
+		if ( false === $written || 0 === $written ) {
+			error_log( sprintf(
+				'[AMS Cache] Could not write downloaded file for attachment %d to %s',
+				$attachment_id,
+				$target_path
+			) );
+			return false;
+		}
+	}
+
+	if ( ! is_file( $target_path ) || 0 === filesize( $target_path ) ) {
+		return false;
+	}
+
+	// Mark this file as a temporary download so KH Offloader can re-offload it.
+	update_post_meta( $attachment_id, '_ams_cache_offload_temp_download', 1 );
+
+	return $target_path;
+}
+
+/**
  * Build optimizer source list for an attachment.
  *
  * @param int   $attachment_id Attachment ID.
@@ -2051,16 +2176,34 @@ function scm_get_attachment_image_optimizer_sources( $attachment_id, $metadata =
 			continue;
 		}
 
-		if ( ! scm_is_safe_optimizable_image_file( $path ) ) {
-			if ( $offload_info['offloaded'] && is_file( $path ) ) {
-				// File exists locally but was moved by offload plugin
-				// This can happen for newly uploaded thumbnails
-			} else {
+		// If the file is missing and this attachment is offloaded, try to download it.
+		if ( ! is_file( $path ) && $offload_info['offloaded'] && $offload_info['can_download'] && ! empty( $offload_info['remote_url'] ) ) {
+			$remote_url = $offload_info['remote_url'];
+
+			// For sized files, build the cloud URL by replacing the filename.
+			if ( 'full' !== $key ) {
+				$remote_url = str_replace(
+					basename( $offload_info['remote_url'] ),
+					$item['file'],
+					$offload_info['remote_url']
+				);
+			}
+
+			$downloaded = scm_download_offloaded_attachment_image( $attachment_id, $relative, $remote_url );
+
+			if ( false === $downloaded ) {
+				// Download failed — skip this size.
 				continue;
 			}
+
+			$path = $downloaded;
 		}
 
 		if ( ! is_file( $path ) ) {
+			continue;
+		}
+
+		if ( ! scm_is_safe_optimizable_image_file( $path ) ) {
 			continue;
 		}
 
@@ -2403,7 +2546,7 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 		if ( $offload_info['offloaded'] ) {
 			$summary['skipped'] = 1;
 			$summary['skipReason'] = sprintf(
-				'Offloaded by %s. Use "Download & optimize" to pull images locally first.',
+				'Offloaded by %s. No local source files could be downloaded for optimization.',
 				$offload_info['provider']
 			);
 		} else {
@@ -2454,7 +2597,50 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 		$summary['metadata'] = scm_apply_image_optimizer_primary_upload_format( $attachment_id, $summary['metadata'], $summary, $settings['image_primary_format'] );
 	}
 
-	if ( 'upload' !== $mode_key && ! empty( $summary['metadata'] ) && is_array( $summary['metadata'] ) ) {
+	// For offloaded attachments that were downloaded and optimized,
+	// trigger metadata update so the offload plugin can re-upload new variants.
+	$was_offloaded = ! empty( $summary['offloaded'] );
+	$did_generate  = $summary['generated'] > 0 || $summary['reused'] > 0;
+
+	if ( $was_offloaded && $did_generate && ! empty( $summary['metadata'] ) && is_array( $summary['metadata'] ) ) {
+		// Ensure offload plugins see the updated metadata with new variant sources.
+		wp_update_attachment_metadata( $attachment_id, $summary['metadata'] );
+		$summary['reoffloaded'] = true;
+
+		// Clean up the temp download marker after successful re-offload.
+		delete_post_meta( $attachment_id, '_ams_cache_offload_temp_download' );
+
+		// For offloaded attachments, delete the original source files that were
+		// downloaded from cloud for optimization. The WebP variants have been
+		// re-uploaded, so the original JPG/PNG locals are no longer needed.
+		$uploads  = wp_get_upload_dir();
+		$base_dir = trailingslashit( wp_normalize_path( $uploads['basedir'] ) );
+
+		foreach ( $summary['sources'] as $source ) {
+			if ( empty( $source['path'] ) || ! is_string( $source['path'] ) ) {
+				continue;
+			}
+
+			$source_path = wp_normalize_path( $source['path'] );
+
+			// Safety: only delete files inside the uploads directory.
+			if ( 0 !== strpos( $source_path, $base_dir ) ) {
+				continue;
+			}
+
+			// Don't delete WebP variant files — KH Offloader handles their retention.
+			$extension = strtolower( pathinfo( $source_path, PATHINFO_EXTENSION ) );
+
+			if ( 'webp' === $extension ) {
+				continue;
+			}
+
+			// Delete the original source file (JPG/PNG) that was downloaded from cloud.
+			if ( is_file( $source_path ) ) {
+				wp_delete_file( $source_path );
+			}
+		}
+	} elseif ( 'upload' !== $mode_key && ! empty( $summary['metadata'] ) && is_array( $summary['metadata'] ) ) {
 		wp_update_attachment_metadata( $attachment_id, $summary['metadata'] );
 	}
 
@@ -2462,6 +2648,12 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 	unset( $stored_summary['metadata'] );
 
 	update_post_meta( $attachment_id, '_ams_cache_image_optimization', $stored_summary );
+
+	// Clear retry counter on successful optimization.
+	if ( $summary['generated'] > 0 || $summary['reused'] > 0 ) {
+		delete_post_meta( $attachment_id, '_ams_cache_image_opt_retries' );
+	}
+
 	update_option(
 		'scm_image_optimization_last',
 		array(
@@ -2472,6 +2664,7 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 			'failed'       => $summary['failed'],
 			'skipped'      => $summary['skipped'],
 			'offloaded'    => $summary['offloaded'] ? 'yes' : 'no',
+			'reoffloaded'  => ! empty( $summary['reoffloaded'] ) ? 'yes' : 'no',
 			'savedBytes'   => $summary['savedBytes'],
 			'savedLabel'   => size_format( $summary['savedBytes'], 2 ),
 			'primaryFormat' => isset( $summary['primaryFormat'] ) ? $summary['primaryFormat'] : '',
@@ -2657,6 +2850,64 @@ function scm_optimize_image_metadata_on_update( $metadata, $attachment_id ) {
 }
 
 /**
+ * Clean up original image files after AMS Cache converts them to WebP
+ * and KH Offloader finishes uploading the converted files.
+ *
+ * Hooks into khs3data_after_upload_to_cloud so the original JPEG/PNG
+ * files referenced by _ams_cache_image_original_file are deleted
+ * whenever KH Offloader completes an upload of a converted attachment.
+ *
+ * @param int $attachment_id Attachment ID.
+ *
+ * @return void
+ */
+function scm_cleanup_original_files_after_kh_offload( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	$original_file = get_post_meta( $attachment_id, '_ams_cache_image_original_file', true );
+
+	if ( empty( $original_file ) || ! is_string( $original_file ) ) {
+		return;
+	}
+
+	$uploads  = wp_get_upload_dir();
+	$base_dir = trailingslashit( $uploads['basedir'] );
+	$full_path = wp_normalize_path( $base_dir . ltrim( $original_file, '/' ) );
+
+	// Delete the original main file (e.g. photo.jpg).
+	if ( is_file( $full_path ) ) {
+		wp_delete_file( $full_path );
+	}
+
+	// Also delete original sized files that were replaced with WebP variants.
+	$original_metadata = get_post_meta( $attachment_id, '_ams_cache_image_original_metadata', true );
+
+	if ( ! empty( $original_metadata['sizes'] ) && is_array( $original_metadata['sizes'] ) ) {
+		$file_dir = trailingslashit( dirname( $full_path ) );
+
+		foreach ( $original_metadata['sizes'] as $size_name => $size_data ) {
+			if ( empty( $size_data['file'] ) ) {
+				continue;
+			}
+
+			$size_path = wp_normalize_path( $file_dir . $size_data['file'] );
+
+			if ( is_file( $size_path ) ) {
+				wp_delete_file( $size_path );
+			}
+		}
+	}
+
+	// Clear the stored original references. They are no longer needed after cleanup.
+	delete_post_meta( $attachment_id, '_ams_cache_image_original_file' );
+	delete_post_meta( $attachment_id, '_ams_cache_image_original_metadata' );
+}
+
+/**
  * Keep local files when image optimization still needs them.
  *
  * @param int $delete_rule   Offloader local deletion rule.
@@ -2763,21 +3014,37 @@ function scm_process_image_optimization_queue() {
 		return;
 	}
 
-	$batch = array_splice( $queue, 0, $settings['image_batch_size'] );
+	$batch     = array_splice( $queue, 0, $settings['image_batch_size'] );
 	$remaining = array();
 
 	foreach ( $batch as $attachment_id ) {
 		$result = scm_optimize_attachment_images( $attachment_id, array(), 'manual' );
 
-		if ( ! empty( $result['offloaded'] ) && $result['generated'] === 0 && $result['reused'] === 0 ) {
-			$skip_count = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
-			update_option( 'scm_image_optimization_offloaded_count', $skip_count + 1, false );
+		// Track offloaded-attachment outcomes.
+		if ( ! empty( $result['offloaded'] ) ) {
+			if ( $result['generated'] === 0 && $result['reused'] === 0 ) {
+				// Offloaded but could not download or optimize — count and skip.
+				$skip_count = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
+				update_option( 'scm_image_optimization_offloaded_count', $skip_count + 1, false );
 
-			if ( ! isset( $result['skipReason'] ) ) {
-				$result['skipReason'] = 'Offloaded attachment — no local files to optimize.';
+				if ( ! isset( $result['skipReason'] ) ) {
+					$result['skipReason'] = 'Offloaded attachment — could not download or optimize.';
+				}
+			} elseif ( ! empty( $result['reoffloaded'] ) ) {
+				// Successfully downloaded, optimized, and re-offloaded.
+				$reoffload_count = (int) get_option( 'scm_image_optimization_reoffloaded_count', 0 );
+				update_option( 'scm_image_optimization_reoffloaded_count', $reoffload_count + 1, false );
 			}
+		}
 
-			continue;
+		// Re-queue failed items for retry (keep at most 3 retries).
+		if ( ! empty( $result['failed'] ) && $result['generated'] === 0 && $result['reused'] === 0 ) {
+			$retries = (int) get_post_meta( $attachment_id, '_ams_cache_image_opt_retries', true );
+
+			if ( $retries < 3 ) {
+				update_post_meta( $attachment_id, '_ams_cache_image_opt_retries', $retries + 1 );
+				$remaining[] = $attachment_id;
+			}
 		}
 	}
 
@@ -5534,6 +5801,8 @@ function scm_register_wordpress_hooks() {
 	add_filter( 'wp_get_attachment_image', 'scm_filter_attachment_image_html', 20, 5 );
 	add_filter( 'khs3data_local_deletion_rule', 'scm_preserve_local_images_for_pending_optimization', 20, 2 );
 	add_filter( 'khs3data_should_offload_attachment', 'scm_should_delay_advanced_media_offload_for_image_optimization', 5, 2 );
+	add_action( 'khs3data_after_upload_to_cloud', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
+	add_action( 'khs3data_after_delete_regenerated_local_thumbnails', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
 
 	$registered = true;
 }
