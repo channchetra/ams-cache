@@ -2195,8 +2195,16 @@ function scm_get_attachment_image_optimizer_sources( $attachment_id, $metadata =
 	}
 
 	$uploads     = wp_get_upload_dir();
-	$base_dir    = trailingslashit( $uploads['basedir'] );
-	$base_rel    = dirname( $metadata['file'] );
+	$base_dir    = trailingslashit( wp_normalize_path( $uploads['basedir'] ) );
+
+	// Normalize: if metadata file is a full path, make it relative to uploads.
+	$meta_file   = wp_normalize_path( $metadata['file'] );
+
+	if ( 0 === strpos( $meta_file, $base_dir ) ) {
+		$meta_file = substr( $meta_file, strlen( $base_dir ) );
+	}
+
+	$base_rel    = dirname( $meta_file );
 	$sources     = array();
 	$seen        = array();
 	$offload_info = scm_get_attachment_offload_info( $attachment_id );
@@ -2611,6 +2619,27 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 	$formats      = $settings['image_formats'];
 	$offload_info = scm_get_attachment_offload_info( $attachment_id );
 
+	// Diagnostic: log what we received.
+	error_log( sprintf(
+		'[AMS Cache] Raw metadata for %d: file=%s sizes=%s',
+		$attachment_id,
+		isset( $metadata['file'] ) ? $metadata['file'] : '(none)',
+		isset( $metadata['sizes'] ) && is_array( $metadata['sizes'] ) ? implode( ',', array_keys( $metadata['sizes'] ) ) : '(none)'
+	) );
+
+	// Diagnostic: log source count and keys.
+	$source_keys = array();
+	foreach ( $sources as $s ) {
+		$source_keys[] = isset( $s['key'] ) ? $s['key'] : '?';
+	}
+	error_log( sprintf(
+		'[AMS Cache] Optimizing attachment %d (mode: %s). Found %d sources: %s',
+		$attachment_id,
+		$mode_key,
+		count( $sources ),
+		implode( ', ', $source_keys )
+	) );
+
 	$summary = array(
 		'generatedAt'  => time(),
 		'formats'      => $formats,
@@ -2951,6 +2980,8 @@ function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
 		return $metadata;
 	}
 
+	error_log( sprintf( '[AMS Cache] Upload optimization START for attachment %d', $attachment_id ) );
+
 	// Skip non-image attachments and already-optimized formats (WebP, AVIF, SVG).
 	$mime = get_post_mime_type( $attachment_id );
 
@@ -2977,14 +3008,37 @@ function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
 
 	update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
 
+	// WP 7.0+: metadata may arrive without sizes. Ensure they exist.
+	if ( empty( $metadata['sizes'] ) || ! is_array( $metadata['sizes'] ) ) {
+		if ( function_exists( 'wp_create_image_subsizes' ) ) {
+			$file = get_attached_file( $attachment_id );
+
+			if ( is_file( $file ) ) {
+				$fresh = wp_create_image_subsizes( $file, $attachment_id );
+
+				if ( is_array( $fresh ) && ! empty( $fresh['sizes'] ) ) {
+					$metadata = array_merge( $metadata, $fresh );
+				}
+			}
+		}
+	}
+
 	$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
 
 		if ( ! empty( $result['metadata'] ) && is_array( $result['metadata'] ) ) {
 			$metadata = $result['metadata'];
 
-			// Advanced Media Offloader reads metadata from DB during its later
-			// wp_generate_attachment_metadata callback, so persist variants early.
-			update_post_meta( $attachment_id, '_wp_attachment_metadata', $metadata );
+			// Offload plugins (KH Offloader, Advanced Media Offloader) read metadata
+			// from the DB during later wp_generate_attachment_metadata callbacks.
+			// Use the canonical WordPress API so cache invalidation, object-cache
+			// drops-ins, and wp_update_attachment_metadata observers all see the
+			// updated sizes referencing .webp files.
+			wp_update_attachment_metadata( $attachment_id, $metadata );
+
+			// Belt-and-suspenders: force-clear the post meta cache so
+			// subsequent wp_get_attachment_metadata() calls in this request
+			// never return stale .png references.
+			wp_cache_delete( $attachment_id, 'post_meta' );
 		}
 
 		if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) || ( ! empty( $result['failed'] ) && ! empty( $result['generated'] ) ) ) {
@@ -3052,6 +3106,21 @@ function scm_optimize_image_metadata_on_update( $metadata, $attachment_id ) {
 
 	$processing[ $attachment_id ] = true;
 	update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+
+	// WP 7.0+: metadata may arrive without sizes. Ensure they exist.
+	if ( empty( $metadata['sizes'] ) || ! is_array( $metadata['sizes'] ) ) {
+		if ( function_exists( 'wp_create_image_subsizes' ) ) {
+			$file = get_attached_file( $attachment_id );
+
+			if ( is_file( $file ) ) {
+				$fresh = wp_create_image_subsizes( $file, $attachment_id );
+
+				if ( is_array( $fresh ) && ! empty( $fresh['sizes'] ) ) {
+					$metadata = array_merge( $metadata, $fresh );
+				}
+			}
+		}
+	}
 
 	$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
 
