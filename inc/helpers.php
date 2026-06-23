@@ -2034,6 +2034,30 @@ function scm_is_safe_optimizable_image_file( $path ) {
  *
  * @return string|false Local file path on success, false on failure.
  */
+function scm_try_kh_offloader_download( $attachment_id, $target_path ) {
+	if ( ! function_exists( 'kho' ) || ! class_exists( 'KH_Offloader\\Services\\CloudAttachmentDownloader' ) ) {
+		return false;
+	}
+	try {
+		$kho = kho();
+		$cp = null;
+		if ( ! empty( $kho->container ) && method_exists( $kho->container, 'has' ) && $kho->container->has( 'cloud_provider' ) ) {
+			$cp = $kho->container->get( 'cloud_provider' );
+		}
+		if ( empty( $cp ) ) {
+			return false;
+		}
+		$d = new KH_Offloader\Services\CloudAttachmentDownloader( $cp );
+		$d->downloadAttachment( $attachment_id );
+		if ( is_file( $target_path ) && filesize( $target_path ) > 0 ) {
+			return $target_path;
+		}
+	} catch ( \Throwable $e ) {
+		error_log( '[AMS Cache] KHO download fallback failed: ' . $e->getMessage() );
+	}
+	return false;
+}
+
 function scm_download_offloaded_attachment_image( $attachment_id, $relative_file, $remote_url ) {
 	if ( empty( $remote_url ) || empty( $relative_file ) ) {
 		return false;
@@ -2058,22 +2082,49 @@ function scm_download_offloaded_attachment_image( $attachment_id, $relative_file
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 	}
 
-	// Use wp_remote_get for better error handling than download_url.
-	$response = wp_remote_get(
-		$remote_url,
-		array(
-			'timeout'     => 60,
-			'redirection' => 5,
-			'stream'      => true,
-		)
-	);
+	// Check if the remote URL is actually local (no custom CDN domain configured).
+	// In that case skip the wasteful HTTP loopback and go straight to KHO download.
+	$uploads_url = wp_get_upload_dir();
+	$remote_host = parse_url( $remote_url, PHP_URL_HOST );
+	$upload_host = parse_url( $uploads_url['baseurl'], PHP_URL_HOST );
+	$is_local_url = ( ! empty( $remote_host ) && ! empty( $upload_host ) && $remote_host === $upload_host );
 
-	if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-		error_log( sprintf(
-			'[AMS Cache] Failed to download offloaded file for attachment %d from %s: %s',
-			$attachment_id,
+	if ( ! $is_local_url ) {
+		// Use wp_remote_get for better error handling than download_url.
+		$response = wp_remote_get(
 			$remote_url,
-			is_wp_error( $response ) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code( $response )
+			array(
+				'timeout'     => 60,
+				'redirection' => 5,
+				'stream'      => true,
+			)
+		);
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$http_code = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
+		} else {
+			$http_code = 200;
+		}
+	} else {
+		// Local URL — file doesn't exist locally, skip HTTP.
+		$http_code = 404;
+	}
+
+	// Try KH Offloader for private buckets or missing local files
+	if ( 200 !== $http_code ) {
+		$kho_result = scm_try_kh_offloader_download( $attachment_id, $target_path );
+		if ( false !== $kho_result ) {
+			update_post_meta( $attachment_id, '_ams_cache_offload_temp_download', 1 );
+			return $target_path;
+		}
+
+		$err_msg = isset( $response ) && is_wp_error( $response )
+			? $response->get_error_message()
+			: 'HTTP ' . $http_code;
+		error_log( sprintf(
+			'[AMS Cache] Failed to download attachment %d: %s',
+			$attachment_id,
+			$err_msg
 		) );
 		return false;
 	}
@@ -3139,6 +3190,14 @@ function scm_process_image_optimization_queue() {
 		return;
 	}
 
+	// Honour cancel flag.
+	if ( get_option( 'scm_image_optimization_queue_cancelled', 0 ) > 0 ) {
+		delete_option( 'scm_image_optimization_queue_cancelled' );
+		delete_option( 'scm_image_optimization_queue' );
+		update_option( 'scm_image_optimization_queue_total', 0 );
+		return;
+	}
+
 	$batch     = array_splice( $queue, 0, $settings['image_batch_size'] );
 	$remaining = array();
 
@@ -3147,6 +3206,13 @@ function scm_process_image_optimization_queue() {
 	update_option( 'scm_image_optimization_queue_total', $total_queued, false );
 
 	foreach ( $batch as $attachment_id ) {
+			// Cancel mid-batch.
+			if ( get_option( 'scm_image_optimization_queue_cancelled', 0 ) > 0 ) {
+				delete_option( 'scm_image_optimization_queue_cancelled' );
+				delete_option( 'scm_image_optimization_queue' );
+				update_option( 'scm_image_optimization_queue_total', 0 );
+				return;
+			}
 		// Pre-cleanup: for offloaded attachments that were already converted
 		// before this fix, sweep leftover JPG/PNG files from the upload directory.
 		$offload_info       = scm_get_attachment_offload_info( $attachment_id );

@@ -1,6 +1,6 @@
 import './admin.css';
 
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {
 	Card,
@@ -878,6 +878,23 @@ function App() {
 
 	const save = () => run('scm_action_dashboard_save_settings', {settings: JSON.stringify(settings)});
 	const refresh = () => run('scm_action_dashboard_status');
+
+	// Auto-refresh when image queue is active (every 8 seconds).
+	const imageQueue = data.optimization?.reports?.imageQueue || 0;
+	const imageQueueTotal = data.optimization?.reports?.imageQueueTotal || 0;
+	const imageProgress = data.optimization?.reports?.imageProgress;
+
+	useEffect(() => {
+		if (imageQueue <= 0 && imageQueueTotal <= 0) return;
+
+		const timer = setInterval(() => {
+			request('scm_action_dashboard_status')
+				.then((result) => { if (result?.status) setStatus(result.status); })
+				.catch(() => {});
+		}, 8000);
+
+		return () => clearInterval(timer);
+	}, [imageQueue, imageQueueTotal]);
 	const loadReports = () => {
 		const reports = data.optimization?.reports || {};
 		return run('scm_action_dashboard_reports', {offset: String(reports.loadedCount || 0)}).then((result) => {
@@ -926,6 +943,15 @@ function App() {
 						<h1>{viewLabel}</h1>
 						<p>Live cache controls and page optimization state. <strong>Updated:</strong> {data.generatedAt}</p>
 					</div>
+					{imageQueueTotal > 0 ? (
+						<div className="ams-image-queue-progress" style={{display:'flex',flexDirection:'column',gap:4,minWidth:180}}>
+							<div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--ams-muted,#6b7280)'}}>
+								<span>Image optimization</span>
+								<span>{imageQueueTotal - imageQueue}/{imageQueueTotal}</span>
+							</div>
+							<div className="ams-progress" style={{marginTop:0}}><span style={{width:percent(imageProgress)}} /></div>
+						</div>
+					) : null}
 					<div className="ams-toolbar-actions">
 						<AmsButton icon={RefreshCcw} iconOnly busy={busy} onPress={actions.refresh} aria-label="Refresh">Refresh</AmsButton>
 						<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>

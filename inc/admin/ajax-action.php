@@ -25,6 +25,7 @@ add_action( 'wp_ajax_scm_action_dashboard_reports', 'scm_ajax_dashboard_reports_
 add_action( 'wp_ajax_scm_action_dashboard_preload', 'scm_ajax_dashboard_preload_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_purge_homepage', 'scm_ajax_dashboard_purge_homepage_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_queue_images', 'scm_ajax_dashboard_queue_images_callback' );
+add_action( 'wp_ajax_scm_action_dashboard_cancel_queue_images', 'scm_ajax_dashboard_cancel_queue_images_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_test_driver', 'scm_ajax_dashboard_test_driver_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_save_settings', 'scm_ajax_dashboard_save_settings_callback' );
 
@@ -564,6 +565,20 @@ function scm_ajax_dashboard_purge_homepage_callback() {
  *
  * @return void
  */
+function scm_ajax_dashboard_cancel_queue_images_callback() {
+	scm_ajax_dashboard_guard();
+	update_option( 'scm_image_optimization_queue_cancelled', time() );
+	update_option( 'scm_image_optimization_queue_total', 0 );
+	delete_option( 'scm_image_optimization_queue' );
+	delete_option( 'scm_image_optimization_offloaded_count' );
+	delete_option( 'scm_image_optimization_reoffloaded_count' );
+	wp_clear_scheduled_hook( 'scm_process_image_optimization_queue' );
+	wp_send_json_success( array(
+		'message' => __( 'Image optimization queue cancelled.', 'ams-cache' ),
+		'status'  => scm_dashboard_get_status_data(),
+	) );
+}
+
 function scm_ajax_dashboard_queue_images_callback() {
 	scm_ajax_dashboard_guard();
 
@@ -593,7 +608,13 @@ function scm_ajax_dashboard_queue_images_callback() {
 	$offloaded_count = 0;
 	$kho_count       = 0;
 
+	$skipped_optimized = 0;
 	foreach ( $attachments as $attachment_id ) {
+		$already_opt = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
+		if ( ! empty( $already_opt['generated'] ) || ! empty( $already_opt['primaryConverted'] ) ) {
+			$skipped_optimized++;
+			continue;
+		}
 		$offload_info = scm_get_attachment_offload_info( $attachment_id );
 
 		if ( $offload_info['offloaded'] ) {
@@ -630,6 +651,13 @@ function scm_ajax_dashboard_queue_images_callback() {
 		);
 	}
 
+	if ( $skipped_optimized > 0 ) {
+		$message .= ' ' . sprintf(
+			/* translators: %s is the number of already-optimized attachments. */
+			__( '%s already optimized — skipped.', 'ams-cache' ),
+			number_format_i18n( $skipped_optimized )
+		);
+	}
 	if ( $offloaded_count > 0 ) {
 		if ( $kho_count > 0 ) {
 			$message .= ' ' . sprintf(
