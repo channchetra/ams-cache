@@ -611,9 +611,24 @@ function scm_ajax_dashboard_queue_images_callback() {
 
 	$message = sprintf(
 		/* translators: %s is the number of queued attachments. */
-		__( '%s recent image attachments queued for optimization. First batch processed.', 'ams-cache' ),
-		number_format_i18n( count( $attachments ) )
+		__( '%s recent image attachments queued for optimization. First batch of %s processed.', 'ams-cache' ),
+		number_format_i18n( count( $attachments ) ),
+		number_format_i18n( scm_get_page_optimization_settings()['image_batch_size'] )
 	);
+
+	$queue_total   = (int) get_option( 'scm_image_optimization_queue_total', 0 );
+	$queue_remaining = (int) count( get_option( 'scm_image_optimization_queue', array() ) );
+	$queue_completed = max( 0, $queue_total - $queue_remaining );
+
+	if ( $queue_total > 0 ) {
+		$message .= ' ' . sprintf(
+			/* translators: %1$s completed, %2$s total, %3$s remaining. */
+			__( 'Progress: %1$s of %2$s completed, %3$s remaining.', 'ams-cache' ),
+			number_format_i18n( $queue_completed ),
+			number_format_i18n( $queue_total ),
+			number_format_i18n( $queue_remaining )
+		);
+	}
 
 	if ( $offloaded_count > 0 ) {
 		if ( $kho_count > 0 ) {

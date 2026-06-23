@@ -2458,14 +2458,6 @@ function scm_apply_image_optimizer_primary_upload_format( $attachment_id, $metad
 	$original_file     = isset( $metadata['file'] ) ? $metadata['file'] : '';
 	$converted         = false;
 
-	if ( '' !== $original_file && ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_file' ) ) {
-		update_post_meta( $attachment_id, '_ams_cache_image_original_file', $original_file );
-	}
-
-	if ( ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_metadata' ) ) {
-		update_post_meta( $attachment_id, '_ams_cache_image_original_metadata', $original_metadata );
-	}
-
 	foreach ( $summary['sources'] as $source ) {
 		if ( empty( $source['key'] ) || empty( $source['variants'][ $format ]['file'] ) || empty( $source['variants'][ $format ]['mime'] ) ) {
 			continue;
@@ -2490,6 +2482,17 @@ function scm_apply_image_optimizer_primary_upload_format( $attachment_id, $metad
 			$metadata['sizes'][ $source['key'] ]['file']      = wp_basename( $variant['file'] );
 			$metadata['sizes'][ $source['key'] ]['mime-type'] = $variant['mime'];
 			$metadata['sizes'][ $source['key'] ]['filesize']  = isset( $variant['bytes'] ) ? (int) $variant['bytes'] : 0;
+		}
+	}
+
+	// Only store original file references when at least one source was actually converted.
+	if ( $converted ) {
+		if ( '' !== $original_file && ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_file' ) ) {
+			update_post_meta( $attachment_id, '_ams_cache_image_original_file', $original_file );
+		}
+
+		if ( ! metadata_exists( 'post', $attachment_id, '_ams_cache_image_original_metadata' ) ) {
+			update_post_meta( $attachment_id, '_ams_cache_image_original_metadata', $original_metadata );
 		}
 	}
 
@@ -2640,6 +2643,43 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 				wp_delete_file( $source_path );
 			}
 		}
+
+		// Robust sweep: also scan for leftover JPG/PNG files matching the
+		// original stem pattern, catching any additional or differently-named
+		// crops that sources didn't explicitly track.
+		if ( ! empty( $summary['sources'][0]['file'] ) ) {
+			$original_file_rel = $summary['sources'][0]['file'];
+			$source_dir        = trailingslashit( dirname( wp_normalize_path( $base_dir . ltrim( $original_file_rel, '/' ) ) ) );
+			$original_stem     = pathinfo( basename( $original_file_rel ), PATHINFO_FILENAME );
+
+			if ( '' !== $original_stem && is_dir( $source_dir ) ) {
+				$stem_pattern = preg_quote( $original_stem, '/' );
+
+				foreach ( scandir( $source_dir ) as $entry ) {
+					if ( '.' === $entry || '..' === $entry ) {
+						continue;
+					}
+
+					$entry_path = wp_normalize_path( trailingslashit( $source_dir ) . $entry );
+
+					if ( ! is_file( $entry_path ) ) {
+						continue;
+					}
+
+					$entry_ext = strtolower( pathinfo( $entry, PATHINFO_EXTENSION ) );
+
+					if ( ! in_array( $entry_ext, array( 'jpg', 'jpeg', 'png' ), true ) ) {
+						continue;
+					}
+
+					if ( 1 !== preg_match( '/^' . $stem_pattern . '(?:-|$|\.)/i', $entry ) ) {
+						continue;
+					}
+
+					wp_delete_file( $entry_path );
+				}
+			}
+		}
 	} elseif ( 'upload' !== $mode_key && ! empty( $summary['metadata'] ) && is_array( $summary['metadata'] ) ) {
 		wp_update_attachment_metadata( $attachment_id, $summary['metadata'] );
 	}
@@ -2770,10 +2810,37 @@ function scm_schedule_single_image_optimization( $attachment_id ) {
 function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
 	$settings = scm_get_page_optimization_settings();
 
-	if ( 'yes' === $settings['image_optimization'] && 'yes' === $settings['image_optimize_on_upload'] ) {
-		update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+	if ( 'yes' !== $settings['image_optimization'] || 'yes' !== $settings['image_optimize_on_upload'] ) {
+		return $metadata;
+	}
 
-		$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
+	// Skip non-image attachments and already-optimized formats (WebP, AVIF, SVG).
+	$mime = get_post_mime_type( $attachment_id );
+
+	if ( ! in_array( $mime, array( 'image/jpeg', 'image/png' ), true ) ) {
+		// WebP, AVIF, GIF, SVG, PDF, audio, video etc. — do not optimize.
+		return $metadata;
+	}
+
+	// Skip if the attachment file is already a WebP (re-upload of an existing WebP).
+	$attached_file = get_attached_file( $attachment_id );
+
+	if ( ! empty( $attached_file ) && 'webp' === strtolower( pathinfo( $attached_file, PATHINFO_EXTENSION ) ) ) {
+		return $metadata;
+	}
+
+	$already_optimized = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
+
+	if (
+		! empty( $already_optimized['primaryConverted'] ) ||
+		! empty( $already_optimized['primaryFormat'] )
+	) {
+		return $metadata;
+	}
+
+	update_post_meta( $attachment_id, '_ams_cache_image_upload_retry_pending', 1 );
+
+	$result = scm_optimize_attachment_images( $attachment_id, $metadata, 'upload' );
 
 		if ( ! empty( $result['metadata'] ) && is_array( $result['metadata'] ) ) {
 			$metadata = $result['metadata'];
@@ -2788,7 +2855,6 @@ function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
 		} else {
 			scm_clear_single_image_optimization_pending( $attachment_id );
 		}
-	}
 
 	return $metadata;
 }
@@ -2825,7 +2891,25 @@ function scm_optimize_image_metadata_on_update( $metadata, $attachment_id ) {
 
 	$mime = get_post_mime_type( $attachment_id );
 
-	if ( ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/webp' ), true ) ) {
+	// Only optimize JPEG and PNG — skip WebP, AVIF, GIF, SVG, PDF, etc.
+	if ( ! in_array( $mime, array( 'image/jpeg', 'image/png' ), true ) ) {
+		return $metadata;
+	}
+
+	// Skip if the attached file is already a WebP.
+	$attached_file = get_attached_file( $attachment_id );
+
+	if ( ! empty( $attached_file ) && 'webp' === strtolower( pathinfo( $attached_file, PATHINFO_EXTENSION ) ) ) {
+		return $metadata;
+	}
+
+	// Skip if this attachment was already optimized by AMS Cache.
+	$already_optimized = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
+
+	if (
+		! empty( $already_optimized['primaryConverted'] ) ||
+		! empty( $already_optimized['primaryFormat'] )
+	) {
 		return $metadata;
 	}
 
@@ -2874,31 +2958,72 @@ function scm_cleanup_original_files_after_kh_offload( $attachment_id ) {
 		return;
 	}
 
-	$uploads  = wp_get_upload_dir();
-	$base_dir = trailingslashit( $uploads['basedir'] );
+	$uploads   = wp_get_upload_dir();
+	$base_dir  = trailingslashit( $uploads['basedir'] );
 	$full_path = wp_normalize_path( $base_dir . ltrim( $original_file, '/' ) );
+	$file_dir  = dirname( $full_path );
+
+	// Derive the original basename without extension (e.g. "photo" from "photo.jpg").
+	$original_basename = basename( $original_file );
+	$original_stem     = pathinfo( $original_basename, PATHINFO_FILENAME );
 
 	// Delete the original main file (e.g. photo.jpg).
 	if ( is_file( $full_path ) ) {
 		wp_delete_file( $full_path );
 	}
 
-	// Also delete original sized files that were replaced with WebP variants.
+	// Also delete original sized files listed in the stored original metadata.
 	$original_metadata = get_post_meta( $attachment_id, '_ams_cache_image_original_metadata', true );
 
 	if ( ! empty( $original_metadata['sizes'] ) && is_array( $original_metadata['sizes'] ) ) {
-		$file_dir = trailingslashit( dirname( $full_path ) );
+		$size_dir = trailingslashit( $file_dir );
 
 		foreach ( $original_metadata['sizes'] as $size_name => $size_data ) {
 			if ( empty( $size_data['file'] ) ) {
 				continue;
 			}
 
-			$size_path = wp_normalize_path( $file_dir . $size_data['file'] );
+			$size_path = wp_normalize_path( $size_dir . $size_data['file'] );
 
 			if ( is_file( $size_path ) ) {
 				wp_delete_file( $size_path );
 			}
+		}
+	}
+
+	// Robust sweep: delete any leftover non-WebP files in the upload directory
+	// that match the original filename stem. WordPress or plugins may generate
+	// additional sizes (e.g. -scaled versions, custom crops) after AMS Cache runs,
+	// and the metadata snapshot won't include those.
+	if ( '' !== $original_stem && is_dir( $file_dir ) ) {
+		$stem_pattern = preg_quote( $original_stem, '/' );
+
+		foreach ( scandir( $file_dir ) as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$entry_path = wp_normalize_path( trailingslashit( $file_dir ) . $entry );
+
+			if ( ! is_file( $entry_path ) ) {
+				continue;
+			}
+
+			$entry_ext = strtolower( pathinfo( $entry, PATHINFO_EXTENSION ) );
+
+			// Only target JPG and PNG originals. Skip WebP (handled by KH Offloader)
+			// and skip unrelated files.
+			if ( ! in_array( $entry_ext, array( 'jpg', 'jpeg', 'png' ), true ) ) {
+				continue;
+			}
+
+			// Match files whose basename starts with the original stem.
+			// E.g. "photo-scaled.jpg", "photo-150x150.jpg", "photo-768x576.png".
+			if ( 1 !== preg_match( '/^' . $stem_pattern . '(?:-|$|\.)/i', $entry ) ) {
+				continue;
+			}
+
+			wp_delete_file( $entry_path );
 		}
 	}
 
@@ -3017,7 +3142,20 @@ function scm_process_image_optimization_queue() {
 	$batch     = array_splice( $queue, 0, $settings['image_batch_size'] );
 	$remaining = array();
 
+	// Store total queue size for dashboard progress display.
+	$total_queued = count( $queue ) + count( $batch );
+	update_option( 'scm_image_optimization_queue_total', $total_queued, false );
+
 	foreach ( $batch as $attachment_id ) {
+		// Pre-cleanup: for offloaded attachments that were already converted
+		// before this fix, sweep leftover JPG/PNG files from the upload directory.
+		$offload_info       = scm_get_attachment_offload_info( $attachment_id );
+		$original_file_meta = get_post_meta( $attachment_id, '_ams_cache_image_original_file', true );
+
+		if ( $offload_info['offloaded'] && ! empty( $original_file_meta ) && is_string( $original_file_meta ) ) {
+			scm_cleanup_original_files_after_kh_offload( $attachment_id );
+		}
+
 		$result = scm_optimize_attachment_images( $attachment_id, array(), 'manual' );
 
 		// Track offloaded-attachment outcomes.
@@ -5803,6 +5941,7 @@ function scm_register_wordpress_hooks() {
 	add_filter( 'khs3data_should_offload_attachment', 'scm_should_delay_advanced_media_offload_for_image_optimization', 5, 2 );
 	add_action( 'khs3data_after_upload_to_cloud', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
 	add_action( 'khs3data_after_delete_regenerated_local_thumbnails', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
+	add_action( 'khs3data_after_cleanup_local_files', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
 
 	$registered = true;
 }

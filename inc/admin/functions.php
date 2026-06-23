@@ -284,7 +284,12 @@ function scm_dashboard_get_optimization_report_summary() {
 	$total_reports   = scm_count_page_optimization_reports();
 	$image_last      = get_option( 'scm_image_optimization_last', array() );
 	$image_queue     = get_option( 'scm_image_optimization_queue', array() );
+	$image_queue_count = is_array( $image_queue ) ? count( $image_queue ) : 0;
+	$image_queue_total = (int) get_option( 'scm_image_optimization_queue_total', 0 );
 	$image_offloaded = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
+	$image_reoffloaded = (int) get_option( 'scm_image_optimization_reoffloaded_count', 0 );
+	$image_saved_label = isset( $image_last['savedLabel'] ) ? $image_last['savedLabel'] : '0 B';
+	$image_progress    = $image_queue_total > 0 ? round( ( max( 0, $image_queue_total - $image_queue_count ) / $image_queue_total ) * 100 ) : 100;
 	$applied_pages  = 0;
 	$saved_bytes    = 0;
 	$ucss_saved     = 0;
@@ -342,8 +347,13 @@ function scm_dashboard_get_optimization_report_summary() {
 		'jsAnalyzed'    => $js_analyzed,
 		'jsDeferred'    => $js_deferred,
 		'imageLast'      => is_array( $image_last ) ? $image_last : array(),
-		'imageQueue'     => is_array( $image_queue ) ? count( $image_queue ) : 0,
+		'imageQueue'     => $image_queue_count,
+		'imageQueueTotal' => $image_queue_total,
+		'imageQueueCompleted' => max( 0, $image_queue_total - $image_queue_count ),
 		'imageOffloaded' => $image_offloaded,
+		'imageReoffloaded' => $image_reoffloaded,
+		'imageSavedLabel' => $image_saved_label,
+		'imageProgress'  => $image_progress,
 	);
 }
 

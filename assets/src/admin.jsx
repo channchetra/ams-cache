@@ -570,7 +570,7 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 						<StatCard icon={Link2} title="External UCSS Saved" value={reports.externalUcssSavedLabel || '0 B'} detail="linked CSS removed" progress={100} />
 						<StatCard icon={Code2} title="Local UCSS Saved" value={reports.ucssSavedLabel || '0 B'} detail="inline CSS removed" progress={100} />
 						<StatCard icon={FastForward} title="JS Analysis" value={`${reports.jsDeferred || 0} / ${reports.jsAnalyzed || 0}`} detail="safely deferred / analyzed" progress={reports.jsAnalyzed ? ((reports.jsDeferred || 0) / reports.jsAnalyzed) * 100 : 0} />
-						<StatCard icon={Image} title="Image Optimizer" value={reports.imageSavedLabel || '0 B'} detail={`${reports.imageQueue || 0} attachments queued`} progress={100} />
+						<StatCard icon={Image} title="Image Optimizer" value={reports.imageSavedLabel || '0 B'} detail={reports.imageQueueTotal ? `${reports.imageQueueCompleted || 0}/${reports.imageQueueTotal || 0} done, ${reports.imageQueue || 0} queued` : `${reports.imageQueue || 0} attachments queued`} progress={reports.imageProgress != null ? reports.imageProgress : 100} />
 					</div>
 					<div className="grid w-full grid-cols-1 items-stretch gap-4 2xl:grid-cols-2">
 						<Panel title="Optimization Summary">
