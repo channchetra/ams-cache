@@ -2781,11 +2781,33 @@ function scm_enqueue_image_optimization( $attachment_id ) {
 		return;
 	}
 
+	scm_enqueue_image_optimization_batch( array( $attachment_id ) );
+}
+
+/**
+ * Add multiple attachments to the image optimization queue in a single read/write.
+ *
+ * @param int[] $attachment_ids Attachment IDs.
+ *
+ * @return void
+ */
+function scm_enqueue_image_optimization_batch( array $attachment_ids ) {
+	$attachment_ids = array_map( 'intval', $attachment_ids );
+	$attachment_ids = array_filter( $attachment_ids, function ( $id ) {
+		return $id > 0;
+	} );
+
+	if ( empty( $attachment_ids ) ) {
+		return;
+	}
+
 	$queue = get_option( 'scm_image_optimization_queue', array() );
 	$queue = is_array( $queue ) ? array_map( 'intval', $queue ) : array();
 
-	if ( ! in_array( $attachment_id, $queue, true ) ) {
-		$queue[] = $attachment_id;
+	foreach ( $attachment_ids as $attachment_id ) {
+		if ( ! in_array( $attachment_id, $queue, true ) ) {
+			$queue[] = $attachment_id;
+		}
 	}
 
 	$queue = array_slice( array_values( array_unique( $queue ) ), -500 );
@@ -2901,7 +2923,7 @@ function scm_queue_image_optimization_on_upload( $metadata, $attachment_id ) {
 			update_post_meta( $attachment_id, '_wp_attachment_metadata', $metadata );
 		}
 
-		if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) ) {
+		if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) || ( ! empty( $result['failed'] ) && ! empty( $result['generated'] ) ) ) {
 			scm_schedule_single_image_optimization( $attachment_id );
 		} else {
 			scm_clear_single_image_optimization_pending( $attachment_id );
@@ -2973,7 +2995,7 @@ function scm_optimize_image_metadata_on_update( $metadata, $attachment_id ) {
 		$metadata = $result['metadata'];
 	}
 
-	if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) ) {
+	if ( empty( $result ) || ( empty( $result['generated'] ) && empty( $result['reused'] ) && empty( $result['offloaded'] ) ) || ( ! empty( $result['failed'] ) && ! empty( $result['generated'] ) ) ) {
 		scm_schedule_single_image_optimization( $attachment_id );
 	} else {
 		scm_clear_single_image_optimization_pending( $attachment_id );
@@ -3134,40 +3156,40 @@ function scm_should_delay_advanced_media_offload_for_image_optimization( $should
 }
 
 /**
- * Start Advanced Media Offloader after a deferred upload optimization retry.
+ * Start KH Offloader after a deferred upload optimization retry.
  *
  * @param int $attachment_id Attachment ID.
  *
  * @return void
  */
-function scm_maybe_start_advanced_media_offload_after_image_optimization( $attachment_id ) {
+function scm_maybe_start_kh_offloader_after_image_optimization( $attachment_id ) {
 	$attachment_id = (int) $attachment_id;
 
-	if ( $attachment_id <= 0 || ! function_exists( 'advmo' ) || ! class_exists( 'Advanced_Media_Offloader\\Services\\CloudAttachmentUploader' ) ) {
+	if ( $attachment_id <= 0 || ! function_exists( 'kho' ) || ! class_exists( 'KH_Offloader\\Services\\CloudAttachmentUploader' ) ) {
 		return;
 	}
 
 	try {
-		$advanced_media_offloader = advmo();
+		$kho = kho();
 
 		if (
-			empty( $advanced_media_offloader->container ) ||
-			! method_exists( $advanced_media_offloader->container, 'has' ) ||
-			! $advanced_media_offloader->container->has( 'cloud_provider' )
+			empty( $kho->container ) ||
+			! method_exists( $kho->container, 'has' ) ||
+			! $kho->container->has( 'cloud_provider' )
 		) {
 			return;
 		}
 
-		$cloud_provider = $advanced_media_offloader->container->get( 'cloud_provider' );
+		$cloud_provider = $kho->container->get( 'cloud_provider' );
 
 		if ( empty( $cloud_provider ) ) {
 			return;
 		}
 
-		$uploader = new \Advanced_Media_Offloader\Services\CloudAttachmentUploader( $cloud_provider );
+		$uploader = new \KH_Offloader\Services\CloudAttachmentUploader( $cloud_provider );
 		$uploader->uploadAttachment( $attachment_id );
 	} catch ( \Throwable $e ) {
-		error_log( sprintf( '[AMS Cache] Advanced Media Offloader handoff failed for attachment %d: %s', $attachment_id, $e->getMessage() ) );
+		error_log( sprintf( '[AMS Cache] KH Offloader handoff failed for attachment %d: %s', $attachment_id, $e->getMessage() ) );
 	}
 }
 
@@ -3242,7 +3264,7 @@ function scm_process_image_optimization_queue() {
 		}
 
 		// Re-queue failed items for retry (keep at most 3 retries).
-		if ( ! empty( $result['failed'] ) && $result['generated'] === 0 && $result['reused'] === 0 ) {
+		if ( ! empty( $result['failed'] ) && ( $result['generated'] === 0 && $result['reused'] === 0 || $result['generated'] > 0 ) ) {
 			$retries = (int) get_post_meta( $attachment_id, '_ams_cache_image_opt_retries', true );
 
 			if ( $retries < 3 ) {
@@ -3291,7 +3313,7 @@ function scm_process_single_image_optimization( $attachment_id ) {
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 	}
 
-	scm_maybe_start_advanced_media_offload_after_image_optimization( $attachment_id );
+	scm_maybe_start_kh_offloader_after_image_optimization( $attachment_id );
 }
 
 /**

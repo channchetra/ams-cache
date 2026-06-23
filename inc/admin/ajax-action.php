@@ -607,8 +607,9 @@ function scm_ajax_dashboard_queue_images_callback() {
 
 	$offloaded_count = 0;
 	$kho_count       = 0;
-
 	$skipped_optimized = 0;
+	$to_enqueue       = array();
+
 	foreach ( $attachments as $attachment_id ) {
 		$already_opt = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
 		if ( ! empty( $already_opt['generated'] ) || ! empty( $already_opt['primaryConverted'] ) ) {
@@ -625,8 +626,11 @@ function scm_ajax_dashboard_queue_images_callback() {
 			}
 		}
 
-		scm_enqueue_image_optimization( $attachment_id );
+		$to_enqueue[] = (int) $attachment_id;
 	}
+
+	// Batch-enqueue: one read + one write instead of 200+200.
+	scm_enqueue_image_optimization_batch( $to_enqueue );
 
 	scm_process_image_optimization_queue();
 
