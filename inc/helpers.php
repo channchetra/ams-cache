@@ -1982,7 +1982,11 @@ function scm_is_safe_optimizable_image_file( $path ) {
 	$base      = realpath( $uploads['basedir'] );
 
 	if ( false === $base ) {
-		return false;
+		$base = wp_normalize_path( $uploads['basedir'] );
+
+		if ( ! is_dir( $base ) ) {
+			return false;
+		}
 	}
 
 	$base = rtrim( wp_normalize_path( $base ), '/' ) . '/';
@@ -2290,7 +2294,26 @@ function scm_generate_bun_image_optimizer_variant( $source, $format, $quality, $
 	$script      = scm_get_bun_image_optimizer_script();
 	$uploads     = wp_get_upload_dir();
 	$uploads_dir = realpath( $uploads['basedir'] );
+
+	// realpath() may fail on some server configurations despite the
+	// directory existing. Fall back to the normalized path.
+	if ( false === $uploads_dir ) {
+		$uploads_dir = wp_normalize_path( $uploads['basedir'] );
+
+		if ( ! is_dir( $uploads_dir ) ) {
+			$uploads_dir = false;
+		}
+	}
+
 	$source_path = realpath( $source['path'] );
+
+	if ( false === $source_path ) {
+		$source_path = wp_normalize_path( $source['path'] );
+
+		if ( ! is_file( $source_path ) ) {
+			$source_path = false;
+		}
+	}
 
 	if ( '' === $bun || ! file_exists( $script ) || false === $uploads_dir || false === $source_path ) {
 		return array();
@@ -2359,7 +2382,11 @@ function scm_generate_image_optimizer_variant( $source, $format, $quality ) {
 	$uploads_dir = realpath( $uploads['basedir'] );
 
 	if ( false === $uploads_dir ) {
-		return array();
+		$uploads_dir = wp_normalize_path( $uploads['basedir'] );
+
+		if ( ! is_dir( $uploads_dir ) ) {
+			return array();
+		}
 	}
 
 	$uploads_dir_full = rtrim( wp_normalize_path( $uploads_dir ), '/' ) . '/';
@@ -2367,7 +2394,11 @@ function scm_generate_image_optimizer_variant( $source, $format, $quality ) {
 	$source_path      = realpath( $source['path'] );
 
 	if ( false === $source_path ) {
-		return array();
+		$source_path = wp_normalize_path( $source['path'] );
+
+		if ( ! is_file( $source_path ) ) {
+			return array();
+		}
 	}
 
 	$source_path = wp_normalize_path( $source_path );
@@ -2618,8 +2649,36 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 		$source_summary['variants'] = array();
 		$summary['sourceBytes'] += (int) $source['bytes'];
 
+		// If this source is already in every target format (e.g. already WebP),
+		// skip it rather than counting it as a failure.
+		$source_ext = strtolower( pathinfo( $source['path'], PATHINFO_EXTENSION ) );
+		$needs_conversion = false;
+
 		foreach ( $formats as $format ) {
-			$variant = scm_generate_image_optimizer_variant( $source, $format, $settings['image_quality'] );
+			if ( $source_ext !== $format ) {
+				$needs_conversion = true;
+				break;
+			}
+		}
+
+		if ( ! $needs_conversion ) {
+			// Source is already in the target format — not a failure.
+			$summary['sources'][] = $source_summary;
+			continue;
+		}
+
+		foreach ( $formats as $format ) {
+			try {
+				$variant = scm_generate_image_optimizer_variant( $source, $format, $settings['image_quality'] );
+			} catch ( \Throwable $e ) {
+				error_log( sprintf(
+					'[AMS Cache] Variant generation threw for attachment %d size %s: %s',
+					$attachment_id,
+					$source['key'],
+					$e->getMessage()
+				) );
+				$variant = array();
+			}
 
 			if ( empty( $variant['file'] ) ) {
 				$summary['failed']++;
@@ -2643,6 +2702,11 @@ function scm_optimize_attachment_images( $attachment_id, $metadata = array(), $m
 		}
 
 		$summary['sources'][] = $source_summary;
+
+		// Free resources between source images (Imagick can hold large allocations).
+		if ( function_exists( 'gc_collect_cycles' ) ) {
+			gc_collect_cycles();
+		}
 	}
 
 	$summary['metadata'] = scm_apply_image_optimizer_summary_to_metadata( $metadata, $summary );
@@ -3065,9 +3129,9 @@ function scm_cleanup_original_files_after_kh_offload( $attachment_id ) {
 	}
 
 	// Robust sweep: delete any leftover non-WebP files in the upload directory
-	// that match the original filename stem. WordPress or plugins may generate
-	// additional sizes (e.g. -scaled versions, custom crops) after AMS Cache runs,
-	// and the metadata snapshot won't include those.
+	// that match the original filename stem, but ONLY when a WebP replacement
+	// already exists (meaning the conversion succeeded for that size).
+	// Keep unconverted PNG/JPG files so retries have source images to work from.
 	if ( '' !== $original_stem && is_dir( $file_dir ) ) {
 		$stem_pattern = preg_quote( $original_stem, '/' );
 
@@ -3093,6 +3157,15 @@ function scm_cleanup_original_files_after_kh_offload( $attachment_id ) {
 			// Match files whose basename starts with the original stem.
 			// E.g. "photo-scaled.jpg", "photo-150x150.jpg", "photo-768x576.png".
 			if ( 1 !== preg_match( '/^' . $stem_pattern . '(?:-|$|\.)/i', $entry ) ) {
+				continue;
+			}
+
+			// Safety: only delete the PNG/JPG if a WebP counterpart exists.
+			// This prevents deleting unconverted thumbnails that still need retry.
+			$entry_stem = pathinfo( $entry, PATHINFO_FILENAME );
+			$webp_path  = wp_normalize_path( trailingslashit( $file_dir ) . $entry_stem . '.webp' );
+
+			if ( ! is_file( $webp_path ) || 0 === filesize( $webp_path ) ) {
 				continue;
 			}
 
