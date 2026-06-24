@@ -986,6 +986,8 @@ function scm_is_expert_mode_code_ready() {
  * @return int
  */
 function scm_clear_all_cache() {
+	scm_sync_expert_mode_runtime();
+
 	$driver_type = get_option( 'scm_option_driver' );
 	$driver      = scm_driver_factory( $driver_type );
 
@@ -1110,4 +1112,43 @@ function scm_update_config( $setting ) {
 
 	// phpcs:ignore
 	@file_put_contents( $file, $content );
+}
+
+/**
+ * Sync runtime config and Expert Mode lock file.
+ *
+ * @return void
+ */
+function scm_sync_expert_mode_runtime() {
+	$driver_type      = get_option( 'scm_option_driver', 'file' );
+	$connection_type  = scm_get_driver_connection_type( $driver_type );
+	$advanced_setting = scm_normalize_driver_settings(
+		scm_get_driver_advanced_settings( $driver_type ),
+		$connection_type
+	);
+
+	$setting['cache_driver']             = $driver_type;
+	$setting['cache_key_prefix']         = scm_get_cache_key_prefix();
+	$setting['driver_advanced_settings'] = $advanced_setting;
+	$setting['driver_connection_type']   = $connection_type;
+	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
+	$setting['preload']                  = array(
+		'enable'               => scm_is_preload_enabled(),
+		'limit'                => (int) get_option( 'scm_option_preload_limit', 50 ),
+		'crawl_homepage_links' => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
+	);
+	$setting['cache_max_entries']        = scm_get_cache_max_entries();
+
+	scm_update_config( $setting );
+
+	$checkpoint = scm_get_upload_dir() . '/expert.lock';
+
+	if ( 'enable' === get_option( 'scm_option_expert_mode_status' ) ) {
+		file_put_contents( $checkpoint, 'VOTE!' );
+		return;
+	}
+
+	if ( file_exists( $checkpoint ) ) {
+		unlink( $checkpoint );
+	}
 }

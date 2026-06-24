@@ -422,6 +422,8 @@ function scm_ajax_dashboard_save_settings_callback() {
 		update_option( 'scm_option_woocommerce_event_payment_complete', scm_ajax_dashboard_yes_no( isset( $woocommerce['paymentComplete'] ) ? $woocommerce['paymentComplete'] : get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ) ) );
 	}
 
+	scm_sync_expert_mode_runtime();
+
 	wp_send_json_success(
 		array(
 			'message' => __( 'Settings saved.', 'ams-cache' ),
