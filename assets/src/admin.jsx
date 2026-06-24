@@ -795,7 +795,7 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.0.5</Pill>
+					<Pill tone="info">AMS Cache 3.0.6</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, JS analysis, and image conversion in one clean WordPress admin experience.</p>
 					<div className="ams-action-row">
@@ -819,7 +819,7 @@ function AboutPage({data}) {
 				<button type="button">Security</button>
 				<button type="button">Credits</button>
 			</div>
-			<Panel title="Welcome to AMS Cache 3.0.5" className="ams-full-width">
+			<Panel title="Welcome to AMS Cache 3.0.6" className="ams-full-width">
 				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, safer upload-time image conversion before offload, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-3">
@@ -929,7 +929,7 @@ function App() {
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.5">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.6">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label}>
