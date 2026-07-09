@@ -961,7 +961,7 @@ function scm_search_expert_mode_code_snippet( $string ) {
  * @return bool
  */
 function scm_is_expert_mode_code_ready() {
-	$result = scm_search_expert_mode_code_snippet( scm_get_upload_dir() );
+	$result = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_upload_dir() ) );
 	if ( $result[0] && $result[1] ) {
 		return true;
 	}

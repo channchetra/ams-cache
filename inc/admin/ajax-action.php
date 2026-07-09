@@ -339,14 +339,23 @@ function scm_ajax_dashboard_save_settings_callback() {
 	}
 
 	if ( isset( $settings['preload'] ) && is_array( $settings['preload'] ) ) {
-		$preload = $settings['preload'];
+		$preload     = $settings['preload'];
+		$was_enabled = 'yes' === get_option( 'scm_option_preload_cache', 'no' );
 
 		update_option( 'scm_option_preload_cache', scm_ajax_dashboard_yes_no( isset( $preload['enabled'] ) ? $preload['enabled'] : get_option( 'scm_option_preload_cache', 'no' ) ) );
+		$now_enabled = get_option( 'scm_option_preload_cache' );
 		update_option( 'scm_option_preload_limit', max( 1, min( 1000, absint( isset( $preload['limit'] ) ? $preload['limit'] : get_option( 'scm_option_preload_limit', 50 ) ) ) ) );
 		update_option( 'scm_option_preload_homepage_links', scm_ajax_dashboard_yes_no( isset( $preload['crawlHomepage'] ) ? $preload['crawlHomepage'] : get_option( 'scm_option_preload_homepage_links', 'yes' ), 'yes' ) );
 		update_option( 'scm_option_post_homepage', scm_ajax_dashboard_yes_no( isset( $preload['homepage'] ) ? $preload['homepage'] : get_option( 'scm_option_post_homepage', 'yes' ), 'yes' ) );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'scm_option_post_types' );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'scm_option_post_archives' );
+
+		if ( ! $was_enabled && 'yes' === $now_enabled ) {
+			scm_schedule_preload_cache( true );
+			if ( function_exists( 'spawn_cron' ) ) {
+				spawn_cron();
+			}
+		}
 	}
 
 	if ( isset( $settings['performance'] ) && is_array( $settings['performance'] ) ) {
