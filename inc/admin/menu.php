@@ -392,7 +392,6 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 						'external_ucss'     => __( 'External UCSS', 'ams-cache' ),
 						'local_ucss'        => __( 'Local UCSS', 'ams-cache' ),
 						'js_analysis'       => __( 'JS analysis', 'ams-cache' ),
-						'image_optimization' => __( 'Image optimization', 'ams-cache' ),
 					),
 					'statuses' => array(
 						'applied'        => __( 'Applied', 'ams-cache' ),

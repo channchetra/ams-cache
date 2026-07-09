@@ -24,8 +24,6 @@ add_action( 'wp_ajax_scm_action_dashboard_clear_cache_type', 'scm_ajax_dashboard
 add_action( 'wp_ajax_scm_action_dashboard_reports', 'scm_ajax_dashboard_reports_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_preload', 'scm_ajax_dashboard_preload_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_purge_homepage', 'scm_ajax_dashboard_purge_homepage_callback' );
-add_action( 'wp_ajax_scm_action_dashboard_queue_images', 'scm_ajax_dashboard_queue_images_callback' );
-add_action( 'wp_ajax_scm_action_dashboard_cancel_queue_images', 'scm_ajax_dashboard_cancel_queue_images_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_test_driver', 'scm_ajax_dashboard_test_driver_callback' );
 add_action( 'wp_ajax_scm_action_dashboard_save_settings', 'scm_ajax_dashboard_save_settings_callback' );
 
@@ -60,27 +58,30 @@ function scm_ajax_dashboard_guard() {
  * @return void
  */
 function scm_ajax_clear_cache_callback() {
+	scm_ajax_dashboard_guard();
 
-	if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'scm_clear_cache_' . scm_get_dir_hash() ) ) {
-		echo __( 'Token has been rejected.', 'ams-cache' );
-		wp_die();
+	$rows        = scm_clear_all_cache();
+	$has_deleted = $rows > 0;
+	$message     = $has_deleted
+		? sprintf( __( '%s rows have been deleted.', 'ams-cache' ), $rows )
+		: __( 'There is no cache on your site currently.', 'ams-cache' );
+
+	if ( $has_deleted ) {
+		wp_send_json_success(
+			array(
+				'message' => $message,
+				'rows'    => $rows,
+				'status'  => scm_dashboard_get_status_data(),
+			)
+		);
 	}
 
-	if ( ! current_user_can( 'manage_options' ) ) {
-		echo __( 'Access denied.', 'ams-cache' );
-		wp_die();
-	}
-
-	$rows = scm_clear_all_cache();
-
-	if ( $rows > 0 ) {
-		// translators: %s is the number of rows.
-		echo sprintf( __( '%s rows has been deleted.', 'ams-cache' ), $rows );
-	} else {
-		echo __( 'There is no cache on your site currently.', 'ams-cache' );
-	}
-
-	wp_die();
+	wp_send_json_error(
+		array(
+			'message' => $message,
+			'rows'    => $rows,
+		)
+	);
 }
 
 /**
@@ -89,49 +90,52 @@ function scm_ajax_clear_cache_callback() {
  * @return void
  */
 function scm_ajax_purge_current_page_callback() {
-
-	if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'scm_purge_current_page_' . scm_get_dir_hash() ) ) {
-		echo __( 'Token has been rejected.', 'ams-cache' );
-		wp_die();
-	}
-
-	if ( ! current_user_can( 'edit_posts' ) ) {
-		echo __( 'Access denied.', 'ams-cache' );
-		wp_die();
-	}
+	scm_ajax_dashboard_guard();
 
 	$url = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
 
 	if ( empty( $url ) ) {
-		echo __( 'Current page URL is empty.', 'ams-cache' );
-		wp_die();
+		wp_send_json_error(
+			array(
+				'message' => __( 'Current page URL is empty.', 'ams-cache' ),
+			)
+		);
 	}
 
 	$home_host = parse_url( home_url( '/' ), PHP_URL_HOST );
 	$url_host  = parse_url( $url, PHP_URL_HOST );
 
 	if ( ! empty( $url_host ) && strtolower( $url_host ) !== strtolower( $home_host ) ) {
-		echo __( 'Only same-site URLs can be purged.', 'ams-cache' );
-		wp_die();
+		wp_send_json_error(
+			array(
+				'message' => __( 'Only same-site URLs can be purged.', 'ams-cache' ),
+			)
+		);
 	}
 
 	$path = parse_url( $url, PHP_URL_PATH );
 	$path = empty( $path ) ? '/' : $path;
 
 	if ( ! scm_is_cacheable_document_path( $path ) ) {
-		echo __( 'This URL is not a cacheable page.', 'ams-cache' );
-		wp_die();
+		wp_send_json_error(
+			array(
+				'message' => __( 'This URL is not a cacheable page.', 'ams-cache' ),
+			)
+		);
 	}
 
 	$result = scm_purge_cache_uri( $path );
 
-	echo sprintf(
-		/* translators: %s is the purged URL path. */
-		__( 'Cache purged for current page: %s', 'ams-cache' ),
-		$result['uri']
+	wp_send_json_success(
+		array(
+			'message' => sprintf(
+				/* translators: %s is the purged URL path. */
+				__( 'Cache purged for current page: %s', 'ams-cache' ),
+				$result['uri']
+			),
+			'status'  => scm_dashboard_get_status_data(),
+		)
 	);
-
-	wp_die();
 }
 
 /**
@@ -361,11 +365,6 @@ function scm_ajax_dashboard_save_settings_callback() {
 			'external_ucss',
 			'local_ucss',
 			'js_analysis',
-			'image_optimization',
-			'image_optimize_on_upload',
-			'image_rewrite_html',
-			'image_placeholders',
-			'image_remote_rewrite',
 		);
 
 		foreach ( $boolean_keys as $key ) {
@@ -381,10 +380,6 @@ function scm_ajax_dashboard_save_settings_callback() {
 		$current['ucss_safelist']        = sanitize_textarea_field( isset( $incoming['ucss_safelist'] ) ? $incoming['ucss_safelist'] : $current['ucss_safelist'] );
 		$current['media_exclusions']     = sanitize_textarea_field( isset( $incoming['media_exclusions'] ) ? $incoming['media_exclusions'] : $current['media_exclusions'] );
 		$current['js_exclusions']        = sanitize_textarea_field( isset( $incoming['js_exclusions'] ) ? $incoming['js_exclusions'] : $current['js_exclusions'] );
-		$current['image_quality']        = max( 1, min( 100, absint( isset( $incoming['image_quality'] ) ? $incoming['image_quality'] : $current['image_quality'] ) ) );
-		$current['image_batch_size']     = max( 1, min( 20, absint( isset( $incoming['image_batch_size'] ) ? $incoming['image_batch_size'] : $current['image_batch_size'] ) ) );
-		$current['image_formats']        = array( 'webp' );
-		$current['image_primary_format'] = 'webp';
 
 		update_option( 'scm_option_page_optimization', $current );
 	}
@@ -557,133 +552,6 @@ function scm_ajax_dashboard_purge_homepage_callback() {
 				__( 'Homepage cache purged. %s priority preload URLs queued.', 'ams-cache' ),
 				$count
 			),
-			'status'  => scm_dashboard_get_status_data(),
-		)
-	);
-}
-
-/**
- * Dashboard image optimizer queue callback.
- *
- * @return void
- */
-function scm_ajax_dashboard_cancel_queue_images_callback() {
-	scm_ajax_dashboard_guard();
-	update_option( 'scm_image_optimization_queue_cancelled', time() );
-	update_option( 'scm_image_optimization_queue_total', 0 );
-	delete_option( 'scm_image_optimization_queue' );
-	delete_option( 'scm_image_optimization_offloaded_count' );
-	delete_option( 'scm_image_optimization_reoffloaded_count' );
-	wp_clear_scheduled_hook( 'scm_process_image_optimization_queue' );
-	wp_send_json_success( array(
-		'message' => __( 'Image optimization queue cancelled.', 'ams-cache' ),
-		'status'  => scm_dashboard_get_status_data(),
-	) );
-}
-
-function scm_ajax_dashboard_queue_images_callback() {
-	scm_ajax_dashboard_guard();
-
-	$settings = scm_get_page_optimization_settings();
-
-	if ( 'yes' !== $settings['image_optimization'] ) {
-		wp_send_json_error(
-			array(
-				'message' => __( 'Image optimization is disabled.', 'ams-cache' ),
-			)
-		);
-	}
-
-	$attachments = get_posts(
-		array(
-			'post_type'      => 'attachment',
-			'post_mime_type' => array( 'image/jpeg', 'image/png', 'image/webp' ),
-			'post_status'    => 'inherit',
-			'fields'         => 'ids',
-			'posts_per_page' => 200,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-			'no_found_rows'  => true,
-		)
-	);
-
-	$offloaded_count = 0;
-	$kho_count       = 0;
-	$skipped_optimized = 0;
-	$to_enqueue       = array();
-
-	foreach ( $attachments as $attachment_id ) {
-		$already_opt = get_post_meta( $attachment_id, '_ams_cache_image_optimization', true );
-		if ( ! empty( $already_opt['generated'] ) || ! empty( $already_opt['primaryConverted'] ) ) {
-			$skipped_optimized++;
-			continue;
-		}
-		$offload_info = scm_get_attachment_offload_info( $attachment_id );
-
-		if ( $offload_info['offloaded'] ) {
-			$offloaded_count++;
-
-			if ( false !== stripos( $offload_info['provider'], 'KH Offloader' ) ) {
-				$kho_count++;
-			}
-		}
-
-		$to_enqueue[] = (int) $attachment_id;
-	}
-
-	// Batch-enqueue: one read + one write instead of 200+200.
-	scm_enqueue_image_optimization_batch( $to_enqueue );
-
-	scm_process_image_optimization_queue();
-
-	$message = sprintf(
-		/* translators: %s is the number of queued attachments. */
-		__( '%s recent image attachments queued for optimization. First batch of %s processed.', 'ams-cache' ),
-		number_format_i18n( count( $attachments ) ),
-		number_format_i18n( scm_get_page_optimization_settings()['image_batch_size'] )
-	);
-
-	$queue_total   = (int) get_option( 'scm_image_optimization_queue_total', 0 );
-	$queue_remaining = (int) count( get_option( 'scm_image_optimization_queue', array() ) );
-	$queue_completed = max( 0, $queue_total - $queue_remaining );
-
-	if ( $queue_total > 0 ) {
-		$message .= ' ' . sprintf(
-			/* translators: %1$s completed, %2$s total, %3$s remaining. */
-			__( 'Progress: %1$s of %2$s completed, %3$s remaining.', 'ams-cache' ),
-			number_format_i18n( $queue_completed ),
-			number_format_i18n( $queue_total ),
-			number_format_i18n( $queue_remaining )
-		);
-	}
-
-	if ( $skipped_optimized > 0 ) {
-		$message .= ' ' . sprintf(
-			/* translators: %s is the number of already-optimized attachments. */
-			__( '%s already optimized — skipped.', 'ams-cache' ),
-			number_format_i18n( $skipped_optimized )
-		);
-	}
-	if ( $offloaded_count > 0 ) {
-		if ( $kho_count > 0 ) {
-			$message .= ' ' . sprintf(
-				/* translators: %1$s is the total offloaded count, %2$s is the KH Offloader count. */
-				__( '%1$s are offloaded (%2$s via KH Offloader). AMS Cache will download, optimize to WebP, and re-offload these automatically.', 'ams-cache' ),
-				number_format_i18n( $offloaded_count ),
-				number_format_i18n( $kho_count )
-			);
-		} else {
-			$message .= ' ' . sprintf(
-				/* translators: %s is the number of offloaded attachments. */
-				__( '%s are offloaded. AMS Cache will attempt to download and optimize these.', 'ams-cache' ),
-				number_format_i18n( $offloaded_count )
-			);
-		}
-	}
-
-	wp_send_json_success(
-		array(
-			'message' => $message,
 			'status'  => scm_dashboard_get_status_data(),
 		)
 	);

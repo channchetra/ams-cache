@@ -24,6 +24,12 @@ define( 'SCM_INC', true );
  */
 function scm_run_expert_mode( $args ) {
 
+	// Raise memory early (Expert Mode runs before WP_MEMORY_LIMIT is applied).
+	// Default FPM 128M can be exhausted reading multi-MB cache files from the file driver.
+	if ( function_exists( 'ini_set' ) ) {
+		@ini_set( 'memory_limit', '512M' );
+	}
+
 	$microtime_before = microtime( true );
 	$sql_queries      = 0;
 
@@ -84,17 +90,17 @@ function scm_run_expert_mode( $args ) {
 
 		foreach ( $excluded_get_vars as $var ) {
 			if ( isset( $_GET[ $var ] ) ) {
-				return true;
+				return;
 			}
 		}
 		foreach ( $excluded_post_vars as $var ) {
 			if ( isset( $_POST[ $var ] ) ) {
-				return true;
+				return;
 			}
 		}
 		foreach ( $excluded_cookie_vars as $var ) {
 			if ( isset( $_COOKIE[ $var ] ) ) {
-				return true;
+				return;
 			}
 		}
 	}
@@ -182,7 +188,7 @@ function scm_run_expert_mode( $args ) {
 		$memory_usage = $memory_usage / ( 1024 * 1024 );
 		$memory_usage = round( $memory_usage, 4 );
 		
-		if ( ! empty( $cached_content ) ) {
+		if ( ! empty( $cached_content ) && strpos( $cached_content, '</body>' ) !== false && strlen( $cached_content ) >= 1024 ) {
 			$date            = date( 'Y-m-d H:i:s' );
 			$microtime_after = microtime(true);
 			$page_speed      = round( $microtime_after - $microtime_before, 3 );

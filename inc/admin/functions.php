@@ -282,14 +282,6 @@ function scm_dashboard_get_optimization_report_summary() {
 	$summary_reports = scm_get_page_optimization_reports( 20 );
 	$initial_reports = array_slice( $summary_reports, 0, 5 );
 	$total_reports   = scm_count_page_optimization_reports();
-	$image_last      = get_option( 'scm_image_optimization_last', array() );
-	$image_queue     = get_option( 'scm_image_optimization_queue', array() );
-	$image_queue_count = is_array( $image_queue ) ? count( $image_queue ) : 0;
-	$image_queue_total = (int) get_option( 'scm_image_optimization_queue_total', 0 );
-	$image_offloaded = (int) get_option( 'scm_image_optimization_offloaded_count', 0 );
-	$image_reoffloaded = (int) get_option( 'scm_image_optimization_reoffloaded_count', 0 );
-	$image_saved_label = isset( $image_last['savedLabel'] ) ? $image_last['savedLabel'] : '0 B';
-	$image_progress    = $image_queue_total > 0 ? round( ( max( 0, $image_queue_total - $image_queue_count ) / $image_queue_total ) * 100 ) : 100;
 	$applied_pages  = 0;
 	$saved_bytes    = 0;
 	$ucss_saved     = 0;
@@ -346,14 +338,6 @@ function scm_dashboard_get_optimization_report_summary() {
 		'externalUcssAppliedPages' => $external_ucss_pages,
 		'jsAnalyzed'    => $js_analyzed,
 		'jsDeferred'    => $js_deferred,
-		'imageLast'      => is_array( $image_last ) ? $image_last : array(),
-		'imageQueue'     => $image_queue_count,
-		'imageQueueTotal' => $image_queue_total,
-		'imageQueueCompleted' => max( 0, $image_queue_total - $image_queue_count ),
-		'imageOffloaded' => $image_offloaded,
-		'imageReoffloaded' => $image_reoffloaded,
-		'imageSavedLabel' => $image_saved_label,
-		'imageProgress'  => $image_progress,
 	);
 }
 
@@ -630,7 +614,6 @@ function scm_dashboard_get_status_data() {
 		'external_ucss',
 		'local_ucss',
 		'js_analysis',
-		'image_optimization',
 	);
 
 	$enabled_features = 0;
@@ -681,7 +664,6 @@ function scm_dashboard_get_status_data() {
 		),
 		'optimization' => array(
 			'enabled'       => 'yes' === $optimization['status'],
-			'imageEnabled'  => 'yes' === $optimization['image_optimization'],
 			'enabledCount'  => $enabled_features,
 			'totalCount'    => count( $feature_keys ),
 			'progress'      => round( ( $enabled_features / count( $feature_keys ) ) * 100 ),
@@ -903,6 +885,12 @@ function scm_expert_mode_code_template() {
 // BEGIN - AMS Cache
 // Settings are read from <?php echo $config_file; ?>.
 // Update Redis DB, key prefix, driver, and preload options in AMS Cache admin.
+//
+// Raise memory early — Expert Mode runs before WP_MEMORY_LIMIT is applied
+// and large cache pages can exhaust FPM's default 128M.
+if ( function_exists( 'ini_set' ) ) {
+	@ini_set( 'memory_limit', '512M' );
+}
 
 if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
 

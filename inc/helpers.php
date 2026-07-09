@@ -705,15 +705,6 @@ function scm_get_default_page_optimization_settings() {
 		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item\nmenu-item-has-children\ncurrent-menu-item\ncurrent-menu-parent\ncurrent-menu-ancestor\nsub-menu\ndropdown\ndropdown-menu\ndropdown-toggle\nsfHover\nis-open\nis-visible\nslick\nslick-active\nslick-current\nslick-initialized\nswiper\nswiper-slide\nswiper-wrapper\nswiper-button-next\nswiper-button-prev\nrevslider\nrev_slider\nrs-module\nrs-layer\nrs-slide\nsr7\ntp-caption\nwoocommerce\nwp-block\nalignwide\nalignfull",
 		'critical_image_count' => 1,
 		'external_ucss_max_file_size' => 307200,
-		'image_optimization'  => 'no',
-		'image_optimize_on_upload' => 'yes',
-		'image_rewrite_html'  => 'yes',
-		'image_placeholders'   => 'yes',
-		'image_remote_rewrite' => 'no',
-		'image_formats'       => array( 'webp' ),
-		'image_primary_format' => 'webp',
-		'image_quality'       => 82,
-		'image_batch_size'    => 5,
 		'media_exclusions'     => "logo\navatar\ncaptcha",
 		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal\nrevslider\nrev_slider\nrs6\nsr7\nthemepunch\nrbtools\nslider-revolution\nrevolution\nslick\nswiper\nowl.carousel\nsmartmenus\nsuperfish\nbootstrap\ndropdown\nmenu-image\nmenu\nnavigation\nhoverIntent",
 	);
@@ -732,10 +723,6 @@ function scm_get_page_optimization_settings() {
 	$settings['bun_path']             = trim( (string) $settings['bun_path'] );
 	$settings['purgecss_path']        = trim( (string) $settings['purgecss_path'] );
 	$settings['external_ucss_max_file_size'] = max( 51200, min( 1048576, (int) $settings['external_ucss_max_file_size'] ) );
-	$settings['image_quality']        = max( 1, min( 100, (int) $settings['image_quality'] ) );
-	$settings['image_batch_size']     = max( 1, min( 20, (int) $settings['image_batch_size'] ) );
-	$settings['image_formats']        = scm_normalize_image_optimizer_formats( $settings['image_formats'] );
-	$settings['image_primary_format'] = in_array( sanitize_key( (string) $settings['image_primary_format'] ), $settings['image_formats'], true ) ? sanitize_key( (string) $settings['image_primary_format'] ) : reset( $settings['image_formats'] );
 	$settings['ucss_safelist']        = scm_merge_textarea_lines( $settings['ucss_safelist'], scm_get_protected_ucss_safelist() );
 	$settings['js_exclusions']        = scm_merge_textarea_lines( $settings['js_exclusions'], scm_get_protected_js_exclusions() );
 
@@ -4703,8 +4690,6 @@ function scm_optimize_html( $html ) {
 		$html = scm_optimize_media_tags( $html, $settings );
 	}
 
-	$html = scm_rewrite_cached_attachment_images( $html, $settings );
-
 	if ( 'yes' === $settings['preconnect_fonts'] ) {
 		$html = scm_add_font_preconnects( $html );
 	}
@@ -4881,19 +4866,7 @@ function scm_get_page_optimization_requirements() {
 	$purgecss_check = scm_check_executable_version( $settings['purgecss_path'] );
 	$work_dir       = scm_get_page_optimization_work_dir();
 	$work_dir_ready = is_dir( $work_dir ) ? is_writable( $work_dir ) : wp_mkdir_p( $work_dir );
-	$image_support   = array();
-	$image_ready     = true;
 	$bun_check       = scm_check_executable_version( $settings['bun_path'] );
-	$bun_image_check = scm_check_bun_image_optimizer();
-	$bun_formats     = ! empty( $bun_image_check['formats'] ) ? array_map( 'strtolower', (array) $bun_image_check['formats'] ) : array();
-
-	foreach ( $settings['image_formats'] as $format ) {
-		$editor_supported = scm_image_editor_supports_format( $format );
-		$bun_supported    = in_array( strtolower( (string) $format ), $bun_formats, true );
-		$supported        = $editor_supported || $bun_supported;
-		$image_ready      = $image_ready && $supported;
-		$image_support[]  = strtoupper( $format ) . ': ' . ( $supported ? __( 'supported', 'ams-cache' ) : __( 'not supported', 'ams-cache' ) );
-	}
 
 	return array(
 		'cache_status' => array(
@@ -4935,21 +4908,6 @@ function scm_get_page_optimization_requirements() {
 			'label'  => __( 'Local optimizer workspace', 'ams-cache' ),
 			'passed' => $work_dir_ready,
 			'detail' => $work_dir_ready ? __( 'Workspace is writable.', 'ams-cache' ) : __( 'Workspace is not writable.', 'ams-cache' ),
-		),
-		'image_editor' => array(
-			'label'  => __( 'Image editor for WebP', 'ams-cache' ),
-			'passed' => $image_ready,
-			'detail' => implode( ', ', $image_support ),
-		),
-		'bun_image_optimizer' => array(
-			'label'  => __( 'Bun image optimizer', 'ams-cache' ),
-			'passed' => $bun_image_check['passed'],
-			'detail' => $bun_image_check['detail'],
-		),
-		'uploads_writable' => array(
-			'label'  => __( 'Uploads directory for image variants', 'ams-cache' ),
-			'passed' => is_writable( wp_get_upload_dir()['basedir'] ),
-			'detail' => is_writable( wp_get_upload_dir()['basedir'] ) ? __( 'Uploads directory is writable.', 'ams-cache' ) : __( 'Uploads directory is not writable.', 'ams-cache' ),
 		),
 	);
 }
@@ -6162,16 +6120,7 @@ function scm_register_wordpress_hooks() {
 		return;
 	}
 
-	add_filter( 'wp_generate_attachment_metadata', 'scm_queue_image_optimization_on_upload', 1, 2 );
-	add_filter( 'wp_update_attachment_metadata', 'scm_optimize_image_metadata_on_update', 5, 2 );
-	add_action( 'scm_process_image_optimization_queue', 'scm_process_image_optimization_queue' );
-	add_action( 'scm_process_single_image_optimization', 'scm_process_single_image_optimization', 10, 1 );
-	add_filter( 'wp_get_attachment_image', 'scm_filter_attachment_image_html', 20, 5 );
-	add_filter( 'khs3data_local_deletion_rule', 'scm_preserve_local_images_for_pending_optimization', 20, 2 );
-	add_filter( 'khs3data_should_offload_attachment', 'scm_should_delay_advanced_media_offload_for_image_optimization', 5, 2 );
-	add_action( 'khs3data_after_upload_to_cloud', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
-	add_action( 'khs3data_after_delete_regenerated_local_thumbnails', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
-	add_action( 'khs3data_after_cleanup_local_files', 'scm_cleanup_original_files_after_kh_offload', 10, 1 );
+	// Image optimization hooks removed — feature is discontinued.
 
 	$registered = true;
 }

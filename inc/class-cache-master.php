@@ -262,7 +262,8 @@ class Cache_Master {
 
 			$cached_content = $this->driver->get( $this->cache_key );
 
-			if ( ! empty( $cached_content ) ) {
+			// Never serve cached payloads that are empty or lack a valid HTML document.
+			if ( ! empty( $cached_content ) && strpos( $cached_content, '</body>' ) !== false && strlen( $cached_content ) >= 1024 ) {
 
 				$cached_content .= $this->debug_message( 'ob_start' );
 
@@ -317,6 +318,11 @@ class Cache_Master {
 			);
 
 			scm_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
+
+			// Guard: optimization must never produce empty/invalid HTML.
+			if ( empty( $content ) || strpos( $content, '</body>' ) === false || strlen( $content ) < 1024 ) {
+				$content = $before_optimization;
+			}
 		}
 
 		$cache_content = $content;
@@ -326,14 +332,17 @@ class Cache_Master {
 			$ttl = (int) get_option( 'scm_option_ttl' );
 
 			$cache_content .= $debug_message;
-	
-			if ( 'disable' === get_option( 'scm_option_ttl_mechanism' ) ) {
-				$ttl = null;
-			}
 
-			$this->driver->set( $this->cache_key, $cache_content, $ttl );
-			scm_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
-			$this->log( $this->data_type, $this->cache_key, $cache_content );
+			// Only store the cache entry when the final payload is a valid HTML document.
+			if ( ! empty( $cache_content ) && strpos( $cache_content, '</body>' ) !== false && strlen( $cache_content ) >= 1024 ) {
+				if ( 'disable' === get_option( 'scm_option_ttl_mechanism' ) ) {
+					$ttl = null;
+				}
+
+				$this->driver->set( $this->cache_key, $cache_content, $ttl );
+				scm_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
+				$this->log( $this->data_type, $this->cache_key, $cache_content );
+			}
 		}
 
 		$content = str_replace(

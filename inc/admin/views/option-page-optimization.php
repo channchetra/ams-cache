@@ -27,10 +27,6 @@ $toggles = array(
 	'external_ucss'     => __( 'External UCSS Generation', 'ams-cache' ),
 	'local_ucss'        => __( 'Local UCSS Generation', 'ams-cache' ),
 	'js_analysis'       => __( 'JS Analysis', 'ams-cache' ),
-	'image_optimization' => __( 'Image Optimization', 'ams-cache' ),
-	'image_optimize_on_upload' => __( 'Optimize images on upload', 'ams-cache' ),
-	'image_rewrite_html' => __( 'Serve generated images in HTML', 'ams-cache' ),
-	'image_remote_rewrite' => __( 'Allow offloaded remote URL rewrite', 'ams-cache' ),
 );
 
 ?>
@@ -112,30 +108,3 @@ $toggles = array(
 </div>
 <p><em><?php _e( 'Defer JavaScript can break menus, sliders, checkout, ads, analytics, or builder scripts. AMS Cache force-skips common menu, Slider Revolution, Slick, Swiper, and checkout scripts, but still test on staging and exclude any fragile theme script.', 'ams-cache' ); ?></em></p>
 <p><em><?php _e( 'Local UCSS, External UCSS, and JS Analysis require Bun, PurgeCSS, shell_exec, and a writable optimizer workspace. Use the requirement table above before enabling them on production.', 'ams-cache' ); ?></em></p>
-
-<hr />
-<h3><?php _e( 'Image Optimization', 'ams-cache' ); ?></h3>
-<p><em><?php _e( 'AMS Cache generates WebP variants beside original uploads, prefers Bun Image when available, falls back to the WordPress image editor, stores variant and placeholder metadata on the attachment, and rewrites WordPress attachment image HTML only when a generated variant exists.', 'ams-cache' ); ?></em></p>
-
-<fieldset class="scm-option-item">
-	<legend><?php _e( 'Output formats', 'ams-cache' ); ?></legend>
-	<input type="hidden" name="scm_option_page_optimization[image_formats][]" value="webp">
-	<label>
-		<strong><?php _e( 'WebP', 'ams-cache' ); ?></strong>
-	</label>
-</fieldset>
-
-<div style="margin-top: 20px">
-	<label for="ams-cache-page-optimization-image-quality">
-		<?php _e( 'Image quality', 'ams-cache' ); ?>
-	</label><br />
-	<input type="number" min="1" max="100" step="1" id="ams-cache-page-optimization-image-quality" name="scm_option_page_optimization[image_quality]" class="small-text" value="<?php echo esc_attr( $settings['image_quality'] ); ?>">
-</div>
-
-<div style="margin-top: 20px">
-	<label for="ams-cache-page-optimization-image-batch-size">
-		<?php _e( 'Background batch size', 'ams-cache' ); ?>
-	</label><br />
-	<input type="number" min="1" max="20" step="1" id="ams-cache-page-optimization-image-batch-size" name="scm_option_page_optimization[image_batch_size]" class="small-text" value="<?php echo esc_attr( $settings['image_batch_size'] ); ?>">
-</div>
-<p><em><?php _e( 'Remote S3/CDN JPG URLs change only after a WebP variant exists locally and your offload plugin syncs that generated variant to the same remote path. Hard-coded theme URLs or unsynced attachment sizes stay as original JPG/PNG. Disabled mode is safest for WP Offload Media and Advanced Offload Media.', 'ams-cache' ); ?></em></p>

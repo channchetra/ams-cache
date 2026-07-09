@@ -170,15 +170,6 @@ function scm_deactivation() {
 
 	$option_uninstall = get_option( 'scm_option_uninstall' );
 	delete_transient( 'scm_preload_queue' );
-	wp_clear_scheduled_hook( 'scm_process_image_optimization_queue' );
-	$upload_image_queue = get_option( 'scm_image_upload_optimization_queue', array() );
-	$upload_image_queue = is_array( $upload_image_queue ) ? array_map( 'intval', $upload_image_queue ) : array();
-
-	foreach ( $upload_image_queue as $attachment_id ) {
-		wp_clear_scheduled_hook( 'scm_process_single_image_optimization', array( $attachment_id ) );
-	}
-
-	delete_option( 'scm_image_upload_optimization_queue' );
 
 	if ( 'yes' === $option_uninstall ) {
 
@@ -234,9 +225,5 @@ function scm_deactivation() {
 		foreach ( $options as $option ) {
 			delete_option( 'scm_option_' . $option );
 		}
-
-		delete_option( 'scm_image_optimization_queue' );
-		delete_option( 'scm_image_optimization_last' );
-		delete_option( 'scm_image_optimization_offloaded_count' );
 	}
 }

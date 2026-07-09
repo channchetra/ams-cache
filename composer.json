@@ -15,7 +15,15 @@
         "shieldon/simple-cache": "^1.0"
     },
     "scripts": {
-        "test": "php vendor/bin/phpunit"
+        "test": "php vendor/bin/phpunit",
+        "post-install-cmd": [
+            "@php -r \"copy('patches/File.php', 'vendor/shieldon/simple-cache/src/SimpleCache/Driver/File.php');\"",
+            "@php -r \"copy('patches/Redis.php', 'vendor/shieldon/simple-cache/src/SimpleCache/Driver/Redis.php');\""
+        ],
+        "post-update-cmd": [
+            "@php -r \"copy('patches/File.php', 'vendor/shieldon/simple-cache/src/SimpleCache/Driver/File.php');\"",
+            "@php -r \"copy('patches/Redis.php', 'vendor/shieldon/simple-cache/src/SimpleCache/Driver/Redis.php');\""
+        ]
     },
     "autoload-dev": {
         "psr-4": {

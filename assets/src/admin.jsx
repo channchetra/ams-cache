@@ -23,7 +23,6 @@ import {
 	Gauge,
 	HardDrive,
 	Home,
-	Image,
 	Info,
 	Link2,
 	Play,
@@ -546,11 +545,11 @@ function PreloadSettings({data, settings, update, save, isBusy, runPreload, purg
 	);
 }
 
-function PerformanceSettings({data, settings, updatePerformance, save, isBusy, queueImages, loadReports}) {
+function PerformanceSettings({data, settings, updatePerformance, save, isBusy, loadReports}) {
 	const [tab, setTab] = useState('overview');
 	const perf = settings.performance || {};
 	const reports = data.optimization?.reports || {};
-	const tabs = ['overview', 'requirements', 'optimization', 'images'];
+	const tabs = ['overview', 'requirements', 'optimization'];
 
 	return (
 		<>
@@ -570,7 +569,6 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 						<StatCard icon={Link2} title="External UCSS Saved" value={reports.externalUcssSavedLabel || '0 B'} detail="linked CSS removed" progress={100} />
 						<StatCard icon={Code2} title="Local UCSS Saved" value={reports.ucssSavedLabel || '0 B'} detail="inline CSS removed" progress={100} />
 						<StatCard icon={FastForward} title="JS Analysis" value={`${reports.jsDeferred || 0} / ${reports.jsAnalyzed || 0}`} detail="safely deferred / analyzed" progress={reports.jsAnalyzed ? ((reports.jsDeferred || 0) / reports.jsAnalyzed) * 100 : 0} />
-						<StatCard icon={Image} title="Image Optimizer" value={reports.imageSavedLabel || '0 B'} detail={reports.imageQueueTotal ? `${reports.imageQueueCompleted || 0}/${reports.imageQueueTotal || 0} done, ${reports.imageQueue || 0} queued` : `${reports.imageQueue || 0} attachments queued`} progress={reports.imageProgress != null ? reports.imageProgress : 100} />
 					</div>
 					<div className="grid w-full grid-cols-1 items-stretch gap-4 2xl:grid-cols-2">
 						<Panel title="Optimization Summary">
@@ -579,8 +577,7 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 								{label: 'Total Saved', value: reports.savedLabel || '0 B'},
 								{label: 'External UCSS Saved', value: reports.externalUcssSavedLabel || '0 B'},
 								{label: 'Local UCSS Saved', value: reports.ucssSavedLabel || '0 B'},
-								{label: 'JS Deferred', value: reports.jsDeferred || 0},
-								{label: 'Image Queue', value: reports.imageQueue || 0}
+								{label: 'JS Deferred', value: reports.jsDeferred || 0}
 							]} />
 						</Panel>
 						<LatestReport report={(reports.reports || [])[0]} />
@@ -616,23 +613,6 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, q
 					<TextFieldRow label="PurgeCSS path" value={perf.purgecss_path} onChange={(value) => updatePerformance('purgecss_path', value)} />
 					<TextAreaRow label="UCSS safelist" value={perf.ucss_safelist} onChange={(value) => updatePerformance('ucss_safelist', value)} />
 					<TextAreaRow label="JavaScript defer exclusions" value={perf.js_exclusions} onChange={(value) => updatePerformance('js_exclusions', value)} />
-				</Panel>
-			) : null}
-			{tab === 'images' ? (
-				<Panel title="Image Optimization">
-					<SwitchRow label="Image Optimization" checked={perf.image_optimization === 'yes'} onChange={(checked) => updatePerformance('image_optimization', checked ? 'yes' : 'no')} />
-					<SwitchRow label="Optimize images on upload" description="New uploads convert before offload when source files are local." checked={perf.image_optimize_on_upload === 'yes'} onChange={(checked) => updatePerformance('image_optimize_on_upload', checked ? 'yes' : 'no')} />
-					<SwitchRow label="Serve generated images in HTML" checked={perf.image_rewrite_html === 'yes'} onChange={(checked) => updatePerformance('image_rewrite_html', checked ? 'yes' : 'no')} />
-					<SwitchRow label="Allow remote URL rewrite" description="Keep disabled unless offload plugin syncs generated variants." checked={perf.image_remote_rewrite === 'yes'} onChange={(checked) => updatePerformance('image_remote_rewrite', checked ? 'yes' : 'no')} />
-					<FactList items={[{label: 'Output format', value: 'WebP'}, {label: 'Primary upload format', value: 'WebP'}]} />
-					<TextFieldRow label="Image quality" type="number" min="1" max="100" value={perf.image_quality} onChange={(value) => updatePerformance('image_quality', value)} />
-					<TextFieldRow label="Background batch size" type="number" min="1" max="20" value={perf.image_batch_size} onChange={(value) => updatePerformance('image_batch_size', value)} />
-					<SwitchRow label="Image placeholders" description="Store a tiny safe data URL and show it as a background while the final image loads." checked={perf.image_placeholders === 'yes'} onChange={(checked) => updatePerformance('image_placeholders', checked ? 'yes' : 'no')} />
-					<TextAreaRow label="Media exclusions" value={perf.media_exclusions} onChange={(value) => updatePerformance('media_exclusions', value)} />
-					<div className="ams-action-row">
-						<AmsButton icon={Image} tone="primary" busy={isBusy} onPress={queueImages}>Start Optimize</AmsButton>
-						<AmsButton onPress={loadReports}>Refresh Reports</AmsButton>
-					</div>
 				</Panel>
 			) : null}
 		</>
@@ -754,7 +734,7 @@ function ExpertSettings({settings, update, save, isBusy}) {
 				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={settings.cache?.expertModeStatus === 'enable'} onChange={(checked) => update('cache', 'expertModeStatus', checked ? 'enable' : 'disable')} />
 			</Panel>
 			<Panel title="Configure Code Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={copyCode}>{copied ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
-				<p className="ams-muted">Paste this block into wp-config.php above ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œThatÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s all, stop editingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â. It loads config before WordPress boots.</p>
+				<p className="ams-muted">Paste this block into wp-config.php above &ldquo;That&rsquo;s all, stop editing&rdquo;. It loads config before WordPress boots.</p>
 				<pre
 					className="ams-code-block ams-code-block--copyable"
 					role="button"
@@ -783,8 +763,8 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 			<SwitchRow label="Footer Text" checked={settings.benchmark?.footer === 'yes'} onChange={(checked) => update('benchmark', 'footer', checked ? 'yes' : 'no')} />
 			<MiniSelectRow label="Footer Display" value={settings.benchmark?.footerDisplay || 'text'} options={displays} onChange={(value) => update('benchmark', 'footerDisplay', value)} />
 			<div className="ams-benchmark-preview">
-				<span>ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂÃƒÂ¡Ã…Â¾Ã‚Â¿ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ÃƒÂ¡Ã…Â¾Ã†â€™ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¸Ã¢â‚¬Â ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¾Ã¢â‚¬ËœÃƒÂ¡Ã…Â¸Ã¢â‚¬Â ÃƒÂ¡Ã…Â¾Ã¢â‚¬â€œÃƒÂ¡Ã…Â¸Ã‚ÂÃƒÂ¡Ã…Â¾Ã…Â¡</span>
-				<strong>ÃƒÂ¡Ã…Â¾Ã‹Å“ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ | ÃƒÂ¡Ã…Â¾Ã¢â‚¬â€œÃƒÂ¡Ã…Â¸Ã‚ÂÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂºÃƒÂ¡Ã…Â¾Ã¢â‚¬ÂÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â€šÂ¬ÃƒÂ¡Ã…Â¾Ã‚Â¾ÃƒÂ¡Ã…Â¾Ã‚Â 0.42 ÃƒÂ¡Ã…Â¾Ã…â€œÃƒÂ¡Ã…Â¾Ã‚Â·ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å“ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¾Ã¢â‚¬ËœÃƒÂ¡Ã…Â¾Ã‚Â¸ | ÃƒÂ¡Ã…Â¾Ã‚Â¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¸Ã¢â‚¬â„¢ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¡ÃƒÂ¡Ã…Â¾Ã¢â‚¬Â¦ÃƒÂ¡Ã…Â¾Ã¢â‚¬Å¾ÃƒÂ¡Ã…Â¾Ã¢â‚¬Â¦ÃƒÂ¡Ã…Â¾Ã‚Â¶ÃƒÂ¡Ã…Â¸Ã¢â‚¬Â  32 MB</strong>
+				<span>Your cached pages served to visitors will show this footer.</span>
+				<strong>Page load: 0.42 sec | Queries: 12 | Memory: 32 MB</strong>
 			</div>
 		</Panel>
 	);
@@ -795,9 +775,9 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.0.6</Pill>
+					<Pill tone="info">AMS Cache 3.0.8</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
-					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, JS analysis, and image conversion in one clean WordPress admin experience.</p>
+					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
 					<div className="ams-action-row">
 						<AmsButton tone="primary">AMS Technical Team</AmsButton>
 						<AmsButton>Simple Cache Core</AmsButton>
@@ -808,24 +788,22 @@ function AboutPage({data}) {
 					<div className="ams-mini-metric"><strong>{data.optimization?.reqPassed || 0} / {data.optimization?.reqTotal || 0}</strong><span>requirements</span></div>
 					<div className="ams-mini-metric"><strong>Guest</strong><span>safe cache</span></div>
 					<div className="ams-mini-metric"><strong>UCSS</strong><span>local engine</span></div>
-					<div className="ams-mini-metric"><strong>WebP</strong><span>image path</span></div>
 					<div className="ams-progress"><span style={{width: '82%'}} /></div>
 					<div className="ams-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
 			<div className="ams-about-tabs">
-				<button type="button" className="is-active">WhatÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s New</button>
+				<button type="button" className="is-active">What&rsquo;s New</button>
 				<button type="button">Performance</button>
 				<button type="button">Security</button>
 				<button type="button">Credits</button>
 			</div>
-			<Panel title="Welcome to AMS Cache 3.0.6" className="ams-full-width">
-				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, safer upload-time image conversion before offload, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
+			<Panel title="Welcome to AMS Cache 3.0.8" className="ams-full-width">
+				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
-			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-3">
+			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
 				<Panel title="Cache-first Pages"><p>Preload starts from homepage links, selected post types, and archives so guests get warm cache before first visit.</p></Panel>
 				<Panel title="External UCSS"><p>Eligible same-site CSS files are tested with PurgeCSS and only inlined into cached HTML when result is smaller.</p></Panel>
-				<Panel title="Image Optimizer Path"><p>New uploads can become WebP metadata before offload plugins read and move files.</p></Panel>
 			</div>
 		</div>
 	);
@@ -879,22 +857,6 @@ function App() {
 	const save = () => run('scm_action_dashboard_save_settings', {settings: JSON.stringify(settings)});
 	const refresh = () => run('scm_action_dashboard_status');
 
-	// Auto-refresh when image queue is active (every 8 seconds).
-	const imageQueue = data.optimization?.reports?.imageQueue || 0;
-	const imageQueueTotal = data.optimization?.reports?.imageQueueTotal || 0;
-	const imageProgress = data.optimization?.reports?.imageProgress;
-
-	useEffect(() => {
-		if (imageQueue <= 0 && imageQueueTotal <= 0) return;
-
-		const timer = setInterval(() => {
-			request('scm_action_dashboard_status')
-				.then((result) => { if (result?.status) setStatus(result.status); })
-				.catch(() => {});
-		}, 8000);
-
-		return () => clearInterval(timer);
-	}, [imageQueue, imageQueueTotal]);
 	const loadReports = () => {
 		const reports = data.optimization?.reports || {};
 		return run('scm_action_dashboard_reports', {offset: String(reports.loadedCount || 0)}).then((result) => {
@@ -923,13 +885,12 @@ function App() {
 		clearType: (cacheType) => run('scm_action_dashboard_clear_cache_type', {cacheType}),
 		runPreload: () => run('scm_action_dashboard_preload'),
 		purgeHomepage: () => run('scm_action_dashboard_purge_homepage'),
-		queueImages: () => run('scm_action_dashboard_queue_images'),
 		testDriver: (driver) => run('scm_action_dashboard_test_driver', {driver})
 	};
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.6">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.8">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label}>
@@ -943,20 +904,10 @@ function App() {
 						<h1>{viewLabel}</h1>
 						<p>Live cache controls and page optimization state. <strong>Updated:</strong> {data.generatedAt}</p>
 					</div>
-					{imageQueueTotal > 0 ? (
-						<div className="ams-image-queue-progress" style={{display:'flex',flexDirection:'column',gap:4,minWidth:180}}>
-							<div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--ams-muted,#6b7280)'}}>
-								<span>Image optimization</span>
-								<span>{imageQueueTotal - imageQueue}/{imageQueueTotal}</span>
-							</div>
-							<div className="ams-progress" style={{marginTop:0}}><span style={{width:percent(imageProgress)}} /></div>
-						</div>
-					) : null}
 					<div className="ams-toolbar-actions">
 						<AmsButton icon={RefreshCcw} iconOnly busy={busy} onPress={actions.refresh} aria-label="Refresh">Refresh</AmsButton>
 						<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
 						<AmsButton icon={Home} iconOnly onPress={actions.purgeHomepage} aria-label="Purge Homepage">Purge Homepage</AmsButton>
-						<AmsButton icon={Image} iconOnly onPress={actions.queueImages} aria-label="Queue Images">Queue Images</AmsButton>
 						<AmsButton icon={Trash2} iconOnly tone="danger" onPress={actions.clearAll} aria-label="Clear All">Clear All</AmsButton>
 					</div>
 				</header>
@@ -972,7 +923,7 @@ function App() {
 					{view === 'overview' ? <Overview data={data} go={setView} actions={actions} /> : null}
 					{view === 'cache' ? <CacheSettings settings={settings} update={update} save={save} isBusy={busy} testDriver={actions.testDriver} /> : null}
 					{view === 'preload' ? <PreloadSettings data={data} settings={settings} update={update} save={save} isBusy={busy} runPreload={actions.runPreload} purgeHomepage={actions.purgeHomepage} /> : null}
-					{view === 'performance' ? <PerformanceSettings data={data} settings={settings} updatePerformance={updatePerformance} save={save} isBusy={busy} queueImages={actions.queueImages} loadReports={loadReports} /> : null}
+					{view === 'performance' ? <PerformanceSettings data={data} settings={settings} updatePerformance={updatePerformance} save={save} isBusy={busy} loadReports={loadReports} /> : null}
 					{view === 'rules' ? <RulesSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
 					{view === 'statistics' ? <StatisticsSettings data={data} settings={settings} update={update} save={save} isBusy={busy} clearType={actions.clearType} /> : null}
 					{view === 'expert' ? <ExpertSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}

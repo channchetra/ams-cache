@@ -1,6 +1,6 @@
 {
   "name": "ams-cache",
-  "version": "3.0.6",
+  "version": "3.0.8",
   "private": true,
   "type": "module",
   "description": "Build tooling and optional local optimizers for the AMS Cache WordPress plugin.",
@@ -11,8 +11,7 @@
     "release": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump minor",
-    "release:major": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump major",
-    "image:check": "bun inc/assets/bun/image-optimizer.mjs --check"
+    "release:major": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump major"
   },
   "devDependencies": {
     "@heroui/react": "^3.0.5",
