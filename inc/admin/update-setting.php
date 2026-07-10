@@ -251,68 +251,7 @@ function scm_update_scm_option_clear_cache() {
  * @return void
  */
 function scm_update_exclusion() {
-	$status = get_option( 'scm_option_exclusion_status' );
-
-	if ( 'no' === $status ) {
-		$setting['exclusion']['enable'] = false;
-	}
-
-	if ( 'yes' === $status ) {
-		$setting['exclusion']['enable'] = true;
-	}
-
-	// Excluded list.
-	$exluded_list = get_option( 'scm_option_excluded_list' );
-	$exluded_list_filtered = get_option( 'scm_option_excluded_list_filtered' );
-
-	$exluded_list_arr = explode( "\n", $exluded_list );
-	$exluded_list_tmp = array();
-
-	foreach ( $exluded_list_arr as $item ) {
-		$str = trim( $item );
-		$str = parse_url( $str, PHP_URL_PATH );
-
-		$exluded_list_tmp[] = $str;
-	}
-
-	if ( count( $exluded_list_tmp ) > 1 ) {
-		$content = implode( "\n", $exluded_list_tmp );
-	} else {
-		$content = implode( '', $exluded_list_tmp );
-	}
-
-	if ( $exluded_list_filtered !== $content ) {
-		update_option( 'scm_option_excluded_list_filtered', $content );
-	}
-
-	$setting['exclusion']['excluded_list'] = $exluded_list_tmp;
-
-	// Excluded GET, POST and COOKIE variables.
-	$check_list = array(
-		'get',
-		'post',
-		'cookie',
-	);
-
-	foreach ( $check_list as $list ) {
-		$exluded_variables = get_option( 'scm_option_excluded_' . $list . '_vars', '' );
-
-		$exluded_variables_arr = explode( "\n", $exluded_variables );
-		$exluded_variables_tmp = array();
-
-		foreach ( $exluded_variables_arr as $item ) {
-			$str = trim( $item );
-			if ( preg_match( '/^[a-zA-Z0-9_\-]+$/', $str ) ) {
-				$exluded_variables_tmp[] = $str;
-			}
-		}
-
-		$setting['exclusion'][ 'excluded_' . $list . '_vars' ] = array();
-
-		if ( ! empty( $exluded_variables_tmp ) ) {
-			$setting['exclusion'][ 'excluded_' . $list . '_vars' ] = $exluded_variables_tmp;
-		}
-	}
+	$setting['exclusion'] = scm_get_runtime_exclusion_config();
 
 	scm_update_config( $setting );
 }
@@ -326,15 +265,7 @@ function scm_update_exclusion() {
  * @return void
  */
 function scm_update_woocommerce() {
-	$status = get_option( 'scm_option_woocommerce_status' );
-
-	if ( 'no' === $status ) {
-		$setting['woocommerce']['enable'] = false;
-	}
-
-	if ( 'yes' === $status ) {
-		$setting['woocommerce']['enable'] = true;
-	}
+	$setting['woocommerce']['enable'] = 'yes' === get_option( 'scm_option_woocommerce_status', 'no' );
 
 	scm_update_config( $setting );
 	scm_clear_all_cache();

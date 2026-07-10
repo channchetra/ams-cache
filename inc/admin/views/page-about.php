@@ -75,7 +75,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 		<article class="ams-about-card">
 			<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
 			<h4><?php _e( 'External UCSS', 'ams-cache' ); ?></h4>
-			<p><?php _e( 'Eligible same-site CSS files are tested with PurgeCSS, rewritten safely, and only inlined into cached HTML when the result is smaller.', 'ams-cache' ); ?></p>
+			<p><?php _e( 'Eligible same-site CSS files use conservative PHP matching, rewrite relative URLs safely, and publish hashed assets only when the result is smaller.', 'ams-cache' ); ?></p>
 		</article>
 		<article class="ams-about-card">
 			<span class="dashicons dashicons-format-image" aria-hidden="true"></span>

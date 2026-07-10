@@ -23,11 +23,14 @@ function scm_get_default_page_optimization_settings() {
 		'external_ucss'        => 'no',
 		'local_ucss'           => 'no',
 		'js_analysis'          => 'no',
-		'bun_path'             => 'bun',
-		'purgecss_path'        => 'purgecss',
+		'bun_path'             => '',
+		'purgecss_path'        => '',
 		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item\nmenu-item-has-children\ncurrent-menu-item\ncurrent-menu-parent\ncurrent-menu-ancestor\nsub-menu\ndropdown\ndropdown-menu\ndropdown-toggle\nsfHover\nis-open\nis-visible\nslick\nslick-active\nslick-current\nslick-initialized\nswiper\nswiper-slide\nswiper-wrapper\nswiper-button-next\nswiper-button-prev\nrevslider\nrev_slider\nrs-module\nrs-layer\nrs-slide\nsr7\ntp-caption\nwoocommerce\nwp-block\nalignwide\nalignfull",
 		'critical_image_count' => 1,
 		'external_ucss_max_file_size' => 307200,
+		'local_ucss_max_file_size' => 524288,
+		'js_analysis_max_script_bytes' => 262144,
+		'js_analysis_max_total_bytes' => 1048576,
 		'media_exclusions'     => "logo\navatar\ncaptcha",
 		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal\nrevslider\nrev_slider\nrs6\nsr7\nthemepunch\nrbtools\nslider-revolution\nrevolution\nslick\nswiper\nowl.carousel\nsmartmenus\nsuperfish\nbootstrap\ndropdown\nmenu-image\nmenu\nnavigation\nhoverIntent",
 	);
@@ -46,6 +49,9 @@ function scm_get_page_optimization_settings() {
 	$settings['bun_path']             = trim( (string) $settings['bun_path'] );
 	$settings['purgecss_path']        = trim( (string) $settings['purgecss_path'] );
 	$settings['external_ucss_max_file_size'] = max( 51200, min( 1048576, (int) $settings['external_ucss_max_file_size'] ) );
+	$settings['local_ucss_max_file_size'] = max( 51200, min( 1048576, (int) $settings['local_ucss_max_file_size'] ) );
+	$settings['js_analysis_max_script_bytes'] = max( 16384, min( 1048576, (int) $settings['js_analysis_max_script_bytes'] ) );
+	$settings['js_analysis_max_total_bytes'] = max( 65536, min( 4194304, (int) $settings['js_analysis_max_total_bytes'] ) );
 	$settings['ucss_safelist']        = scm_merge_textarea_lines( $settings['ucss_safelist'], scm_get_protected_ucss_safelist() );
 	$settings['js_exclusions']        = scm_merge_textarea_lines( $settings['js_exclusions'], scm_get_protected_js_exclusions() );
 
@@ -161,7 +167,7 @@ function scm_get_page_optimization_report_dir() {
  * @return string
  */
 function scm_get_page_optimization_work_dir() {
-	return scm_get_upload_dir() . '/optimization_work';
+	return scm_get_private_runtime_dir() . '/optimization_work';
 }
 
 /**
@@ -727,14 +733,21 @@ function scm_local_asset_url_to_path( $url ) {
 
 	$path = ltrim( wp_normalize_path( rawurldecode( $path ) ), '/' );
 
-	if ( '' === $path || false !== strpos( $path, '..' ) ) {
+	if ( '' === $path ) {
 		return '';
 	}
 
-	$full_path = wp_normalize_path( ABSPATH . $path );
-	$root_path = wp_normalize_path( ABSPATH );
+	$root_path = realpath( ABSPATH );
+	$full_path = realpath( ABSPATH . $path );
 
-	if ( 0 !== strpos( $full_path, $root_path ) ) {
+	if ( false === $root_path || false === $full_path ) {
+		return '';
+	}
+
+	$root_path = rtrim( wp_normalize_path( $root_path ), '/' ) . '/';
+	$full_path = wp_normalize_path( $full_path );
+
+	if ( 0 !== strncasecmp( $full_path . '/', $root_path, strlen( $root_path ) ) ) {
 		return '';
 	}
 
@@ -936,8 +949,13 @@ function scm_optimize_media_tags( $html, $settings ) {
 				$image_index++;
 
 				if ( 'yes' === $settings['critical_images'] && $image_index <= $lcp_count ) {
-					$tag = scm_html_set_attribute( $tag, 'loading', 'eager' );
-					$tag = scm_html_set_attribute( $tag, 'fetchpriority', 'high' );
+					if ( ! scm_html_has_attribute( $tag, 'loading' ) ) {
+						$tag = scm_html_set_attribute( $tag, 'loading', 'eager' );
+					}
+
+					if ( ! scm_html_has_attribute( $tag, 'fetchpriority' ) ) {
+						$tag = scm_html_set_attribute( $tag, 'fetchpriority', 'high' );
+					}
 
 					$src    = scm_html_get_attribute( $tag, 'src' );
 					$srcset = scm_html_get_attribute( $tag, 'srcset' );

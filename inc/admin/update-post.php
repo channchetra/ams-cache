@@ -66,10 +66,6 @@ function scm_update_post( $post_ID, $post, $update ) {
  * @return void
  */
 function scm_update_post_status( $new_status, $old_status, $post ) {
-	if ( 'publish' !== $new_status || 'publish' === $old_status ) {
-		return;
-	}
-
 	if ( 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
 		return;
 	}
@@ -85,8 +81,26 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 	}
 
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+	$post_url = get_permalink( $post->ID );
+
+	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
+		if ( $post_url ) {
+			scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+		}
+
+		scm_preload_critical_urls( 0, true, $driver );
+		return;
+	}
+
+	if ( 'publish' !== $new_status || 'publish' === $old_status ) {
+		return;
+	}
 
 	$GLOBALS['scm_recently_published_post_ids'][ $post->ID ] = true;
+
+	if ( $post_url ) {
+		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+	}
 
 	scm_preload_critical_urls( $post->ID, true, $driver );
 }
@@ -119,6 +133,11 @@ function scm_delete_post( $post_ID, $post = null ) {
 	}
 
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+	$post_url = get_permalink( $post_ID );
+
+	if ( $post_url ) {
+		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+	}
 
 	scm_preload_critical_urls( $post_ID, true, $driver );
 }

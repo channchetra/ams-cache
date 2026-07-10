@@ -40,23 +40,31 @@ function scm_run_expert_mode( $args ) {
 
 	$plugin_dir        = rtrim( $args['plugin_dir'], '/' );
 	$plugin_upload_dir = rtrim( $args['plugin_upload_dir'], '/' );
+	$runtime_dir       = isset( $args['runtime_dir'] ) ? rtrim( $args['runtime_dir'], '/' ) : '';
 
 	// Make sure that AMS Cache exists.
 	if ( ! file_exists( $plugin_dir . '/cache-master.php' ) ) {
 		return;
 	}
 
-	// Make the "expert mode" is enabled.
-	if ( ! file_exists( $plugin_upload_dir . '/expert.lock' ) ) {
-		return;
+	// New snippets use a private runtime directory. Old snippets continue to
+	// work until the dashboard generates a replacement snippet.
+	$runtime_dir = '' !== $runtime_dir ? $runtime_dir : $plugin_upload_dir;
+	$lock_file   = $runtime_dir . '/expert.lock';
+	$config_file = $runtime_dir . '/config.json';
+
+	if ( ( ! file_exists( $lock_file ) || ! file_exists( $config_file ) ) && $runtime_dir !== $plugin_upload_dir ) {
+		$runtime_dir = $plugin_upload_dir;
+		$lock_file   = $runtime_dir . '/expert.lock';
+		$config_file = $runtime_dir . '/config.json';
 	}
 
-	if ( ! file_exists( $plugin_upload_dir . '/config.json' ) ) {
+	if ( ! file_exists( $lock_file ) || ! file_exists( $config_file ) ) {
 		return;
 	}
 
 	// Read configuration data.
-	$content = file_get_contents( $plugin_upload_dir . '/config.json' );
+	$content = file_get_contents( $config_file );
 	$config  = json_decode( $content, true );
 
 	$site_path = '/';

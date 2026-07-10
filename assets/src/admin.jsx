@@ -609,8 +609,11 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, l
 					))}
 					<TextFieldRow label="Critical image count" type="number" min="0" max="5" value={perf.critical_image_count} onChange={(value) => updatePerformance('critical_image_count', value)} />
 					<TextFieldRow label="External CSS max file size" type="number" min="51200" max="1048576" value={perf.external_ucss_max_file_size} onChange={(value) => updatePerformance('external_ucss_max_file_size', value)} />
-					<TextFieldRow label="Bun path" value={perf.bun_path || 'bun'} onChange={(value) => updatePerformance('bun_path', value)} />
-					<TextFieldRow label="PurgeCSS path" value={perf.purgecss_path} onChange={(value) => updatePerformance('purgecss_path', value)} />
+					<TextFieldRow label="Legacy Bun path (optional)" value={perf.bun_path || ''} onChange={(value) => updatePerformance('bun_path', value)} />
+					<TextFieldRow label="Legacy PurgeCSS path (optional)" value={perf.purgecss_path || ''} onChange={(value) => updatePerformance('purgecss_path', value)} />
+					<TextFieldRow label="Local CSS max bytes" type="number" min="51200" max="1048576" value={perf.local_ucss_max_file_size} onChange={(value) => updatePerformance('local_ucss_max_file_size', value)} />
+					<TextFieldRow label="JS max script bytes" type="number" min="16384" max="1048576" value={perf.js_analysis_max_script_bytes} onChange={(value) => updatePerformance('js_analysis_max_script_bytes', value)} />
+					<TextFieldRow label="JS max total bytes" type="number" min="65536" max="4194304" value={perf.js_analysis_max_total_bytes} onChange={(value) => updatePerformance('js_analysis_max_total_bytes', value)} />
 					<TextAreaRow label="UCSS safelist" value={perf.ucss_safelist} onChange={(value) => updatePerformance('ucss_safelist', value)} />
 					<TextAreaRow label="JavaScript defer exclusions" value={perf.js_exclusions} onChange={(value) => updatePerformance('js_exclusions', value)} />
 				</Panel>
@@ -775,7 +778,7 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.0.8</Pill>
+					<Pill tone="info">AMS Cache 3.0.9</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
 					<div className="ams-action-row">
@@ -798,12 +801,12 @@ function AboutPage({data}) {
 				<button type="button">Security</button>
 				<button type="button">Credits</button>
 			</div>
-			<Panel title="Welcome to AMS Cache 3.0.8" className="ams-full-width">
+			<Panel title="Welcome to AMS Cache 3.0.9" className="ams-full-width">
 				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
 				<Panel title="Cache-first Pages"><p>Preload starts from homepage links, selected post types, and archives so guests get warm cache before first visit.</p></Panel>
-				<Panel title="External UCSS"><p>Eligible same-site CSS files are tested with PurgeCSS and only inlined into cached HTML when result is smaller.</p></Panel>
+				<Panel title="External UCSS"><p>Eligible same-site CSS files use conservative PHP matching and are published as hashed assets only when the result is smaller.</p></Panel>
 			</div>
 		</div>
 	);
@@ -890,7 +893,7 @@ function App() {
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.8">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.9">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label}>

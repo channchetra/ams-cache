@@ -121,7 +121,6 @@ function scm_activation() {
  * @return void
  */
 function scm_setup_security_files() {
-
 	scm_set_blog_id();
 
 	update_option( 'scm_last_reset_time', time() );
@@ -132,30 +131,29 @@ function scm_setup_security_files() {
 		update_option( 'scm_dir_hash', scm_get_dir_hash() );
 	}
 
-	if ( ! file_exists( scm_get_upload_dir() ) ) {
+	$public_dirs = array_unique(
+		array(
+			WP_CONTENT_DIR . '/uploads/' . SCM_PLUGIN_TEXT_DOMAIN,
+			scm_get_upload_dir(),
+		)
+	);
 
-		wp_mkdir_p( scm_get_upload_dir() );
+	foreach ( $public_dirs as $dir ) {
+		if ( ! wp_mkdir_p( $dir ) ) {
+			continue;
+		}
 
 		$files = array(
-			array(
-				'base'    => WP_CONTENT_DIR . '/uploads/' . SCM_PLUGIN_TEXT_DOMAIN,
-				'file'    => 'index.html',
-				'content' => '',
-			),
-			array(
-				'base'    => WP_CONTENT_DIR . '/uploads/' . SCM_PLUGIN_TEXT_DOMAIN,
-				'file'    => '.htaccess',
-				'content' => 'deny from all',
-			),
+			'index.html' => '',
+			'.htaccess'  => "Require all denied\nDeny from all\n",
 		);
 
-		foreach ( $files as $file ) {
-			if (
-				wp_mkdir_p( $file['base'] ) &&
-				! file_exists( trailingslashit( $file['base'] ) . $file['file'] )
-			) {
+		foreach ( $files as $file => $content ) {
+			$path = trailingslashit( $dir ) . $file;
+
+			if ( ! file_exists( $path ) ) {
 				// phpcs:ignore
-				@file_put_contents( trailingslashit( $file['base'] ) . $file['file'], $file['content'] );
+				@file_put_contents( $path, $content, LOCK_EX );
 			}
 		}
 	}

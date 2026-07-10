@@ -67,6 +67,10 @@ function scm_get_nginx_direct_cache_snippet() {
 		"gzip on;\n" .
 		"gzip_vary on;\n" .
 		"gzip_types text/plain text/css application/javascript application/json image/svg+xml application/xml;\n\n" .
+		"location ~* /wp-content/uploads/ams-cache/[^/]+/(?:config\\.json|expert\\.lock|optimization_work|optimization_reports)(?:/|$) {\n" .
+		"    deny all;\n" .
+		"    return 404;\n" .
+		"}\n\n" .
 		"location ^~ " . $relative_dir . "/ {\n" .
 		"    internal;\n" .
 		"    add_header X-AMS-Cache-Static HIT always;\n" .

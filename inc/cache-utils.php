@@ -37,6 +37,12 @@ function scm_add_font_preconnects( $html ) {
  * @return string
  */
 function scm_defer_scripts( $html, $settings ) {
+	// PHP analysis is the safe mode. Do not let the legacy broad pass defer the
+	// scripts the analyzer deliberately rejected.
+	if ( 'yes' === $settings['js_analysis'] ) {
+		return $html;
+	}
+
 	$exclusions = scm_get_lines_from_textarea( $settings['js_exclusions'] );
 
 	return preg_replace_callback(
@@ -128,6 +134,405 @@ function scm_get_local_optimizer_error_detail( $output, $fallback ) {
 }
 
 /**
+ * Decide whether a CSS selector is safe to remove.
+ *
+ * Dynamic and unsupported selectors are always kept. This is intentionally
+ * conservative because a false negative costs bytes while a false positive
+ * can break an interactive frontend.
+ *
+ * @param string $selector Selector text.
+ * @param string $html     Page HTML.
+ * @param array  $safelist Protected selector fragments.
+ *
+ * @return bool
+ */
+function scm_css_selector_is_used( $selector, $html, $safelist ) {
+	$selector = trim( preg_replace( '/\s+/', ' ', (string) $selector ) );
+
+	if ( '' === $selector ) {
+		return false;
+	}
+
+	foreach ( $safelist as $safe ) {
+		$safe = trim( (string) $safe );
+
+		if ( '' !== $safe && false !== stripos( $selector, $safe ) ) {
+			return true;
+		}
+	}
+
+	foreach ( array( ':', '[', ']', '>', '+', '~', '*', '{', '}', '\\' ) as $dynamic_character ) {
+		if ( false !== strpos( $selector, $dynamic_character ) ) {
+			return true;
+		}
+	}
+
+	$class_names = array();
+	$id_names    = array();
+	preg_match_all( '/\.([a-zA-Z_][a-zA-Z0-9_-]*)/', $selector, $class_matches );
+	preg_match_all( '/#([a-zA-Z_][a-zA-Z0-9_-]*)/', $selector, $id_matches );
+	$class_names = isset( $class_matches[1] ) ? $class_matches[1] : array();
+	$id_names    = isset( $id_matches[1] ) ? $id_matches[1] : array();
+
+	foreach ( $class_names as $class_name ) {
+		if ( ! preg_match( '/\bclass\s*=\s*(["\'])(.*?)\1/is', $html, $class_attributes ) ) {
+			return false;
+		}
+
+		if ( ! preg_match( '/(?:^|\s)' . preg_quote( $class_name, '/' ) . '(?:\s|$)/', $class_attributes[2] ) ) {
+			return false;
+		}
+	}
+
+	foreach ( $id_names as $id_name ) {
+		if ( ! preg_match( '/\bid\s*=\s*(["\'])' . preg_quote( $id_name, '/' ) . '\1/is', $html ) ) {
+			return false;
+		}
+	}
+
+	if ( empty( $class_names ) && empty( $id_names ) && preg_match( '/^([a-z][a-z0-9-]*)$/i', $selector, $tag_match ) ) {
+		return false !== stripos( $html, '<' . strtolower( $tag_match[1] ) );
+	}
+
+	// Complex selectors we cannot prove are unused remain in the stylesheet.
+	return true;
+}
+
+/**
+ * Conservatively remove unused top-level CSS rules without external tools.
+ * Nested at-rules are preserved as complete blocks.
+ *
+ * @param string $css      CSS source.
+ * @param string $html     Page HTML.
+ * @param array  $safelist Protected selector fragments.
+ *
+ * @return string
+ */
+function scm_purge_css_conservative( $css, $html, $safelist ) {
+	$css = (string) $css;
+
+	if ( '' === trim( $css ) || preg_match( '/@import\b/i', $css ) ) {
+		return $css;
+	}
+
+	$output = '';
+	$start  = 0;
+	$depth  = 0;
+	$quote  = '';
+	$comment = false;
+	$length = strlen( $css );
+
+	for ( $i = 0; $i < $length; $i++ ) {
+		$char = $css[ $i ];
+		$next = $i + 1 < $length ? $css[ $i + 1 ] : '';
+
+		if ( $comment ) {
+			if ( '*' === $char && '/' === $next ) {
+				$comment = false;
+				$i++;
+			}
+			continue;
+		}
+
+		if ( '' !== $quote ) {
+			if ( '\\' === $char ) {
+				$i++;
+			} elseif ( $char === $quote ) {
+				$quote = '';
+			}
+			continue;
+		}
+
+		if ( '/' === $char && '*' === $next ) {
+			$comment = true;
+			$i++;
+			continue;
+		}
+
+		if ( '"' === $char || "'" === $char ) {
+			$quote = $char;
+			continue;
+		}
+
+		if ( '{' === $char ) {
+			$depth++;
+			continue;
+		}
+
+		if ( '}' !== $char ) {
+			continue;
+		}
+
+		$depth--;
+
+		if ( 0 !== $depth ) {
+			continue;
+		}
+
+		$rule    = substr( $css, $start, $i - $start + 1 );
+		$opening = strpos( $rule, '{' );
+		$header  = false === $opening ? '' : trim( substr( $rule, 0, $opening ) );
+
+		if ( '' !== $header && ( '@' === $header[0] || scm_css_selector_is_used( $header, $html, $safelist ) ) ) {
+			$output .= $rule;
+		}
+
+		$start = $i + 1;
+	}
+
+	if ( $start < $length ) {
+		// Keep comments, declarations, and malformed trailing CSS untouched.
+		$output .= substr( $css, $start );
+	}
+
+	$output = scm_minify_css( $output );
+
+	return '' === $output ? $css : $output;
+}
+
+/**
+ * Store optimized CSS as a content-addressed public asset.
+ *
+ * @param string $css CSS content.
+ *
+ * @return array
+ */
+function scm_store_optimized_css_asset( $css ) {
+	if ( ! function_exists( 'wp_upload_dir' ) ) {
+		return array();
+	}
+
+	$uploads = wp_upload_dir();
+	$dir     = trailingslashit( $uploads['basedir'] ) . 'ams-cache-assets/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+	$file    = $dir . '/' . hash( 'sha256', (string) $css ) . '.css';
+
+	if ( ! wp_mkdir_p( $dir ) || false === file_put_contents( $file, (string) $css, LOCK_EX ) ) {
+		return array();
+	}
+
+	static $pruned = false;
+
+	if ( ! $pruned ) {
+		$pruned = true;
+		$stale_before = time() - ( 14 * ( defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400 ) );
+
+		foreach ( (array) glob( $dir . '/*.css' ) as $asset_file ) {
+			if ( is_file( $asset_file ) && (int) filemtime( $asset_file ) < $stale_before ) {
+				@unlink( $asset_file );
+			}
+		}
+	}
+
+	$base_dir = rtrim( wp_normalize_path( $uploads['basedir'] ), '/' );
+	$normalized_file = wp_normalize_path( $file );
+
+	if ( 0 !== strncasecmp( $normalized_file . '/', $base_dir . '/', strlen( $base_dir ) + 1 ) ) {
+		return array();
+	}
+
+	$relative = ltrim( substr( $normalized_file, strlen( $base_dir ) ), '/' );
+
+	return array(
+		'file' => $file,
+		'url'  => trailingslashit( $uploads['baseurl'] ) . str_replace( '\\', '/', $relative ),
+	);
+}
+
+/**
+ * Apply the built-in optimizer to inline style blocks.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_internal_local_ucss( $html, $settings ) {
+	if ( ! preg_match_all( '#<style\b([^>]*)>(.*?)</style>#is', $html, $matches, PREG_SET_ORDER ) ) {
+		return $html;
+	}
+
+	$safelist       = scm_get_lines_from_textarea( $settings['ucss_safelist'] );
+	$max_size       = (int) $settings['local_ucss_max_file_size'];
+	$before_bytes   = 0;
+	$after_bytes    = 0;
+	$optimized      = 0;
+	$skipped_blocks = 0;
+	$replacements   = array();
+
+	foreach ( $matches as $index => $match ) {
+		$original_css = (string) $match[2];
+		$before_bytes += strlen( $original_css );
+
+		if ( strlen( $original_css ) > $max_size ) {
+			$skipped_blocks++;
+			$after_bytes += strlen( $original_css );
+			$replacements[ $index ] = $match[0];
+			continue;
+		}
+
+		$optimized_css = scm_purge_css_conservative( $original_css, $html, $safelist );
+
+		if ( '' === trim( $optimized_css ) || strlen( $optimized_css ) >= strlen( $original_css ) ) {
+			$skipped_blocks++;
+			$after_bytes += strlen( $original_css );
+			$replacements[ $index ] = $match[0];
+			continue;
+		}
+
+		$optimized++;
+		$after_bytes += strlen( $optimized_css );
+		$replacements[ $index ] = '<style' . $match[1] . '>' . $optimized_css . '</style>';
+	}
+
+	$replacement_index = 0;
+	$html = preg_replace_callback(
+		'#<style\b([^>]*)>(.*?)</style>#is',
+		function ( $match ) use ( &$replacement_index, $replacements ) {
+			$replacement = isset( $replacements[ $replacement_index ] ) ? $replacements[ $replacement_index ] : $match[0];
+			$replacement_index++;
+			return $replacement;
+		},
+		$html
+	);
+
+	scm_set_page_optimization_runtime(
+		'local_ucss',
+		array(
+			'status'  => $optimized > 0 ? 'applied' : 'no_change',
+			'detail'  => sprintf(
+				__( '%1$s inline CSS before, %2$s after; %3$s optimized, %4$s kept unchanged.', 'ams-cache' ),
+				size_format( $before_bytes, 2 ),
+				size_format( $after_bytes, 2 ),
+				number_format_i18n( $optimized ),
+				number_format_i18n( $skipped_blocks )
+			),
+			'metrics' => array(
+				'beforeBytes'   => $before_bytes,
+				'afterBytes'    => $after_bytes,
+				'savedBytes'    => max( 0, $before_bytes - $after_bytes ),
+				'blocks'        => count( $matches ),
+				'skippedBlocks' => $skipped_blocks,
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
+ * Apply the built-in optimizer to same-site stylesheet files.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_internal_external_ucss( $html, $settings ) {
+	if ( ! preg_match_all( '#<link\b[^>]*>#is', $html, $matches, PREG_SET_ORDER ) ) {
+		return $html;
+	}
+
+	$safelist     = scm_get_lines_from_textarea( $settings['ucss_safelist'] );
+	$max_size     = (int) $settings['external_ucss_max_file_size'];
+	$before_bytes = 0;
+	$after_bytes  = 0;
+	$optimized    = 0;
+	$skipped      = 0;
+	$replacements = array();
+
+	foreach ( $matches as $index => $match ) {
+		$tag = $match[0];
+
+		if ( ! scm_is_external_ucss_candidate( $tag ) ) {
+			continue;
+		}
+
+		$href = html_entity_decode( scm_html_get_attribute( $tag, 'href' ), ENT_QUOTES, 'UTF-8' );
+		$path = scm_local_asset_url_to_path( $href );
+		$size = '' !== $path && is_file( $path ) ? filesize( $path ) : false;
+
+		if ( '' === $href || '' === $path || false === $size || $size <= 0 || $size > $max_size || ! is_readable( $path ) ) {
+			$skipped++;
+			continue;
+		}
+
+		$css = file_get_contents( $path );
+
+		if ( false === $css || '' === trim( $css ) || preg_match( '/@import\b/i', $css ) ) {
+			$skipped++;
+			continue;
+		}
+
+		$before_bytes += strlen( $css );
+		$optimized_css = scm_purge_css_conservative( $css, $html, $safelist );
+		$optimized_css = scm_minify_css( scm_rewrite_css_relative_urls( $optimized_css, $href ) );
+
+		if ( '' === trim( $optimized_css ) || strlen( $optimized_css ) >= strlen( $css ) ) {
+			$skipped++;
+			$after_bytes += strlen( $css );
+			continue;
+		}
+
+		$asset = scm_store_optimized_css_asset( $optimized_css );
+
+		if ( empty( $asset['url'] ) ) {
+			$skipped++;
+			$after_bytes += strlen( $css );
+			continue;
+		}
+
+		$replacement = preg_replace_callback(
+			"/\\bhref\\s*=\\s*(?:([\"']).*?\\1|[^\\s>]+)/is",
+			function ( $href_match ) use ( $asset ) {
+				$quote = isset( $href_match[1] ) && '' !== $href_match[1] ? $href_match[1] : '"';
+				return 'href=' . $quote . esc_url( $asset['url'] ) . $quote;
+			},
+			$tag,
+			1
+		);
+
+		$replacements[ $index ] = false !== $replacement ? $replacement : $tag;
+		$after_bytes += strlen( $optimized_css );
+		$optimized++;
+	}
+
+	$link_index = 0;
+	$html = preg_replace_callback(
+		'#<link\b[^>]*>#is',
+		function ( $match ) use ( &$link_index, $replacements ) {
+			$replacement = isset( $replacements[ $link_index ] ) ? $replacements[ $link_index ] : $match[0];
+			$link_index++;
+			return $replacement;
+		},
+		$html
+	);
+
+	scm_set_page_optimization_runtime(
+		'external_ucss',
+		array(
+			'status'  => $optimized > 0 ? 'applied' : 'no_change',
+			'detail'  => sprintf(
+				__( '%1$s external CSS before, %2$s after; %3$s files optimized, %4$s skipped.', 'ams-cache' ),
+				size_format( $before_bytes, 2 ),
+				size_format( $after_bytes, 2 ),
+				number_format_i18n( $optimized ),
+				number_format_i18n( $skipped )
+			),
+			'metrics' => array(
+				'files'          => $optimized + $skipped,
+				'optimizedFiles' => $optimized,
+				'skippedFiles'   => $skipped,
+				'beforeBytes'    => $before_bytes,
+				'afterBytes'     => $after_bytes,
+				'savedBytes'     => max( 0, $before_bytes - $after_bytes ),
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
  * Run PurgeCSS on inline style blocks.
  *
  * @param string $html     HTML content.
@@ -136,6 +541,8 @@ function scm_get_local_optimizer_error_detail( $output, $fallback ) {
  * @return string
  */
 function scm_apply_local_ucss( $html, $settings ) {
+	return scm_apply_internal_local_ucss( $html, $settings );
+
 	if ( ! preg_match_all( '#<style\b([^>]*)>(.*?)</style>#is', $html, $matches, PREG_SET_ORDER ) ) {
 		scm_set_page_optimization_runtime(
 			'local_ucss',
@@ -444,6 +851,8 @@ function scm_rewrite_css_relative_urls( $css, $stylesheet_url ) {
  * @return string
  */
 function scm_apply_external_ucss( $html, $settings ) {
+	return scm_apply_internal_external_ucss( $html, $settings );
+
 	if ( ! preg_match_all( '#<link\b[^>]*>#is', $html, $matches, PREG_SET_ORDER ) ) {
 		scm_set_page_optimization_runtime(
 			'external_ucss',
@@ -699,7 +1108,139 @@ function scm_apply_external_ucss( $html, $settings ) {
 }
 
 /**
- * Run local Bun script analysis and defer safe local scripts.
+ * Analyze JavaScript source with conservative PHP heuristics.
+ *
+ * @param string $source JavaScript source.
+ *
+ * @return array
+ */
+function scm_analyze_javascript_source( $source ) {
+	$source = (string) $source;
+	$unsafe = array(
+		'/\bdocument\s*\.\s*(?:write|writeln|currentScript)\b/i',
+		'/\b(?:window|document)\s*\.\s*on(?:load|beforeunload|unload)\b/i',
+		'/\b(?:eval|Function)\s*\(/i',
+		'/\b(?:setTimeout|setInterval)\s*\(\s*["\']/i',
+		'/\bwindow\s*\[\s*["\']/i',
+	);
+
+	$reasons = array();
+
+	foreach ( $unsafe as $pattern ) {
+		if ( preg_match( $pattern, $source ) ) {
+			$reasons[] = $pattern;
+		}
+	}
+
+	return array(
+		'safeToDefer' => empty( $reasons ),
+		'reasons'     => $reasons,
+	);
+}
+
+/**
+ * Run bounded PHP script analysis and defer only proven-safe local scripts.
+ *
+ * @param string $html     HTML content.
+ * @param array  $settings Optimization settings.
+ *
+ * @return string
+ */
+function scm_apply_internal_js_analysis( $html, $settings ) {
+	if ( ! preg_match( '#<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1[^>]*></script>#is', $html ) ) {
+		scm_set_page_optimization_runtime(
+			'js_analysis',
+			array(
+				'status'  => 'no_change',
+				'detail'  => __( 'No external scripts found.', 'ams-cache' ),
+				'metrics' => array( 'analyzed' => 0, 'deferred' => 0, 'skipped' => 0 ),
+			)
+		);
+		return $html;
+	}
+
+	$exclusions   = scm_get_lines_from_textarea( isset( $settings['js_exclusions'] ) ? $settings['js_exclusions'] : '' );
+	$max_script   = isset( $settings['js_analysis_max_script_bytes'] ) ? (int) $settings['js_analysis_max_script_bytes'] : 262144;
+	$max_total    = isset( $settings['js_analysis_max_total_bytes'] ) ? (int) $settings['js_analysis_max_total_bytes'] : 1048576;
+	$total_bytes  = 0;
+	$analyzed     = 0;
+	$deferred     = 0;
+	$skipped      = 0;
+
+	$html = preg_replace_callback(
+		'#<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1[^>]*></script>#is',
+		function ( $match ) use ( $exclusions, $max_script, $max_total, &$total_bytes, &$analyzed, &$deferred, &$skipped ) {
+			$tag = $match[0];
+
+			if (
+				scm_html_tag_is_excluded( $tag, $exclusions ) ||
+				scm_html_has_attribute( $tag, 'defer' ) ||
+				scm_html_has_attribute( $tag, 'async' ) ||
+				false !== stripos( $tag, 'type="module"' ) ||
+				false !== stripos( $tag, "type='module'" )
+			) {
+				$skipped++;
+				return $tag;
+			}
+
+			$path = scm_local_asset_url_to_path( html_entity_decode( $match[2], ENT_QUOTES, 'UTF-8' ) );
+
+			if ( '' === $path || ! is_file( $path ) || ! is_readable( $path ) ) {
+				$skipped++;
+				return $tag;
+			}
+
+			$size = filesize( $path );
+
+			if ( false === $size || $size <= 0 || $size > $max_script || ( $total_bytes + $size ) > $max_total ) {
+				$skipped++;
+				return $tag;
+			}
+
+			$source = file_get_contents( $path );
+
+		if ( false === $source ) {
+			$skipped++;
+			return $tag;
+		}
+
+		$total_bytes += $size;
+		$analyzed++;
+
+		if ( empty( scm_analyze_javascript_source( $source )['safeToDefer'] ) ) {
+			return $tag;
+		}
+
+		$deferred++;
+		return preg_replace( '/^<script\b/i', '<script defer', $tag, 1 );
+		},
+		$html
+	);
+
+	scm_set_page_optimization_runtime(
+		'js_analysis',
+		array(
+			'status'  => $deferred > 0 ? 'applied' : 'no_change',
+			'detail'  => sprintf(
+				__( '%1$s local scripts analyzed; %2$s safely deferred; %3$s skipped by exclusions or limits.', 'ams-cache' ),
+				number_format_i18n( $analyzed ),
+				number_format_i18n( $deferred ),
+				number_format_i18n( $skipped )
+			),
+			'metrics' => array(
+				'analyzed'    => $analyzed,
+				'deferred'    => $deferred,
+				'skipped'     => $skipped,
+				'totalBytes'  => $total_bytes,
+			),
+		)
+	);
+
+	return $html;
+}
+
+/**
+ * Run local PHP script analysis and defer safe local scripts.
  *
  * @param string $html     HTML content.
  * @param array  $settings Optimization settings.
@@ -707,6 +1248,8 @@ function scm_apply_external_ucss( $html, $settings ) {
  * @return string
  */
 function scm_apply_local_js_analysis( $html, $settings ) {
+	return scm_apply_internal_js_analysis( $html, $settings );
+
 	if ( ! preg_match_all( '#<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1[^>]*></script>#is', $html, $matches, PREG_SET_ORDER ) ) {
 		scm_set_page_optimization_runtime(
 			'js_analysis',
@@ -1056,11 +1599,8 @@ function scm_check_executable_version( $path ) {
  * @return array
  */
 function scm_get_page_optimization_requirements() {
-	$settings       = scm_get_page_optimization_settings();
-	$purgecss_check = scm_check_executable_version( $settings['purgecss_path'] );
 	$work_dir       = scm_get_page_optimization_work_dir();
 	$work_dir_ready = is_dir( $work_dir ) ? is_writable( $work_dir ) : wp_mkdir_p( $work_dir );
-	$bun_check       = scm_check_executable_version( $settings['bun_path'] );
 
 	return array(
 		'cache_status' => array(
@@ -1083,20 +1623,20 @@ function scm_get_page_optimization_requirements() {
 			'passed' => extension_loaded( 'zlib' ),
 			'detail' => extension_loaded( 'zlib' ) ? __( 'PHP zlib available; enable gzip/Brotli on your web server for best results.', 'ams-cache' ) : __( 'Enable gzip/Brotli on your web server.', 'ams-cache' ),
 		),
-		'shell_exec'   => array(
-			'label'  => __( 'Local optimizer command execution', 'ams-cache' ),
-			'passed' => scm_is_shell_exec_available(),
-			'detail' => scm_is_shell_exec_available() ? __( 'shell_exec is available.', 'ams-cache' ) : __( 'shell_exec is disabled by PHP.', 'ams-cache' ),
+		'php_css'      => array(
+			'label'  => __( 'Built-in PHP CSS optimizer', 'ams-cache' ),
+			'passed' => true,
+			'detail' => __( 'Conservative selector matching; unsupported and dynamic rules are preserved.', 'ams-cache' ),
 		),
-		'purgecss'     => array(
-			'label'  => __( 'PurgeCSS CLI for Local and External UCSS', 'ams-cache' ),
-			'passed' => $purgecss_check['passed'],
-			'detail' => $purgecss_check['detail'],
+		'php_js'       => array(
+			'label'  => __( 'Built-in PHP JavaScript analyzer', 'ams-cache' ),
+			'passed' => true,
+			'detail' => __( 'Bounded same-site analysis; unsafe scripts remain blocking.', 'ams-cache' ),
 		),
-		'bun'          => array(
-			'label'  => __( 'Bun for JS Analysis and image optimizer', 'ams-cache' ),
-			'passed' => $bun_check['passed'],
-			'detail' => $bun_check['detail'],
+		'legacy_cli'   => array(
+			'label'  => __( 'Legacy CLI optimizer settings', 'ams-cache' ),
+			'passed' => true,
+			'detail' => __( 'Optional Bun and PurgeCSS fields remain for compatibility; runtime optimization does not require them.', 'ams-cache' ),
 		),
 		'work_dir'     => array(
 			'label'  => __( 'Local optimizer workspace', 'ams-cache' ),

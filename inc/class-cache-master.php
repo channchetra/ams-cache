@@ -101,7 +101,6 @@ class Cache_Master {
 	public function front_enqueue_styles() {
 		wp_register_style( 'scm-style', false );
 		wp_enqueue_style( 'scm-style' );
-		wp_enqueue_script( 'jquery' );
 		wp_add_inline_style( 'scm-style', $this->get_front_enqueue_styles() );
 	}
 

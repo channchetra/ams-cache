@@ -4,7 +4,7 @@ Contributors: terrylin
 Tags: cache, redis, mongodb, memcached, apc, apcu
 Requires at least: 5.8
 Tested up to: 6.9.4
-Stable tag: 3.0.8
+Stable tag: 3.0.9
 Requires PHP: 7.1.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl.html
@@ -39,9 +39,9 @@ When using the File driver, AMS Cache can write a raw HTML mirror that Nginx may
 
 == Page Optimization ==
 
-AMS Cache can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, local inline UCSS generation through PurgeCSS, External UCSS for same-site local stylesheet files, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, local JS analysis for readable same-site scripts, and optional JavaScript defer with exclusions.
+AMS Cache can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
 
-External UCSS reads only same-site .css files under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative url() assets before inlining, and keeps the original link if PurgeCSS fails or produces no smaller output.
+External UCSS reads only same-site .css files under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative url() assets before publishing a hashed CSS file, and keeps the original link if the PHP engine produces no smaller output.
 
 Large sites can preload up to 1000 URLs. AMS Cache queues preload work in small batches so dashboard actions do not have to wait for every URL in one request.
 
@@ -74,35 +74,7 @@ Built assets are required for the React console. The release script verifies the
 
 == Local UCSS, External UCSS, and JS Analysis ==
 
-AMS Cache can run local UCSS generation, External UCSS generation, and JS analysis from the Optimization tab. The requirement pass checks PHP shell_exec, Bun, PurgeCSS CLI, and a writable optimizer workspace. Install and configure the tools on your server, then set the executable paths in AMS Cache.
-
-Ubuntu/Debian:
-
-`curl -fsSL https://bun.sh/install | bash`
-`~/.bun/bin/bun add --global purgecss`
-
-CentOS/RHEL/AlmaLinux:
-
-`curl -fsSL https://bun.sh/install | bash`
-`~/.bun/bin/bun add --global purgecss`
-
-Verify:
-
-`bun --version`
-`purgecss --version`
-`which bun`
-`which purgecss`
-
-Windows:
-
-`where bun`
-`where purgecss`
-
-On Windows, use the full `bun.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
-
-If PHP open_basedir blocks those binaries, create symlinks inside an allowed directory and use those paths in AMS Cache.
-
-If root can run purgecss but PHP cannot, PHP is probably using a smaller web-user PATH. Set the absolute path from `which purgecss`, commonly `/usr/local/bin/purgecss`, in the Optimization tab.
+AMS Cache uses built-in PHP engines for Local UCSS, External UCSS, and JS Analysis. Production does not require Bun, Node, PurgeCSS, Composer, or shell_exec. The legacy executable fields remain only for saved-setting compatibility. Bun and frontend packages are build-machine dependencies; run `bun install --frozen-lockfile` and `bun run build` before packaging. Optimization workspaces and runtime config use a private temp directory outside public uploads when available.
 
 Use the UCSS safelist for dynamic classes JavaScript adds after load. Local UCSS targets inline page CSS. External UCSS targets eligible same-site stylesheet files and inlines optimized output into cached guest HTML. If one CSS block or stylesheet is malformed, AMS Cache keeps that block or stylesheet raw and still optimizes valid items.
 

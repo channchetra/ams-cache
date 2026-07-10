@@ -876,14 +876,15 @@ function scm_dashboard_test_driver_connection( $type ) {
 function scm_expert_mode_code_template() {
 	$plugin_dir        = wp_normalize_path( rtrim( SCM_PLUGIN_DIR, '/\\' ) );
 	$plugin_upload_dir = wp_normalize_path( rtrim( scm_get_upload_dir(), '/\\' ) );
+	$runtime_dir       = wp_normalize_path( rtrim( scm_get_private_runtime_dir(), '/\\' ) );
 	$expert_mode_file  = $plugin_dir . '/inc/expert-mode.php';
-	$config_file       = $plugin_upload_dir . '/config.json';
+	$config_file       = $runtime_dir . '/config.json';
 
 	ob_start();
 
 	?>
 // BEGIN - AMS Cache
-// Settings are read from <?php echo $config_file; ?>.
+// Settings are read from the private runtime file <?php echo $config_file; ?>.
 // Update Redis DB, key prefix, driver, and preload options in AMS Cache admin.
 //
 // Raise memory early — Expert Mode runs before WP_MEMORY_LIMIT is applied
@@ -901,6 +902,7 @@ if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
 	scm_run_expert_mode( array(
 		'plugin_dir'        => <?php echo var_export( $plugin_dir, true ); ?>,
 		'plugin_upload_dir' => <?php echo var_export( $plugin_upload_dir, true ); ?>,
+		'runtime_dir'       => <?php echo var_export( $runtime_dir, true ); ?>,
 	) );
 
 	/* END - Blog ID: <?php echo get_current_blog_id(); ?> */
@@ -1062,6 +1064,47 @@ function scm_clear_cache_type( $cache_type ) {
  *
  * @return void
  */
+function scm_get_runtime_exclusion_config() {
+	$list = array();
+
+	foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_list', '' ) ) as $item ) {
+		$path = parse_url( $item, PHP_URL_PATH );
+		$path = is_string( $path ) ? trim( $path ) : '';
+
+		if ( '' === $path ) {
+			continue;
+		}
+
+		if ( '/' !== $path[0] ) {
+			$path = '/' . $path;
+		}
+
+		$list[] = '/' === $path ? '/' : untrailingslashit( $path );
+	}
+
+	$variables = array();
+
+	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
+		$variables[ $type ] = array();
+
+		foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
+			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
+				$variables[ $type ][] = $item;
+			}
+		}
+	}
+
+	update_option( 'scm_option_excluded_list_filtered', implode( "\n", $list ) );
+
+	return array(
+		'enable'               => 'yes' === get_option( 'scm_option_exclusion_status', 'no' ),
+		'excluded_list'        => $list,
+		'excluded_get_vars'    => $variables['get'],
+		'excluded_post_vars'   => $variables['post'],
+		'excluded_cookie_vars' => $variables['cookie'],
+	);
+}
+
 function scm_update_config( $setting ) {
 
 	$config  = get_option( 'scm_config', array() );
@@ -1096,10 +1139,15 @@ function scm_update_config( $setting ) {
 	update_option( 'scm_config', $config );
 
 	$file    = scm_get_config_path();
-	$content = json_encode( $config, JSON_PRETTY_PRINT );
+	$content = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+	wp_mkdir_p( dirname( $file ) );
 
 	// phpcs:ignore
-	@file_put_contents( $file, $content );
+	@file_put_contents( $file, $content, LOCK_EX );
+
+	if ( function_exists( 'chmod' ) ) {
+		@chmod( $file, 0600 );
+	}
 }
 
 /**
@@ -1120,6 +1168,11 @@ function scm_sync_expert_mode_runtime() {
 	$setting['driver_advanced_settings'] = $advanced_setting;
 	$setting['driver_connection_type']   = $connection_type;
 	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
+	$setting['html_debug_comment']       = 'yes' === get_option( 'scm_option_html_debug_comment', 'yes' );
+	$setting['woocommerce']              = array(
+		'enable' => 'yes' === get_option( 'scm_option_woocommerce_status', 'no' ),
+	);
+	$setting['exclusion']                = scm_get_runtime_exclusion_config();
 	$setting['preload']                  = array(
 		'enable'               => scm_is_preload_enabled(),
 		'limit'                => (int) get_option( 'scm_option_preload_limit', 50 ),
@@ -1129,10 +1182,12 @@ function scm_sync_expert_mode_runtime() {
 
 	scm_update_config( $setting );
 
-	$checkpoint = scm_get_upload_dir() . '/expert.lock';
+	$checkpoint = scm_get_expert_lock_path();
 
 	if ( 'enable' === get_option( 'scm_option_expert_mode_status' ) ) {
+		wp_mkdir_p( dirname( $checkpoint ) );
 		file_put_contents( $checkpoint, 'VOTE!' );
+		@chmod( $checkpoint, 0600 );
 		return;
 	}
 

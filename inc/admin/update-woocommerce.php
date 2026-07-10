@@ -20,17 +20,31 @@ add_action( 'woocommerce_payment_complete', 'scm_payment_complete' );
  * @return void
  */
 function scm_payment_complete( $order_id ) {
-	$order = wc_get_order( $order_id );
-	$items = $order->get_items();
-
-	foreach ( $items as $item ) {
-		$product_id = $item->get_product_id();
+	if ( 'yes' !== get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ) ) {
+		return;
 	}
 
-	$post_url    = get_permalink( $product_id );
-	$post_path   = parse_url( $post_url, PHP_URL_PATH );
-	$driver_type = get_option( 'scm_option_driver' );
-	$driver      = scm_driver_factory( $driver_type );
+	$order = wc_get_order( $order_id );
 
-	scm_purge_cache_uri( $post_path, $driver );
+	if ( ! $order || ! is_object( $order ) || ! method_exists( $order, 'get_items' ) ) {
+		return;
+	}
+
+	$items = $order->get_items();
+	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+
+	foreach ( $items as $item ) {
+		if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
+			continue;
+		}
+
+		$product_id = absint( $item->get_product_id() );
+		$post_url   = $product_id ? get_permalink( $product_id ) : '';
+
+		if ( '' === $post_url ) {
+			continue;
+		}
+
+		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+	}
 }

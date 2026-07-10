@@ -73,12 +73,87 @@ function scm_get_upload_dir() {
 }
 
 /**
+ * Get a private runtime directory for config, locks, and temporary workspaces.
+ *
+ * Never place control files below the public WordPress document root. Hosts may
+ * not run Apache, so filesystem permissions alone are not a sufficient guard.
+ *
+ * @return string
+ */
+function scm_get_private_runtime_dir() {
+	$candidates = array();
+
+	if ( defined( 'WP_TEMP_DIR' ) && WP_TEMP_DIR ) {
+		$candidates[] = WP_TEMP_DIR;
+	}
+
+	if ( function_exists( 'sys_get_temp_dir' ) ) {
+		$candidates[] = sys_get_temp_dir();
+	}
+
+	if ( defined( 'ABSPATH' ) ) {
+		$candidates[] = dirname( ABSPATH ) . '/ams-cache-runtime';
+	}
+
+	$public_roots = array_filter(
+		array(
+			defined( 'ABSPATH' ) ? ABSPATH : '',
+			defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : '',
+		)
+	);
+
+	foreach ( $candidates as $candidate ) {
+		$candidate = rtrim( str_replace( '\\', '/', (string) $candidate ), '/' );
+
+		if ( '' === $candidate ) {
+			continue;
+		}
+
+		$real_candidate = realpath( $candidate );
+		$compare_path   = false !== $real_candidate
+			? rtrim( str_replace( '\\', '/', $real_candidate ), '/' )
+			: $candidate;
+
+		$is_public = false;
+
+		foreach ( $public_roots as $public_root ) {
+			$public_root = rtrim( str_replace( '\\', '/', (string) $public_root ), '/' );
+
+			if ( '' !== $public_root && 0 === strcasecmp( $compare_path, $public_root ) ) {
+				$is_public = true;
+				break;
+			}
+
+			if ( '' !== $public_root && 0 === strncasecmp( $compare_path . '/', $public_root . '/', strlen( $public_root ) + 1 ) ) {
+				$is_public = true;
+				break;
+			}
+		}
+
+		if ( ! $is_public ) {
+			return $candidate . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+		}
+	}
+
+	return rtrim( sys_get_temp_dir(), '/\\' ) . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+}
+
+/**
+ * Get the private Expert Mode lock path.
+ *
+ * @return string
+ */
+function scm_get_expert_lock_path() {
+	return scm_get_private_runtime_dir() . '/expert.lock';
+}
+
+/**
  * Get configuration file's path.
  *
  * @return string
  */
 function scm_get_config_path() {
-	return scm_get_upload_dir() . '/config.json';
+	return scm_get_private_runtime_dir() . '/config.json';
 }
 
 /**
@@ -91,8 +166,29 @@ function scm_get_config_data() {
 
 	if ( file_exists( $file ) ) {
 		$content = file_get_contents( $file );
-		return json_decode( $content, true );
+		$config = json_decode( $content, true );
+
+		if ( is_array( $config ) ) {
+			return $config;
+		}
 	}
+
+	$option_config = get_option( 'scm_config', array() );
+
+	if ( is_array( $option_config ) && ! empty( $option_config ) ) {
+		return $option_config;
+	}
+
+	$legacy_file = scm_get_upload_dir() . '/config.json';
+
+	if ( file_exists( $legacy_file ) ) {
+		$legacy_config = json_decode( file_get_contents( $legacy_file ), true );
+
+		if ( is_array( $legacy_config ) ) {
+			return $legacy_config;
+		}
+	}
+
 	return scm_get_default_config();
 }
 

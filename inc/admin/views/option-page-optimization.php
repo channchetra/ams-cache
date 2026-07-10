@@ -72,17 +72,17 @@ $toggles = array(
 
 <div style="margin-top: 20px">
 	<label for="ams-cache-page-optimization-bun-path">
-		<?php _e( 'Bun path', 'ams-cache' ); ?>
+		<?php _e( 'Legacy Bun path (optional)', 'ams-cache' ); ?>
 	</label><br />
 	<input type="text" id="ams-cache-page-optimization-bun-path" name="scm_option_page_optimization[bun_path]" class="regular-text" value="<?php echo esc_attr( $settings['bun_path'] ); ?>">
 </div>
 <div style="margin-top: 12px">
 	<label for="ams-cache-page-optimization-purgecss-path">
-		<?php _e( 'PurgeCSS path', 'ams-cache' ); ?>
+		<?php _e( 'Legacy PurgeCSS path (optional)', 'ams-cache' ); ?>
 	</label><br />
 	<input type="text" id="ams-cache-page-optimization-purgecss-path" name="scm_option_page_optimization[purgecss_path]" class="regular-text" value="<?php echo esc_attr( $settings['purgecss_path'] ); ?>">
 </div>
-<p><em><?php _e( 'Local UCSS Generation runs PurgeCSS against inline page CSS. External UCSS runs PurgeCSS against eligible same-site stylesheet files. JS Analysis runs local Bun checks and defers only readable same-site scripts classified safe.', 'ams-cache' ); ?></em></p>
+<p><em><?php _e( 'Local UCSS, External UCSS, and JS Analysis use the built-in PHP engines. The legacy Bun and PurgeCSS fields are retained only for saved-setting compatibility and are not required at runtime.', 'ams-cache' ); ?></em></p>
 
 <div style="margin-top: 20px">
 	<label for="ams-cache-page-optimization-ucss-safelist">
@@ -107,4 +107,4 @@ $toggles = array(
 	<textarea id="ams-cache-page-optimization-js-exclusions" name="scm_option_page_optimization[js_exclusions]" class="large-text code" rows="6"><?php echo esc_textarea( $settings['js_exclusions'] ); ?></textarea>
 </div>
 <p><em><?php _e( 'Defer JavaScript can break menus, sliders, checkout, ads, analytics, or builder scripts. AMS Cache force-skips common menu, Slider Revolution, Slick, Swiper, and checkout scripts, but still test on staging and exclude any fragile theme script.', 'ams-cache' ); ?></em></p>
-<p><em><?php _e( 'Local UCSS, External UCSS, and JS Analysis require Bun, PurgeCSS, shell_exec, and a writable optimizer workspace. Use the requirement table above before enabling them on production.', 'ams-cache' ); ?></em></p>
+<p><em><?php _e( 'The PHP engines enforce conservative selector/script safety and size limits. Test menus, forms, checkout, editors, sliders, and builder pages on staging before enabling aggressive page optimization.', 'ams-cache' ); ?></em></p>

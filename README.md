@@ -43,9 +43,9 @@ When using the File driver, AMS Cache can write a raw HTML mirror that Nginx may
 
 ## Page Optimization
 
-AMS Cache can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, local inline UCSS generation through PurgeCSS, External UCSS for same-site local stylesheet files, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, local JS analysis for readable same-site scripts, and optional JavaScript defer with exclusions.
+AMS Cache can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS for local styles, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
 
-External UCSS is intentionally conservative. It reads only same-site `.css` files that resolve under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative `url()` assets before inlining, and keeps the original `<link>` if PurgeCSS fails or produces no smaller output.
+External UCSS is intentionally conservative. It reads only same-site `.css` files that resolve under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative `url()` assets before publishing a content-addressed CSS file, and keeps the original `<link>` when the PHP engine produces no smaller output.
 
 ## Preloading
 
@@ -86,36 +86,15 @@ All settings forms save in place through authenticated WordPress AJAX requests w
 
 The console normalizes legacy controls into switch-style binary toggles or segmented multi-choice controls, keeps dense settings content aligned for faster scanning, and provides live Statistics lists with per-row cache clearing.
 
-`Applied` in a page report means that transform changed cached output. Local UCSS purges inline `<style>` blocks with PurgeCSS. External UCSS purges eligible same-site stylesheet files and inlines the optimized result into cached guest HTML. Both keep a configurable safelist for dynamic classes. JS Analysis runs a local Bun analyzer and defers only readable same-site scripts classified safe. Report sizes use human-readable units and displayed URLs are decoded for easier review.
+`Applied` in a page report means that transform changed cached output. Local UCSS uses conservative PHP selector matching and preserves dynamic/unsupported rules. External UCSS publishes optimized hashed CSS assets. Both keep a configurable safelist for dynamic classes. JS Analysis uses bounded PHP heuristics and defers only readable same-site scripts classified safe. Report sizes use human-readable units and displayed URLs are decoded for easier review.
 
 Built assets are required for the React console. The release script verifies the Vite manifest before packaging.
 
 ## Local UCSS, External UCSS, and JS Analysis
 
-AMS Cache can run local UCSS generation, External UCSS generation, and JS analysis from the Optimization tab. Install the tools on your server, then set the executable paths in AMS Cache.
+AMS Cache uses built-in PHP engines for Local UCSS, External UCSS, and JS Analysis. Production does not require Bun, Node, PurgeCSS, Composer, or `shell_exec`. The legacy executable fields remain only so older saved settings and dashboards continue to load.
 
-Ubuntu/Debian:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-~/.bun/bin/bun add --global purgecss
-```
-
-CentOS/RHEL/AlmaLinux:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-~/.bun/bin/bun add --global purgecss
-```
-
-Verify:
-
-```bash
-bun --version
-purgecss --version
-which bun
-which purgecss
-```
+Bun and the frontend package toolchain are build-machine dependencies only. Run `bun install --frozen-lockfile` and `bun run build` before packaging the React console.
 
 Windows:
 
@@ -124,8 +103,6 @@ where bun
 where purgecss
 ```
 
-On Windows, use the full `bun.exe` path and the full `purgecss.cmd` path in the Optimization tab when PHP cannot see your shell `PATH`.
-
-If PHP `open_basedir` blocks those binaries, create symlinks inside an allowed directory and use those paths in AMS Cache. PHP `shell_exec` must be enabled, and the local optimizer workspace must be writable.
+On Windows, the optional legacy Bun/PurgeCSS fields can be left empty. Optimization workspaces and runtime config are stored outside public uploads when the host provides a private temp directory.
 
 The preloader uses loopback HTTP requests to warm cached pages. On local development environments with self-signed SSL certificates, SSL verification is automatically disabled for preload requests. This behavior can be overridden via the `scm_preload_sslverify` filter.

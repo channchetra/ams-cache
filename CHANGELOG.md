@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.0.9] - 2026-07-10
+
+### Changed
+- Release build.
+
 ## [3.0.8] - 2026-07-09
 
 ### Changed
