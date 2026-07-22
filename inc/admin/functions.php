@@ -965,11 +965,10 @@ function scm_search_expert_mode_code_snippet( $string ) {
  * @return bool
  */
 function scm_is_expert_mode_code_ready() {
-	$result = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_upload_dir() ) );
-	if ( $result[0] && $result[1] ) {
-		return true;
-	}
-	return false;
+	$upload_result  = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_upload_dir() ) );
+	$runtime_result = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_private_runtime_dir() ) );
+
+	return $upload_result[0] && $upload_result[1] && $runtime_result[0] && $runtime_result[1];
 }
 
 /**

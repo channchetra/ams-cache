@@ -284,5 +284,7 @@ smoke_assert( false === strpos( $cache_master_source, 'if ( ! scm_is_homepage_ur
 
 $preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache-preload.php' );
 smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'scm_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
+$admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/functions.php' );
+smoke_assert( false !== strpos( $admin_source, "scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_private_runtime_dir() ) )" ), 'Expert Mode readiness checks private runtime path' );
 
 echo "AMS Cache smoke tests passed\n";

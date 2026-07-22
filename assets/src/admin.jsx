@@ -784,10 +784,10 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.1.0</Pill>
+					<Pill tone="info">AMS Cache 3.1.1</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
-					<p className="ams-muted">AMS Technical Team Ã‚Â· Simple Cache Core</p>
+					<p className="ams-muted">AMS Technical Team Ãƒâ€šÃ‚Â· Simple Cache Core</p>
 				</div>
 				<div className="ams-about-window" aria-hidden="true">
 					<div className="ams-window-dots"><span /><span /><span /></div>
@@ -798,7 +798,7 @@ function AboutPage({data}) {
 					<div className="ams-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
-			<Panel title="Welcome to AMS Cache 3.1.0" className="ams-full-width">
+			<Panel title="Welcome to AMS Cache 3.1.1" className="ams-full-width">
 				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
@@ -890,7 +890,7 @@ function App() {
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.1.0">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.1.1">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} type="button" className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label} aria-current={view === key ? 'page' : undefined}>

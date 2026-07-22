@@ -1,6 +1,6 @@
 {
   "name": "ams-cache",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "private": true,
   "type": "module",
   "description": "Build tooling and optional local optimizers for the AMS Cache WordPress plugin.",
