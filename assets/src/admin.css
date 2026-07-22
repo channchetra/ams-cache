@@ -104,6 +104,10 @@
 	box-shadow: 0 8px 20px rgba(59, 130, 246, 0.28);
 }
 
+.ams-nav-label {
+	display: none;
+}
+
 .ams-main {
 	min-width: 0;
 	overflow: hidden;
@@ -1063,11 +1067,26 @@
 		min-height: auto;
 		flex-direction: row;
 		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.ams-sidebar::-webkit-scrollbar {
+		display: none;
+	}
+
+	.ams-sidebar > * {
+		flex: 0 0 auto;
 	}
 
 	.ams-topbar {
 		align-items: flex-start;
 		flex-direction: column;
+	}
+
+	.ams-toolbar-actions {
+		width: 100%;
+		min-width: 0;
+		justify-content: flex-start;
 	}
 
 	.ams-setting-row,
@@ -1087,6 +1106,39 @@
 
 
 @media (max-width: 640px) {
+	.ams-toolbar-actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 8px;
+	}
+
+	.ams-toolbar-actions .ams-button {
+		width: 100%;
+		min-width: 0;
+		padding-right: 10px;
+		padding-left: 10px;
+	}
+
+	.ams-sidebar {
+		gap: 8px;
+		padding: 10px;
+	}
+
+	.ams-sidebar button.is-active {
+		width: auto;
+		min-width: 96px;
+		gap: 7px;
+		padding: 0 12px;
+		border-radius: 12px;
+	}
+
+	.ams-sidebar button.is-active .ams-nav-label {
+		display: inline;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.ams-panel-header,
 	.ams-card [data-slot="card-header"],
 	.ams-card [data-slot="header"],

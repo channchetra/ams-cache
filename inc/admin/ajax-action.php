@@ -32,10 +32,10 @@ add_action( 'wp_ajax_scm_action_dashboard_save_settings', 'scm_ajax_dashboard_sa
  *
  * @return void
  */
-function scm_ajax_dashboard_guard() {
+function scm_ajax_dashboard_guard( $nonce_action = 'scm_dashboard', $capability = 'manage_options' ) {
 	$nonce = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ) : '';
 
-	if ( ! wp_verify_nonce( $nonce, 'scm_dashboard_' . scm_get_dir_hash() ) ) {
+	if ( ! wp_verify_nonce( $nonce, $nonce_action . '_' . scm_get_dir_hash() ) ) {
 		wp_send_json_error(
 			array(
 				'message' => __( 'Token has been rejected.', 'ams-cache' ),
@@ -43,7 +43,7 @@ function scm_ajax_dashboard_guard() {
 		);
 	}
 
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( $capability ) ) {
 		wp_send_json_error(
 			array(
 				'message' => __( 'Access denied.', 'ams-cache' ),
@@ -58,7 +58,7 @@ function scm_ajax_dashboard_guard() {
  * @return void
  */
 function scm_ajax_clear_cache_callback() {
-	scm_ajax_dashboard_guard();
+	scm_ajax_dashboard_guard( 'scm_clear_cache', 'manage_options' );
 
 	$rows        = scm_clear_all_cache();
 	$has_deleted = $rows > 0;
@@ -90,7 +90,7 @@ function scm_ajax_clear_cache_callback() {
  * @return void
  */
 function scm_ajax_purge_current_page_callback() {
-	scm_ajax_dashboard_guard();
+	scm_ajax_dashboard_guard( 'scm_purge_current_page', 'edit_posts' );
 
 	$url = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
 

@@ -137,6 +137,19 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 
 	$removed += scm_delete_cache_stats_by_key( $key );
 
+	// Remove stale entries written under an older cache key prefix too.
+	$stats_root = scm_get_upload_dir() . '/stats';
+
+	if ( is_dir( $stats_root ) ) {
+		foreach ( new DirectoryIterator( $stats_root ) as $type_dir ) {
+			if ( ! $type_dir->isDir() || $type_dir->isDot() ) {
+				continue;
+			}
+
+			$removed += scm_delete_duplicate_stats_for_uri( $type_dir->getFilename(), $uri, $key, $driver );
+		}
+	}
+
 	if ( scm_delete_nginx_static_cache( $uri ) ) {
 		$removed++;
 	}

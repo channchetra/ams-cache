@@ -179,16 +179,6 @@ function scm_get_config_data() {
 		return $option_config;
 	}
 
-	$legacy_file = scm_get_upload_dir() . '/config.json';
-
-	if ( file_exists( $legacy_file ) ) {
-		$legacy_config = json_decode( file_get_contents( $legacy_file ), true );
-
-		if ( is_array( $legacy_config ) ) {
-			return $legacy_config;
-		}
-	}
-
 	return scm_get_default_config();
 }
 

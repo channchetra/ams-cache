@@ -3,7 +3,7 @@
  * Plugin Name: AMS Cache
  * Plugin URI:  https://ams.com.kh/
  * Description: A WordPress cache plugin.
- * Version:     3.0.9
+ * Version:     3.1.0
  * Requires at least: 5.8
  * Requires PHP: 7.1
  * Author:      Chetra Chann
@@ -51,7 +51,7 @@ define( 'SCM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SCM_PLUGIN_PATH', __FILE__ );
 define( 'SCM_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-define( 'SCM_PLUGIN_VERSION', '3.0.9' );
+define( 'SCM_PLUGIN_VERSION', '3.1.0' );
 define( 'SCM_CORE_VERSION', '1.3.4' );
 define( 'SCM_PLUGIN_TEXT_DOMAIN', 'ams-cache' );
 
@@ -99,6 +99,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once SCM_PLUGIN_DIR . 'inc/helpers.php';
 		scm_register_wordpress_hooks();
 		require_once SCM_PLUGIN_DIR . 'vendor/autoload.php';
+		// Post mutations can run through AJAX, REST, or frontend requests.
+		require_once SCM_PLUGIN_DIR . 'inc/admin/update-post.php';
 
 		// Full runtime is not needed during AJAX calls, but upload/offload hooks are.
 		if ( ! wp_doing_ajax() ) {
@@ -115,7 +117,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 					'setting',                // Define settings and register settings.
 					'menu',                   // Display menu link and render setting page.
 					'update-setting',         // Event: update settings.
-					'update-post',            // Event: update posts.
 					'functions',              // Helper functions used in admin scope.
 					'admin-bar',              // Add a "Clear Cache" button in admin bar.
 				);

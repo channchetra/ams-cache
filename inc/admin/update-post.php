@@ -14,6 +14,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 
 add_action( 'save_post', 'scm_update_post', 10, 3 );
 add_action( 'transition_post_status', 'scm_update_post_status', 10, 3 );
+add_action( 'wp_trash_post', 'scm_purge_post_before_trash', 10, 2 );
 add_action( 'before_delete_post', 'scm_delete_post', 10, 2 );
 add_filter( 'post_updated_messages', 'scm_notice_after_update_post' );
 
@@ -88,7 +89,7 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 			scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
 		}
 
-		scm_preload_critical_urls( 0, true, $driver );
+		scm_preload_critical_urls( $post->ID, true, $driver );
 		return;
 	}
 
@@ -103,10 +104,42 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 	}
 
 	scm_preload_critical_urls( $post->ID, true, $driver );
+
+	if ( $post_url ) {
+		scm_preload_url( $post_url );
+	}
 }
 
 /**
- * Purge homepage and archive cache before a public post is deleted.
+ * Purge a published post before WordPress changes its status to trash.
+ *
+ * @param int    $post_ID         Post ID.
+ * @param string $previous_status Previous post status.
+ *
+ * @return void
+ */
+function scm_purge_post_before_trash( $post_ID, $previous_status = '' ) {
+	if ( '' === $previous_status ) {
+		$post            = get_post( $post_ID );
+		$previous_status = $post ? $post->post_status : '';
+	}
+
+	if ( 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) || 'publish' !== $previous_status ) {
+		return;
+	}
+
+	$post_url = get_permalink( $post_ID );
+
+	if ( $post_url ) {
+		scm_purge_cache_uri(
+			parse_url( $post_url, PHP_URL_PATH ),
+			scm_driver_factory( get_option( 'scm_option_driver', 'file' ) )
+		);
+	}
+}
+
+/**
+ * Purge the deleted post and affected archive cache before permanent deletion.
  *
  * @param int     $post_ID Post ID.
  * @param WP_Post $post    Post object.
@@ -122,7 +155,7 @@ function scm_delete_post( $post_ID, $post = null ) {
 		$post = get_post( $post_ID );
 	}
 
-	if ( ! $post || 'publish' !== $post->post_status ) {
+	if ( ! $post ) {
 		return;
 	}
 

@@ -48,7 +48,7 @@ function scm_get_preload_batch_size() {
  * @return void
  */
 function scm_schedule_preload_cache( $force = false ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) || ! scm_is_preload_enabled() ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
 		return;
 	}
 
@@ -79,24 +79,131 @@ function scm_schedule_preload_queue( $delay = 15 ) {
 }
 
 /**
- * Preload a single URL with an unauthenticated loopback request.
- *
- * @param string $url URL to preload.
+ * Bootstrap preload once after a plugin deployment.
  *
  * @return void
  */
-function scm_preload_url( $url, $blocking = false, $timeout = 1 ) {
+function scm_maybe_schedule_preload_cache() {
+	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) || ! function_exists( 'wp_next_scheduled' ) ) {
+		return;
+	}
+
+	$signature = defined( 'SCM_PLUGIN_VERSION' ) ? (string) SCM_PLUGIN_VERSION : 'ams-cache';
+
+	if ( wp_next_scheduled( 'scm_preload_cache_event' ) ) {
+		if ( $signature !== get_option( 'scm_preload_bootstrap_version', '' ) ) {
+			update_option( 'scm_preload_bootstrap_version', $signature );
+		}
+
+		return;
+	}
+
+	if ( $signature === get_option( 'scm_preload_bootstrap_version', '' ) ) {
+		return;
+	}
+
+	scm_schedule_preload_cache();
+
+	if ( wp_next_scheduled( 'scm_preload_cache_event' ) ) {
+		update_option( 'scm_preload_bootstrap_version', $signature );
+	}
+}
+
+/**
+ * Check whether a hostname resolves only to the local machine.
+ *
+ * @param string $host Hostname or IP address.
+ *
+ * @return bool
+ */
+function scm_preload_host_is_loopback( $host ) {
+	static $results = array();
+
+	$host = strtolower( trim( (string) $host ) );
+
+	if ( isset( $results[ $host ] ) ) {
+		return $results[ $host ];
+	}
+
+	$addresses = filter_var( $host, FILTER_VALIDATE_IP ) ? array( $host ) : (array) gethostbynamel( $host );
+
+	if ( function_exists( 'dns_get_record' ) && defined( 'DNS_AAAA' ) ) {
+		foreach ( (array) @dns_get_record( $host, DNS_AAAA ) as $record ) {
+			if ( ! empty( $record['ipv6'] ) ) {
+				$addresses[] = $record['ipv6'];
+			}
+		}
+	}
+
+	$has_address = false;
+
+	foreach ( array_unique( $addresses ) as $address ) {
+		if ( ! is_string( $address ) || '' === $address ) {
+			continue;
+		}
+
+		$has_address = true;
+
+		if ( '::1' !== strtolower( trim( $address ) ) && 0 !== strpos( $address, '127.' ) ) {
+			return $results[ $host ] = false;
+		}
+	}
+
+	return $results[ $host ] = $has_address;
+}
+
+/**
+ * Resolve preload TLS verification without weakening production HTTPS.
+ *
+ * @param string $url Same-site preload URL.
+ *
+ * @return bool
+ */
+function scm_preload_sslverify( $url ) {
+	$verify    = (bool) apply_filters( 'scm_preload_sslverify', true );
+	$url_parts = parse_url( $url );
+
+	if ( $verify && ! empty( $url_parts['host'] ) && 'https' === strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) && scm_preload_host_is_loopback( $url_parts['host'] ) ) {
+		return false;
+	}
+
+	return $verify;
+}
+
+/**
+ * Preload a single URL with an unauthenticated loopback request.
+ *
+ * @param string $url      URL to preload.
+ * @param bool   $blocking Wait for the page response so cache writing finishes.
+ * @param int    $timeout  Request timeout in seconds.
+ *
+ * @return array|\WP_Error|null
+ */
+function scm_preload_url( $url, $blocking = true, $timeout = 8 ) {
 	if ( empty( $url ) || ! function_exists( 'wp_remote_get' ) ) {
 		return null;
 	}
 
+	$url_parts  = parse_url( esc_url_raw( $url ) );
+	$home_parts = parse_url( home_url( '/' ) );
+
+	if (
+		empty( $url_parts['scheme'] ) ||
+		empty( $url_parts['host'] ) ||
+		empty( $home_parts['host'] ) ||
+		strtolower( $url_parts['host'] ) !== strtolower( $home_parts['host'] ) ||
+		( isset( $url_parts['port'] ) ? (int) $url_parts['port'] : 0 ) !== ( isset( $home_parts['port'] ) ? (int) $home_parts['port'] : 0 )
+	) {
+		return null;
+	}
+
 	return wp_remote_get(
-		esc_url_raw( $url ),
+		$url_parts['scheme'] . '://' . $url_parts['host'] . ( isset( $url_parts['port'] ) ? ':' . (int) $url_parts['port'] : '' ) . ( isset( $url_parts['path'] ) ? $url_parts['path'] : '/' ) . ( isset( $url_parts['query'] ) ? '?' . $url_parts['query'] : '' ),
 		array(
 			'blocking'    => (bool) $blocking,
 			'timeout'     => max( 1, (int) $timeout ),
 			'redirection' => 2,
-			'sslverify'   => apply_filters( 'scm_preload_sslverify', false ),
+			'sslverify'   => scm_preload_sslverify( $url ),
 			'user-agent'  => 'AMS Cache Preloader/' . SCM_PLUGIN_VERSION,
 		)
 	);
@@ -213,7 +320,7 @@ function scm_get_homepage_discovered_urls( $limit = 100 ) {
 			'blocking'    => true,
 			'timeout'     => 8,
 			'redirection' => 3,
-			'sslverify'   => apply_filters( 'scm_preload_sslverify', false ),
+			'sslverify'   => scm_preload_sslverify( $home_url ),
 			'user-agent'  => 'AMS Cache Preload Crawler/' . SCM_PLUGIN_VERSION,
 		)
 	);
@@ -379,7 +486,7 @@ function scm_get_homepage_priority_preload_urls( $limit = null ) {
  * @return int
  */
 function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
-	if ( ! scm_is_preload_enabled() ) {
+	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
 		return 0;
 	}
 
@@ -403,7 +510,7 @@ function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
 /**
  * Build a short list of homepage and archive URLs to warm immediately.
  *
- * @param int $post_id Optional published post ID for affected archives.
+ * @param int $post_id Optional affected post ID for related archives.
  * @param int $limit   Maximum URLs.
  *
  * @return array
@@ -431,7 +538,7 @@ function scm_get_critical_preload_urls( $post_id = 0, $limit = 25 ) {
 
 	$post_archives = (array) get_option( 'scm_option_post_archives', array() );
 
-	if ( $post && 'publish' === $post->post_status ) {
+	if ( $post ) {
 		if ( isset( $post_archives['category'] ) && 'yes' === $post_archives['category'] ) {
 			foreach ( wp_get_post_categories( $post->ID ) as $term_id ) {
 				$add_url( get_category_link( (int) $term_id ) );
@@ -556,10 +663,7 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 			scm_purge_cache_uri( $path, $driver );
 		}
 
-		$path        = parse_url( $url, PHP_URL_PATH );
-		$is_homepage = scm_is_homepage_uri( empty( $path ) ? '/' : $path );
-
-		scm_preload_url( $url, $is_homepage, $is_homepage ? 8 : 1 );
+		scm_preload_url( $url, true, 8 );
 	}
 
 	update_option( 'scm_last_critical_preload_time', time() );
@@ -682,7 +786,7 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
  * @return int Number of queued URLs.
  */
 function scm_preload_cache( $limit = null ) {
-	if ( ! scm_is_preload_enabled() ) {
+	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
 		return 0;
 	}
 
@@ -696,6 +800,7 @@ function scm_preload_cache( $limit = null ) {
 	update_option( 'scm_last_preload_priority_count', count( $priority_urls ) );
 	update_option( 'scm_preload_queue_total', count( $urls ) );
 	update_option( 'scm_preload_queue_processed', 0 );
+	update_option( 'scm_preload_queue_failed', 0 );
 	update_option( 'scm_preload_queue_remaining', count( $urls ) );
 	update_option( 'scm_preload_queue_started_time', time() );
 	update_option( 'scm_preload_queue_finished_time', 0 );
@@ -713,6 +818,12 @@ function scm_preload_cache( $limit = null ) {
  * @return int Number of dispatched URLs.
  */
 function scm_process_preload_queue() {
+	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+		delete_transient( 'scm_preload_queue' );
+		update_option( 'scm_preload_queue_remaining', 0 );
+		return 0;
+	}
+
 	$queue = get_transient( 'scm_preload_queue' );
 
 	if ( empty( $queue ) || ! is_array( $queue ) ) {
@@ -726,18 +837,23 @@ function scm_process_preload_queue() {
 	$batch      = array_slice( $queue, 0, $batch_size );
 	$remaining  = array_slice( $queue, count( $batch ) );
 	$processed  = (int) get_option( 'scm_preload_queue_processed', 0 );
+	$failed     = (int) get_option( 'scm_preload_queue_failed', 0 );
 
-	foreach ( $batch as $index => $url ) {
-		$path        = parse_url( $url, PHP_URL_PATH );
-		$is_homepage = scm_is_homepage_uri( empty( $path ) ? '/' : $path );
-		$blocking    = $is_homepage && 0 === $processed && 0 === $index;
+	foreach ( $batch as $url ) {
+		$response = scm_preload_url( $url, true, 8 );
+		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+		$body     = is_wp_error( $response ) ? '' : wp_remote_retrieve_body( $response );
 
-		scm_preload_url( $url, $blocking, $blocking ? 8 : 1 );
+		if ( $status < 200 || $status >= 400 || empty( $body ) || false === strpos( $body, '</body>' ) || strlen( $body ) < 1024 ) {
+			$failed++;
+			continue;
+		}
+
+		$processed++;
 	}
 
-	$processed += count( $batch );
-
 	update_option( 'scm_preload_queue_processed', $processed );
+	update_option( 'scm_preload_queue_failed', $failed );
 	update_option( 'scm_preload_queue_remaining', count( $remaining ) );
 
 	if ( empty( $remaining ) ) {
@@ -753,6 +869,8 @@ function scm_process_preload_queue() {
 }
 
 if ( function_exists( 'add_action' ) ) {
+	// Recover the preload event after deployments that keep the option enabled.
+	add_action( 'init', 'scm_maybe_schedule_preload_cache', 20 );
 	add_action( 'scm_preload_cache_event', 'scm_preload_cache' );
 	add_action( 'scm_preload_queue_event', 'scm_process_preload_queue' );
 }

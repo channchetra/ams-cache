@@ -131,11 +131,6 @@ class Cache_Master {
 		$is_archive  = false;
 
 		if ( is_front_page() || is_home() ) {
-			if ( ! scm_is_homepage_uri( $this->get_request_uri() ) ) {
-				$this->is_cache = false;
-				return;
-			}
-
 			$this->is_cache  = true;
 			$this->data_type = 'homepage';
 			

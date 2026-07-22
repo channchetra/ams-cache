@@ -596,6 +596,7 @@ function scm_dashboard_get_status_data() {
 	$critical_count    = (int) get_option( 'scm_last_critical_preload_count', 0 );
 	$queue_total       = (int) get_option( 'scm_preload_queue_total', 0 );
 	$queue_processed   = (int) get_option( 'scm_preload_queue_processed', 0 );
+	$queue_failed      = (int) get_option( 'scm_preload_queue_failed', 0 );
 	$queue_remaining   = (int) get_option( 'scm_preload_queue_remaining', 0 );
 	$planned_priority  = 0;
 
@@ -683,6 +684,7 @@ function scm_dashboard_get_status_data() {
 			'criticalCount'  => $critical_count,
 			'queueTotal'     => $queue_total,
 			'queueProcessed' => $queue_processed,
+			'queueFailed'    => $queue_failed,
 			'queueRemaining' => $queue_remaining,
 			'lastRun'        => scm_dashboard_format_time( (int) get_option( 'scm_last_preload_time', 0 ) ),
 			'lastPriority'   => scm_dashboard_format_time( (int) get_option( 'scm_last_homepage_priority_preload_time', 0 ) ),
@@ -1147,6 +1149,12 @@ function scm_update_config( $setting ) {
 
 	if ( function_exists( 'chmod' ) ) {
 		@chmod( $file, 0600 );
+	}
+
+	$legacy_file = scm_get_upload_dir() . '/config.json';
+
+	if ( file_exists( $legacy_file ) && $legacy_file !== $file ) {
+		@unlink( $legacy_file );
 	}
 }
 

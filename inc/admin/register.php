@@ -131,6 +131,19 @@ function scm_setup_security_files() {
 		update_option( 'scm_dir_hash', scm_get_dir_hash() );
 	}
 
+	// Migrate the legacy public config into the protected option, then remove it.
+	$legacy_config_file = scm_get_upload_dir() . '/config.json';
+
+	if ( file_exists( $legacy_config_file ) ) {
+		$legacy_config = json_decode( file_get_contents( $legacy_config_file ), true );
+
+		if ( is_array( $legacy_config ) && empty( get_option( 'scm_config', array() ) ) ) {
+			update_option( 'scm_config', $legacy_config );
+		}
+
+		@unlink( $legacy_config_file );
+	}
+
 	$public_dirs = array_unique(
 		array(
 			WP_CONTENT_DIR . '/uploads/' . SCM_PLUGIN_TEXT_DOMAIN,

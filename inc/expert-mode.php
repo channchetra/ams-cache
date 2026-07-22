@@ -59,6 +59,20 @@ function scm_run_expert_mode( $args ) {
 		$config_file = $runtime_dir . '/config.json';
 	}
 
+	// Never read control files from the public document root. Old snippets fail
+	// safe and must be regenerated from the dashboard.
+	$runtime_compare = realpath( $runtime_dir );
+	$runtime_compare = false !== $runtime_compare ? $runtime_compare : $runtime_dir;
+	$runtime_compare = rtrim( str_replace( '\\', '/', $runtime_compare ), '/' );
+	$public_root     = defined( 'ABSPATH' ) ? rtrim( str_replace( '\\', '/', ABSPATH ), '/' ) : '';
+
+	if (
+		'' !== $public_root &&
+		( 0 === strcasecmp( $runtime_compare, $public_root ) || 0 === strncasecmp( $runtime_compare . '/', $public_root . '/', strlen( $public_root ) + 1 ) )
+	) {
+		return;
+	}
+
 	if ( ! file_exists( $lock_file ) || ! file_exists( $config_file ) ) {
 		return;
 	}

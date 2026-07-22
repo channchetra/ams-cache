@@ -57,38 +57,52 @@ function scm_footer_js_clear_cache() {
 
 	?>
 	<script>
-		(function($) {
-			$(function() {
-				var scmAjaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
+		(function() {
+			var scmAjaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+			var scmActions = {
+				'#wp-admin-bar-scm-clear-cache .ab-item': {
+					action: 'scm_action_clear_cache',
+					nonce: <?php echo wp_json_encode( wp_create_nonce( 'scm_clear_cache_' . scm_get_dir_hash() ) ); ?>
+				},
+				'#wp-admin-bar-scm-purge-current-page .ab-item': {
+					action: 'scm_action_purge_current_page',
+					nonce: <?php echo wp_json_encode( wp_create_nonce( 'scm_purge_current_page_' . scm_get_dir_hash() ) ); ?>
+				}
+			};
 
-				$('li#wp-admin-bar-scm-clear-cache .ab-item').on('click', function(event) {
+			document.addEventListener('click', function(event) {
+				Object.keys(scmActions).some(function(selector) {
+					var target = event.target.closest ? event.target.closest(selector) : null;
+
+					if (!target) {
+						return false;
+					}
+
 					event.preventDefault();
+					var action = scmActions[selector];
+					var data = new URLSearchParams({action: action.action, _wpnonce: action.nonce});
 
-					var data = {
-						'action': 'scm_action_clear_cache',
-						'_wpnonce': '<?php echo wp_create_nonce( 'scm_clear_cache_' . scm_get_dir_hash() ); ?>'
-					};
+					if ('scm_action_purge_current_page' === action.action) {
+						data.set('url', window.location.href);
+					}
 
-					$.post(scmAjaxUrl, data, function(response) {
-						alert(response);
-					});
-				});
+					fetch(scmAjaxUrl, {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+						body: data.toString()
+					})
+						.then(function(response) { return response.json(); })
+						.then(function(response) {
+							var payload = response && response.data ? response.data : response;
+							alert(payload && payload.message ? payload.message : 'AMS Cache request completed.');
+						})
+						.catch(function() { alert('AMS Cache request failed.'); });
 
-				$('li#wp-admin-bar-scm-purge-current-page .ab-item').on('click', function(event) {
-					event.preventDefault();
-
-					var data = {
-						'action': 'scm_action_purge_current_page',
-						'_wpnonce': '<?php echo wp_create_nonce( 'scm_purge_current_page_' . scm_get_dir_hash() ); ?>',
-						'url': window.location.href
-					};
-
-					$.post(scmAjaxUrl, data, function(response) {
-						alert(response);
-					});
+					return true;
 				});
 			});
-		})(jQuery);
+		})();
 	</script> 
 	<?php
 }

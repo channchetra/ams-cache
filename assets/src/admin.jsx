@@ -27,6 +27,7 @@ import {
 	Link2,
 	Play,
 	RefreshCcw,
+	Save,
 	Settings,
 	ShoppingCart,
 	SlidersHorizontal,
@@ -63,14 +64,18 @@ const humanStatus = (value) => {
 	return (i18n.statuses && i18n.statuses[text]) || text.replaceAll('_', ' ');
 };
 
-function AmsButton({children, icon: Icon, tone = 'default', size = 'md', busy = false, disabled = false, iconOnly = false, className = '', onPress, ...props}) {
+function AmsButton({children, icon: Icon, tone = 'default', size = 'md', busy = false, disabled = false, iconOnly = false, className = '', onPress, title, ...props}) {
+	const label = iconOnly && typeof children === 'string' ? children : undefined;
+
 	return (
 		<button
+			{...props}
 			type="button"
 			className={`ams-button ams-button--${tone} ams-button--${size} ${iconOnly ? 'ams-button--icon' : ''} ${className}`.trim()}
 			disabled={disabled || busy}
 			onClick={onPress}
-			{...props}
+			title={title || label}
+			aria-label={props['aria-label'] || label}
 		>
 			{Icon ? <Icon size={size === 'sm' ? 15 : 17} aria-hidden="true" /> : null}
 			{iconOnly ? <span className="screen-reader-text">{children}</span> : <span>{busy ? (i18n.loading || 'Working...') : children}</span>}
@@ -349,7 +354,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 function SaveBar({isBusy, onSave, global = false}) {
 	return (
 		<div className={`ams-savebar ${global ? 'ams-savebar--global' : ''}`.trim()}>
-			<AmsButton tone="primary" busy={isBusy} onPress={onSave}>Save Changes</AmsButton>
+			<AmsButton tone="primary" icon={Save} busy={isBusy} onPress={onSave}>Save Changes</AmsButton>
 		</div>
 	);
 }
@@ -369,7 +374,7 @@ function Overview({data, go, actions}) {
 				<StatCard icon={Zap} title="Preload" value={preload.enabled ? 'Enabled' : 'Disabled'} detail={`${preload.queueProcessed || 0} / ${preload.queueTotal || preload.limit || 0} processed`} progress={preload.progress} />
 			</div>
 			<div className="grid w-full grid-cols-1 gap-4 items-stretch auto-rows-fr 2xl:grid-cols-2">
-				<Panel title="Cache Store" action={<AmsButton size="sm" onPress={() => go('cache')}>Settings</AmsButton>}>
+				<Panel title="Cache Store" action={<AmsButton size="sm" icon={Settings} onPress={() => go('cache')}>Settings</AmsButton>}>
 					<FactList items={[
 						{label: 'Driver', value: cache.driver || 'file'},
 						{label: 'Key Prefix', value: cache.keyPrefix || ''},
@@ -378,7 +383,7 @@ function Overview({data, go, actions}) {
 						{label: 'Expert Mode', value: `${cache.expertMode ? 'Enabled' : 'Disabled'} | ${cache.expertReady ? 'Ready' : 'Not ready'}`}
 					]} />
 				</Panel>
-				<Panel title="Preload Queue" action={<AmsButton size="sm" onPress={() => go('preload')}>Settings</AmsButton>}>
+				<Panel title="Preload Queue" action={<AmsButton size="sm" icon={Settings} onPress={() => go('preload')}>Settings</AmsButton>}>
 					<FactList items={[
 						{label: 'Limit', value: preload.limit || 0},
 						{label: 'Homepage Crawl', value: yesNo(preload.crawlHomepage)},
@@ -390,10 +395,10 @@ function Overview({data, go, actions}) {
 				</Panel>
 			</div>
 			<div className="grid w-full grid-cols-1 gap-4 items-stretch auto-rows-fr 2xl:grid-cols-2">
-				<Panel title="Optimization Checks" action={<AmsButton size="sm" onPress={() => go('performance')}>Performance</AmsButton>}>
+				<Panel title="Optimization Checks" action={<AmsButton size="sm" icon={Activity} onPress={() => go('performance')}>Performance</AmsButton>}>
 					<StatusList items={optimization.requirements || []} />
 				</Panel>
-				<Panel title="Cache Footprint" action={<AmsButton size="sm" onPress={() => go('statistics')}>Statistics</AmsButton>}>
+				<Panel title="Cache Footprint" action={<AmsButton size="sm" icon={BarChart3} onPress={() => go('statistics')}>Statistics</AmsButton>}>
 					<div className="ams-footprint">
 						<strong>{stats.totalRows || 0}<span>rows</span></strong>
 						<strong>{stats.totalSizeLabel || '0 B'}<span>stored</span></strong>
@@ -516,6 +521,7 @@ function PreloadSettings({data, settings, update, save, isBusy, runPreload, purg
 				<FactList items={[
 					{label: 'Queue Total', value: data.preload?.queueTotal || 0},
 					{label: 'Queue Processed', value: data.preload?.queueProcessed || 0},
+					{label: 'Queue Failed', value: data.preload?.queueFailed || 0},
 					{label: 'Queue Remaining', value: data.preload?.queueRemaining || 0},
 					{label: 'Homepage Priority', value: data.preload?.priorityCount || 0},
 					{label: 'Critical URLs', value: data.preload?.criticalCount || 0}
@@ -663,7 +669,7 @@ function Reports({reports, loadReports}) {
 					</li>
 				))}
 			</ul>
-			{reports.hasMore ? <div className="ams-loadmore"><AmsButton onPress={loadReports}>Load 5 more</AmsButton></div> : null}
+			{reports.hasMore ? <div className="ams-loadmore"><AmsButton icon={FastForward} onPress={loadReports}>Load 5 more</AmsButton></div> : null}
 		</Panel>
 	);
 }
@@ -778,13 +784,10 @@ function AboutPage({data}) {
 		<div className="ams-about-page">
 			<section className="ams-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.0.9</Pill>
+					<Pill tone="info">AMS Cache 3.1.0</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
-					<div className="ams-action-row">
-						<AmsButton tone="primary">AMS Technical Team</AmsButton>
-						<AmsButton>Simple Cache Core</AmsButton>
-					</div>
+					<p className="ams-muted">AMS Technical Team Ã‚Â· Simple Cache Core</p>
 				</div>
 				<div className="ams-about-window" aria-hidden="true">
 					<div className="ams-window-dots"><span /><span /><span /></div>
@@ -795,13 +798,7 @@ function AboutPage({data}) {
 					<div className="ams-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
-			<div className="ams-about-tabs">
-				<button type="button" className="is-active">What&rsquo;s New</button>
-				<button type="button">Performance</button>
-				<button type="button">Security</button>
-				<button type="button">Credits</button>
-			</div>
-			<Panel title="Welcome to AMS Cache 3.0.9" className="ams-full-width">
+			<Panel title="Welcome to AMS Cache 3.1.0" className="ams-full-width">
 				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
@@ -893,11 +890,12 @@ function App() {
 
 	return (
 		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.0.9">
+			<aside className="ams-sidebar" aria-label="AMS Cache 3.1.0">
 				<div className="ams-logo">AMS</div>
 				{NAV.map(({key, label, icon: Icon}) => (
-					<button key={key} className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label}>
-						<Icon size={19} />
+					<button key={key} type="button" className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label} aria-current={view === key ? 'page' : undefined}>
+						<Icon size={19} aria-hidden="true" />
+						<span className="ams-nav-label">{label}</span>
 					</button>
 				))}
 			</aside>
@@ -908,10 +906,10 @@ function App() {
 						<p>Live cache controls and page optimization state. <strong>Updated:</strong> {data.generatedAt}</p>
 					</div>
 					<div className="ams-toolbar-actions">
-						<AmsButton icon={RefreshCcw} iconOnly busy={busy} onPress={actions.refresh} aria-label="Refresh">Refresh</AmsButton>
+						<AmsButton icon={RefreshCcw} busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
 						<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
-						<AmsButton icon={Home} iconOnly onPress={actions.purgeHomepage} aria-label="Purge Homepage">Purge Homepage</AmsButton>
-						<AmsButton icon={Trash2} iconOnly tone="danger" onPress={actions.clearAll} aria-label="Clear All">Clear All</AmsButton>
+						<AmsButton icon={Home} onPress={actions.purgeHomepage}>Purge Homepage</AmsButton>
+						<AmsButton icon={Trash2} tone="danger" onPress={actions.clearAll}>Clear All Cache</AmsButton>
 					</div>
 				</header>
 				{notice ? (
