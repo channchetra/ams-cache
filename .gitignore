@@ -24,3 +24,5 @@ DESIGN.md
 SESSION_MEMORY.md
 skills-lock.json
 economy*.json
+.ua/
+.php-version

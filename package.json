@@ -1,6 +1,6 @@
 {
   "name": "ams-cache",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "private": true,
   "type": "module",
   "description": "Build tooling and optional local optimizers for the AMS Cache WordPress plugin.",
@@ -8,10 +8,15 @@
     "dev": "bunx vite --host 127.0.0.1",
     "build": "bunx vite build",
     "build:release": "bun run build && powershell -ExecutionPolicy Bypass -File ./bin/build-release.ps1",
+    "build:release:sh": "bash ./bin/build-release.sh",
     "release": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump minor",
-    "release:major": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump major"
+    "release:major": "powershell -ExecutionPolicy Bypass -File ./bin/release.ps1 -Bump major",
+    "release:sh": "bash ./bin/release.sh",
+    "release:sh:patch": "bash ./bin/release.sh --bump patch",
+    "release:sh:minor": "bash ./bin/release.sh --bump minor",
+    "release:sh:major": "bash ./bin/release.sh --bump major"
   },
   "devDependencies": {
     "@heroui/react": "^3.0.5",

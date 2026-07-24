@@ -88,6 +88,16 @@ function scm_maybe_schedule_preload_cache() {
 		return;
 	}
 
+	// Resume a stalled queue whose cron event was lost (object cache flush, deploy mid-run).
+	// Cheap in-memory cron check first; queue transient (DB query) fetched only when the event is missing.
+	if ( ! wp_next_scheduled( 'scm_preload_queue_event' ) ) {
+		$queue = get_transient( 'scm_preload_queue' );
+
+		if ( ! empty( $queue ) && is_array( $queue ) ) {
+			scm_schedule_preload_queue();
+		}
+	}
+
 	$signature = defined( 'SCM_PLUGIN_VERSION' ) ? (string) SCM_PLUGIN_VERSION : 'ams-cache';
 
 	if ( wp_next_scheduled( 'scm_preload_cache_event' ) ) {

@@ -70,7 +70,7 @@ Release build:
 bun run build:release
 ```
 
-One-command version bump and release:
+One-command version bump and release (Windows PowerShell):
 
 ```powershell
 bun run release
@@ -78,7 +78,16 @@ bun run release:minor
 powershell -ExecutionPolicy Bypass -File .\bin\release.ps1 -Version 3.1.0 -Note "Release dashboard polish."
 ```
 
-`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs `bun install --frozen-lockfile`, builds Vite assets into `inc/assets/build`, verifies the Vite manifest, then creates the WordPress zip in `dist/`. Pass `-SkipBunBuild` only when built assets already exist.
+One-command version bump and release (Ubuntu/Linux/macOS):
+
+```bash
+bash bin/release.sh
+bash bin/release.sh --bump minor
+bash bin/release.sh --version 3.1.0 --note "Release dashboard polish."
+bash bin/build-release.sh --skip-bun-build   # package only, using existing built assets
+```
+
+`bin/release.ps1` (Windows) and `bin/release.sh` (Ubuntu/Linux/macOS) default to a patch bump. They sync `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then call the matching build script (`bin/build-release.ps1` / `bin/build-release.sh`). The build script runs the JS build (`bun`, falling back to `pnpm` or `npm` on the bash version), builds Vite assets into `inc/assets/build`, verifies the Vite manifest, then creates the WordPress zip in `dist/`. Pass `-SkipBunBuild` / `--skip-bun-build` only when built assets already exist.
 
 The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, and feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine. It loads five reports first and fetches more only when requested.
 

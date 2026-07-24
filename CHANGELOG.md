@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.1.2] - 2026-07-23
+
+### Added
+- Cross-platform release tooling: `bin/release.sh` and `bin/build-release.sh` bash ports for Ubuntu/Linux/macOS with `bun`/`pnpm`/`npm` and `zip`/`python3` fallbacks, plus matching `release:sh*` package scripts.
+- Preload queue stall recovery: `init` hook reschedules `scm_preload_queue_event` when the queue transient survives but its cron event was lost (object cache flush, deploy mid-run).
+- PHPUnit coverage for preload queue recovery (`tests/test-2-preload-recovery.php`).
+
+### Changed
+- Release packaging now excludes composer dev dependencies (`vendor/phpunit`, `vendor/yoast`, etc.), `.ua/`, and `pnpm-lock.yaml` in both PowerShell and bash build scripts.
+
 ## [3.1.1] - 2026-07-22
 
 ### Changed

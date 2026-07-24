@@ -3,7 +3,7 @@
  * Plugin Name: AMS Cache
  * Plugin URI:  https://ams.com.kh/
  * Description: A WordPress cache plugin.
- * Version:     3.1.1
+ * Version:     3.1.2
  * Requires at least: 5.8
  * Requires PHP: 7.1
  * Author:      Chetra Chann
@@ -51,7 +51,7 @@ define( 'SCM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SCM_PLUGIN_PATH', __FILE__ );
 define( 'SCM_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-define( 'SCM_PLUGIN_VERSION', '3.1.1' );
+define( 'SCM_PLUGIN_VERSION', '3.1.2' );
 define( 'SCM_CORE_VERSION', '1.3.4' );
 define( 'SCM_PLUGIN_TEXT_DOMAIN', 'ams-cache' );
 
