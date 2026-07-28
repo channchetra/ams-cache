@@ -104,7 +104,7 @@ function scm_write_nginx_static_cache( $uri, $content ) {
 		return false;
 	}
 
-	if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+	if ( isset( $_SERVER['REQUEST_URI'] ) && ! scm_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
 		return false;
 	}
 

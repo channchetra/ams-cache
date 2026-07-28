@@ -280,6 +280,42 @@ function scm_request_has_auth_cookie() {
 }
 
 /**
+ * Return query variables that only carry external campaign attribution.
+ *
+ * @return array
+ */
+function scm_get_cache_tracking_query_vars() {
+	return array(
+		'fbclid',
+		'mibextid',
+		'rdid',
+		'shbid',
+		'shbv',
+		'fb_action_ids',
+		'fb_action_types',
+		'fb_source',
+		'utm_source',
+		'utm_medium',
+		'utm_campaign',
+		'utm_term',
+		'utm_content',
+	);
+}
+
+/**
+ * Check whether a query variable is safe to ignore for page-cache identity.
+ *
+ * @param string $name Query variable name.
+ *
+ * @return bool
+ */
+function scm_is_cache_tracking_query_var( $name ) {
+	$name = strtolower( trim( (string) $name ) );
+
+	return in_array( $name, scm_get_cache_tracking_query_vars(), true );
+}
+
+/**
  * Check if a path looks like a frontend HTML document.
  *
  * @param string $path Request path.
@@ -312,16 +348,25 @@ function scm_is_cacheable_request_uri( $uri = null ) {
 		return false;
 	}
 
-	if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
-		return false;
-	}
-
 	if ( scm_request_has_auth_cookie() ) {
 		return false;
 	}
 
 	if ( null === $uri ) {
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+	}
+
+	$query = parse_url( (string) $uri, PHP_URL_QUERY );
+
+	if ( ! empty( $query ) ) {
+		$query_vars = array();
+		parse_str( $query, $query_vars );
+
+		foreach ( array_keys( $query_vars ) as $query_var ) {
+			if ( ! scm_is_cache_tracking_query_var( $query_var ) ) {
+				return false;
+			}
+		}
 	}
 
 	$path = scm_normalize_cache_uri( $uri );

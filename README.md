@@ -39,7 +39,7 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 ## Nginx Direct Static Cache
 
-When using the File driver, AMS Cache can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx `server` block, run `nginx -t`, then reload Nginx.
+When using the File driver, AMS Cache can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx `server` block, run `nginx -t`, then reload Nginx. The generated rule serves the same cached page for Facebook/Meta and UTM tracking variables (`fbclid`, `mibextid`, `rdid`, `shbid`, `shbv`, and standard UTM keys) while bypassing functional or unknown query variables.
 
 ## Page Optimization
 

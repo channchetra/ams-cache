@@ -46,6 +46,6 @@ $snippet                          = scm_get_nginx_direct_cache_snippet();
 </ul>
 
 <p><em><?php _e( 'This creates a raw HTML mirror for File driver cache. Nginx can serve it before PHP, and the snippet also adds gzip plus long browser cache headers for static assets. You must install the snippet manually and test your Nginx config first.', 'ams-cache' ); ?></em></p>
-<p><em><?php _e( 'Security: logged-in, WooCommerce cart/session, query string, admin, REST, XML-RPC, and non-GET requests are bypassed in the generated snippet.', 'ams-cache' ); ?></em></p>
+<p><em><?php _e( 'Security: logged-in, WooCommerce cart/session, unknown query variables, admin, REST, XML-RPC, and non-GET requests are bypassed. Facebook/Meta and UTM tracking variables are safe-listed.', 'ams-cache' ); ?></em></p>
 
 <textarea class="large-text code" rows="18" readonly><?php echo esc_textarea( $snippet ); ?></textarea>

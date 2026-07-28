@@ -166,6 +166,7 @@ function get_month_link( $year, $month ) {
 
 require_once dirname( __DIR__ ) . '/inc/cache-core.php';
 require_once dirname( __DIR__ ) . '/inc/cache-nginx.php';
+require_once dirname( __DIR__ ) . '/inc/cache-nginx-config.php';
 require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
 require_once dirname( __DIR__ ) . '/inc/cache-preload.php';
 require_once dirname( __DIR__ ) . '/inc/page-optimizer.php';
@@ -180,7 +181,14 @@ function smoke_assert( $condition, $message ) {
 
 smoke_assert( '/about/' === scm_normalize_cache_uri( '/about' ), 'cache URI normalization' );
 smoke_assert( scm_is_cacheable_request_uri( '/about/' ), 'HTML request classification' );
+smoke_assert( scm_is_cacheable_request_uri( '/about/?fbclid=tracking-id' ), 'Facebook tracking query remains cacheable' );
+smoke_assert( scm_is_cacheable_request_uri( '/about/?mibextid=share-id&utm_source=facebook' ), 'Meta share tracking queries remain cacheable' );
+smoke_assert( scm_get_cache_key( '/about/' ) === scm_get_cache_key( '/about/?fbclid=tracking-id' ), 'tracking query shares canonical cache key' );
+smoke_assert( ! scm_is_cacheable_request_uri( '/about/?s=cache' ), 'functional query remains uncached' );
 smoke_assert( ! scm_is_cacheable_request_uri( '/assets/app.css' ), 'asset request classification' );
+smoke_assert( false !== strpos( scm_get_nginx_direct_cache_snippet(), 'fbclid' ), 'Nginx snippet allows Facebook tracking query' );
+smoke_assert( false !== strpos( scm_get_nginx_direct_cache_snippet(), 'mibextid' ), 'Nginx snippet allows Meta share query' );
+smoke_assert( false === strpos( scm_get_nginx_direct_cache_snippet(), '&&' ), 'Nginx snippet uses valid condition syntax' );
 smoke_assert( '' !== scm_local_asset_url_to_path( '/inc/cache-core.php' ), 'same-site asset resolution' );
 smoke_assert( '' === scm_local_asset_url_to_path( '/../cache-core.php' ), 'path traversal rejected' );
 
