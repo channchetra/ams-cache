@@ -66,7 +66,8 @@ class Cache_Master {
 	 */
 	public function init() {
 
-		$uri = $this->get_request_uri();
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+		$uri         = scm_normalize_cache_uri( $request_uri );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'front_enqueue_styles' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'front_enqueue_styles' ) );
@@ -76,7 +77,8 @@ class Cache_Master {
 			return;
 		}
 
-		if ( ! scm_is_cacheable_request_uri( $uri ) ) {
+		// The cacheability policy needs the full request URI, including the query string.
+		if ( ! scm_is_cacheable_request_uri( $request_uri ) ) {
 			return;
 		}
 

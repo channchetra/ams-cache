@@ -337,13 +337,14 @@ function scm_is_cacheable_document_path( $path ) {
 }
 
 /**
- * Check if a URI can be treated as a cacheable HTML document request.
+ * Check if a full request URI can be treated as a cacheable HTML document request.
  *
- * @param string|null $uri Request URI.
+ * @param string|null $request_uri Full request URI including the query string.
+ *                                  Pass null to read $_SERVER['REQUEST_URI'].
  *
  * @return bool
  */
-function scm_is_cacheable_request_uri( $uri = null ) {
+function scm_is_cacheable_request_uri( $request_uri = null ) {
 	if ( isset( $_SERVER['REQUEST_METHOD'] ) && ! in_array( $_SERVER['REQUEST_METHOD'], array( 'GET', 'HEAD' ), true ) ) {
 		return false;
 	}
@@ -352,13 +353,27 @@ function scm_is_cacheable_request_uri( $uri = null ) {
 		return false;
 	}
 
-	if ( null === $uri ) {
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+	if ( null === $request_uri ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
 	}
 
-	$query = parse_url( (string) $uri, PHP_URL_QUERY );
+	$request_uri = (string) $request_uri;
 
-	if ( ! empty( $query ) ) {
+	// A raw fragment is never valid in an HTTP request target. Reject it so
+	// parse_url() cannot truncate the query relative to PHP's $_GET parsing.
+	if ( false !== strpos( $request_uri, '#' ) ) {
+		return false;
+	}
+
+	$parsed = parse_url( $request_uri );
+
+	if ( false === $parsed ) {
+		return false;
+	}
+
+	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
+
+	if ( '' !== $query ) {
 		$query_vars = array();
 		parse_str( $query, $query_vars );
 
@@ -369,7 +384,7 @@ function scm_is_cacheable_request_uri( $uri = null ) {
 		}
 	}
 
-	$path = scm_normalize_cache_uri( $uri );
+	$path = scm_normalize_cache_uri( $request_uri );
 
 	return scm_is_cacheable_document_path( $path );
 }

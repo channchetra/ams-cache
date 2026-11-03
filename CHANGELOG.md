@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.1.5] - 2026-11-04
+
+### Changed
+- Fix query-string cache poisoning by gating on the full request URI; fail closed on unparseable URIs and raw fragments. Adds cache-identity regression tests.
+
 ## [3.1.4] - 2026-07-28
 
 ### Changed
