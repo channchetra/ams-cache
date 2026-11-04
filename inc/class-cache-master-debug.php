@@ -208,17 +208,6 @@ trait SCM_Cache_Master_Debug {
 		}
 
 		switch ( $position ) {
-			case 'ob_start':
-				$this->msg();
-				$this->msg( '....... ' . __( 'After', 'ams-cache' ) . ' .......', 2 );
-				$this->msg( sprintf( __( 'Now: %s', 'ams-cache' ), $date ) );
-				$this->msg( sprintf( __( 'Memory usage: %s MB', 'ams-cache' ), $memory_usage ) );
-				$this->msg( sprintf( __( 'SQL queries: %s', 'ams-cache' ), $sql_queries ) );
-				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'ams-cache' ), $timer_stop ) );
-				$this->msg();
-				$this->msg( '//-->' );
-				break;
-
 			case 'ob_stop':
 				$ttl          = (int) get_option( 'scm_option_ttl' );
 				$expires      = time() + $ttl;

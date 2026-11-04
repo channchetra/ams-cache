@@ -258,23 +258,16 @@ class Cache_Master {
 	 * @return void
 	 */
 	public function ob_start() {
+		if ( $this->driver ) {
+			$config = $this->config;
 
-		if ( $this->is_cache_visible() && $this->driver ) {
+			$config['cache_enabled']      = 'enable' === get_option( 'scm_option_caching_status', 'disable' );
+			$config['cache_key_prefix']   = scm_get_cache_key_prefix();
+			$config['html_debug_comment'] = scm_option_is_enabled( 'scm_option_html_debug_comment', 'yes' );
 
-			$cached_content = $this->driver->get( $this->cache_key );
+			$cached_content = scm_serve_cached_response( $config, $this->driver );
 
-			// Never serve cached payloads that are empty or lack a valid HTML document.
-			if ( ! empty( $cached_content ) && strpos( $cached_content, '</body>' ) !== false && strlen( $cached_content ) >= 1024 ) {
-
-				$cached_content .= $this->debug_message( 'ob_start' );
-
-				// This line must be at after debug_message.
-				$cached_content = str_replace(
-					'</body>',
-					"\n" . scm_javascript() . "\n" . '</body>',
-					$cached_content
-				);
-
+			if ( null !== $cached_content ) {
 				echo $cached_content;
 				exit;
 			}
@@ -359,19 +352,6 @@ class Cache_Master {
 	}
 
 	/**
-	 * Check if a user can see the cached pages.
-	 *
-	 * @return bool
-	 */
-	private function is_cache_visible() {
-		if ( is_user_logged_in() ) {
-			return false;
-		}
-
-		return ! scm_request_has_cache_bypass_cookie();
-	}
-
-	/**
 	 * Get request URI.
 	 *
 	 * @return string
@@ -393,44 +373,6 @@ class Cache_Master {
 	 * @return bool
 	 */
 	private function is_ignore() {
-		$uri = $this->get_request_uri();
-
-		if ( true === $this->config['exclusion']['enable'] ) {
-			foreach ( $this->config['exclusion']['excluded_list'] as $ignored_url ) {
-				if ( strpos( $uri, $ignored_url ) === 0 ) {
-					return true;
-				}
-			}
-			foreach ( $this->config['exclusion']['excluded_get_vars'] as $var ) {
-				if ( isset( $_GET[ $var ] ) ) {
-					
-					return true;
-				}
-			}
-			foreach ( $this->config['exclusion']['excluded_post_vars'] as $var ) {
-				if ( isset( $_POST[ $var ] ) ) {
-					return true;
-				}
-			}
-			foreach ( $this->config['exclusion']['excluded_cookie_vars'] as $var ) {
-				if ( isset( $_COOKIE[ $var ] ) ) {
-					return true;
-				}
-			}
-		}
-
-		if ( true === $this->config['woocommerce']['enable'] ) {	
-			if ( isset( $_POST['add-to-cart'] ) && is_numeric( $_POST['add-to-cart'] ) ) {
-				return true;
-			}
-			if ( ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
-				return true;
-			}
-			if ( isset( $_GET['wc-ajax'] ) ) {
-				return true;
-			}
-		}
-
-		return false;
+		return scm_is_cache_request_excluded( $this->config );
 	}
 }

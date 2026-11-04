@@ -31,7 +31,6 @@ function scm_run_expert_mode( $args ) {
 	}
 
 	$microtime_before = microtime( true );
-	$sql_queries      = 0;
 
 	// Prevent CLI conficts
 	if ( ! isset( $_SERVER['REQUEST_URI' ] ) ) {
@@ -81,133 +80,21 @@ function scm_run_expert_mode( $args ) {
 	$content = file_get_contents( $config_file );
 	$config  = json_decode( $content, true );
 
-	$site_path = '/';
-
-	if ( ! empty( $config['site_url'] ) ) {
-		$site_url  = rtrim( $config['site_url'], '/' ) . '/';
-		$site_path = parse_url( $site_url, PHP_URL_PATH );
+	if ( ! is_array( $config ) ) {
+		return;
 	}
 
-	$request_path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+	include_once( $plugin_dir . '/inc/lib/autoload.php' );
+	include_once( $plugin_dir . '/inc/helpers.php' );
 
-	$driver_type          = $config['cache_driver']                      ?? 'file';
-	$cache_key_prefix     = $config['cache_key_prefix']                  ?? '';
-	$is_woocommerce       = $config['woocommerce']['enable']             ?? false;
-	$advanced_settings    = $config['driver_advanced_settings']          ?? array();
-	$advanced_conn_type   = $config['driver_connection_type']            ?? 'tcp';
-	$debug_comment        = $config['html_debug_comment']                ?? true;
-	$is_exclusion         = $config['exclusion']['enable']               ?? false;
-	$excluded_list        = $config['exclusion']['excluded_list']        ?? array();
-	$excluded_get_vars    = $config['exclusion']['excluded_get_vars']    ?? array();
-	$excluded_post_vars   = $config['exclusion']['excluded_post_vars']   ?? array();
-	$excluded_cookie_vars = $config['exclusion']['excluded_cookie_vars'] ?? array();
-
-	// Ignore excluded list...
-	if ( $is_exclusion ) {
-		foreach ( $excluded_list as $ignored_url ) {
-			if ( strpos( $request_path, $ignored_url ) === 0 ) {
-				return;
-			}
-		}
-
-		foreach ( $excluded_get_vars as $var ) {
-			if ( isset( $_GET[ $var ] ) ) {
-				return;
-			}
-		}
-		foreach ( $excluded_post_vars as $var ) {
-			if ( isset( $_POST[ $var ] ) ) {
-				return;
-			}
-		}
-		foreach ( $excluded_cookie_vars as $var ) {
-			if ( isset( $_COOKIE[ $var ] ) ) {
-				return;
-			}
-		}
+	if ( ! isset( $config['cache_enabled'] ) ) {
+		$config['cache_enabled'] = true;
 	}
 
-	// Check if WooCommerce support is enabled.
-	if ( $is_woocommerce ) {		
-		if ( isset( $_POST['add-to-cart'] ) && is_numeric( $_POST['add-to-cart'] ) ) {
-			return;
-		}
-		if ( ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
-			return;
-		}
-		if ( isset( $_GET['wc-ajax'] ) ) {
-			return;
-		}
-	}
+	$cached_content = scm_serve_cached_response( $config, null, $plugin_upload_dir, true, $microtime_before );
 
-	// Start "reading-cache" procedure.
-	if ( strpos( $request_path, $site_path ) === 0 ) {
-
-		// Vendored PSR-16 cache library autoloader.
-		include_once( $plugin_dir . '/inc/lib/autoload.php' );
-		include_once( $plugin_dir . '/inc/helpers.php' );
-
-		if ( ! scm_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
-			return;
-		}
-
-		$request_path = scm_normalize_cache_uri( $request_path );
-
-		// The cache key.
-		$key = md5( $cache_key_prefix . '|' . $request_path );
-
-		$resolved = scm_get_driver_settings( $driver_type, $advanced_settings, $advanced_conn_type );
-		$setting  = $resolved['setting'];
-
-		if ( 'mysql' === $driver_type ) {
-			$sql_queries++;
-		}
-
-		if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
-			$setting['storage'] = $plugin_upload_dir . '/' . $driver_type . '_driver';
-		}
-
-		$driver = new \Shieldon\SimpleCache\Cache( $driver_type, $setting );
-
-		$cached_content = $driver->get( $key );
-
-		$memory_usage = memory_get_usage();
-		$memory_usage = $memory_usage / ( 1024 * 1024 );
-		$memory_usage = round( $memory_usage, 4 );
-		
-		if ( ! empty( $cached_content ) && strpos( $cached_content, '</body>' ) !== false && strlen( $cached_content ) >= 1024 ) {
-			$date            = date( 'Y-m-d H:i:s' );
-			$microtime_after = microtime(true);
-			$page_speed      = round( $microtime_after - $microtime_before, 3 );
-
-			if ( $debug_comment ) {
-				$debug_message  = '';
-				$debug_message .= "\n" . '....... ' . 'After' . ' .......' . "\n\n";
-				$debug_message .= sprintf( 'Now: %s', $date ) . "\n";
-				$debug_message .= sprintf( 'Memory usage: %s MB', $memory_usage ) . "\n";
-				$debug_message .= sprintf( 'SQL queries: %s', $sql_queries ) . "\n";
-				$debug_message .= sprintf( 'Page generated in %s seconds.', $page_speed ) . "\n\n";
-				$debug_message .= '(running in Expert Mode)' . "\n";
-				$debug_message .= "\n//-->";
-
-				$cached_content .= $debug_message;
-			}
-
-			scm_set_view_variable( 'now',  $date, 'after' );
-			scm_set_view_variable( 'memory_usage',  $memory_usage, 'after' );
-			scm_set_view_variable( 'sql_queries',  $sql_queries, 'after' );
-			scm_set_view_variable( 'page_generation_time',  $page_speed, 'after' );
-
-			// This line must be at after scm_set_view_variable.
-			$cached_content = str_replace(
-				'</body>',
-				"\n" . scm_javascript() . "\n" . '</body>',
-				$cached_content
-			);
-
-			// Outpue cache.
-			echo $cached_content;
-			exit;
-		}  
+	if ( null !== $cached_content ) {
+		echo $cached_content;
+		exit;
 	}
 }

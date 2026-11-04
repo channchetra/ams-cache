@@ -68,4 +68,16 @@ class ConfigContractTest extends WP_UnitTestCase {
 		$this->assertSame( array(), $cm->config['exclusion']['excluded_list'] );
 		$this->assertFalse( $cm->config['woocommerce']['enable'] );
 	}
+
+	public function test_expert_config_includes_read_switches() {
+		update_option( 'scm_option_caching_status', 'enable' );
+
+		scm_sync_expert_mode_runtime();
+
+		$config = scm_get_config_data();
+
+		$this->assertArrayHasKey( 'cache_enabled', $config );
+		$this->assertTrue( $config['cache_enabled'] );
+		$this->assertSame( rtrim( get_site_url(), '/' ), $config['site_url'] );
+	}
 }

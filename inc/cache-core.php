@@ -278,6 +278,172 @@ function scm_get_config_data() {
 }
 
 /**
+ * Check whether the current request is excluded from the page cache.
+ *
+ * @param array $config Runtime config.
+ *
+ * @return bool
+ */
+function scm_is_cache_request_excluded( $config ) {
+	$exclusion = isset( $config['exclusion'] ) && is_array( $config['exclusion'] ) ? $config['exclusion'] : array();
+
+	if ( ! empty( $exclusion['enable'] ) ) {
+		$path = isset( $_SERVER['REQUEST_URI'] ) ? scm_normalize_cache_uri( $_SERVER['REQUEST_URI'] ) : '/';
+
+		foreach ( isset( $exclusion['excluded_list'] ) ? $exclusion['excluded_list'] : array() as $ignored_url ) {
+			if ( '' !== (string) $ignored_url && 0 === strpos( $path, $ignored_url ) ) {
+				return true;
+			}
+		}
+
+		foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
+			$key    = 'excluded_' . $type . '_vars';
+			$source = 'get' === $type ? $_GET : ( 'post' === $type ? $_POST : $_COOKIE );
+
+			foreach ( isset( $exclusion[ $key ] ) ? $exclusion[ $key ] : array() as $var ) {
+				if ( isset( $source[ $var ] ) ) {
+					return true;
+				}
+			}
+		}
+	}
+
+	$woocommerce = isset( $config['woocommerce'] ) && is_array( $config['woocommerce'] ) ? $config['woocommerce'] : array();
+
+	if ( ! empty( $woocommerce['enable'] ) ) {
+		if ( isset( $_POST['add-to-cart'] ) && is_numeric( $_POST['add-to-cart'] ) ) {
+			return true;
+		}
+		if ( ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
+			return true;
+		}
+		if ( isset( $_GET['wc-ajax'] ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Build the debug block appended to a cached response.
+ *
+ * @param array      $config     Runtime config.
+ * @param bool       $expert     Whether Expert Mode served the response.
+ * @param float|null $start_time Request start time for pre-WP contexts.
+ *
+ * @return string
+ */
+function scm_build_served_debug_message( $config, $expert = false, $start_time = null ) {
+	$translate = function ( $text ) {
+		return function_exists( '__' ) ? __( $text, 'ams-cache' ) : $text;
+	};
+
+	$date         = date( 'Y-m-d H:i:s' );
+	$memory_usage = round( memory_get_usage() / ( 1024 * 1024 ), 4 );
+	$sql_queries  = function_exists( 'get_num_queries' ) ? get_num_queries() : 0;
+	$page_speed   = function_exists( 'timer_stop' ) ? timer_stop() : ( null !== $start_time ? round( microtime( true ) - $start_time, 3 ) : 0 );
+
+	scm_set_view_variable( 'now', $date, 'after' );
+	scm_set_view_variable( 'memory_usage', $memory_usage, 'after' );
+	scm_set_view_variable( 'sql_queries', $sql_queries, 'after' );
+	scm_set_view_variable( 'page_generation_time', $page_speed, 'after' );
+
+	if ( empty( $config['html_debug_comment'] ) ) {
+		return '';
+	}
+
+	$message  = "\n....... " . $translate( 'After' ) . " .......\n\n";
+	$message .= sprintf( $translate( 'Now: %s' ), $date ) . "\n";
+	$message .= sprintf( $translate( 'Memory usage: %s MB' ), $memory_usage ) . "\n";
+	$message .= sprintf( $translate( 'SQL queries: %s' ), $sql_queries ) . "\n";
+	$message .= sprintf( $translate( 'Page generated in %s seconds.' ), $page_speed ) . "\n";
+
+	if ( $expert ) {
+		$message .= "\n" . $translate( '(running in Expert Mode)' ) . "\n";
+	}
+
+	$message .= "\n//-->\n";
+
+	return $message;
+}
+
+/**
+ * Serve a cached response for the current request.
+ *
+ * @param array                            $config       Runtime config.
+ * @param \Shieldon\SimpleCache\Cache|null $driver       Existing driver, or null to create one.
+ * @param string                           $storage_base Optional file/sqlite storage base.
+ * @param bool                             $expert       Whether this is the pre-WP Expert Mode path.
+ * @param float|null                       $start_time   Request start time for pre-WP metrics.
+ *
+ * @return string|null Cached HTML, or null when no valid cache entry should be served.
+ */
+function scm_serve_cached_response( $config, $driver = null, $storage_base = '', $expert = false, $start_time = null ) {
+	if ( isset( $config['cache_enabled'] ) && ! $config['cache_enabled'] ) {
+		return null;
+	}
+
+	if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) {
+		return null;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+
+	if ( ! scm_is_cacheable_request_uri( $request_uri ) ) {
+		return null;
+	}
+
+	if ( scm_is_cache_request_excluded( $config ) ) {
+		return null;
+	}
+
+	$path = scm_normalize_cache_uri( $request_uri );
+	$key  = scm_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
+
+	if ( ! $driver ) {
+		$driver_type = isset( $config['cache_driver'] ) ? $config['cache_driver'] : 'file';
+		$advanced    = isset( $config['driver_advanced_settings'] ) ? $config['driver_advanced_settings'] : array();
+		$connection  = isset( $config['driver_connection_type'] ) ? $config['driver_connection_type'] : 'tcp';
+
+		if ( '' !== $storage_base && in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
+			// Expert Mode runs before WP_CONTENT_DIR exists; build storage directly.
+			$setting = array(
+				'storage' => rtrim( $storage_base, '/\\' ) . '/' . $driver_type . '_driver',
+			);
+
+			if ( ! empty( $advanced ) ) {
+				$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced, $connection ) );
+			}
+		} else {
+			$resolved = scm_get_driver_settings( $driver_type, $advanced, $connection );
+			$setting  = $resolved['setting'];
+		}
+
+		try {
+			$driver = new \Shieldon\SimpleCache\Cache( $driver_type, $setting );
+		} catch ( \Throwable $e ) {
+			return null;
+		}
+	}
+
+	try {
+		$cached_content = $driver->get( $key );
+	} catch ( \Throwable $e ) {
+		return null;
+	}
+
+	if ( empty( $cached_content ) || false === strpos( $cached_content, '</body>' ) || strlen( $cached_content ) < 1024 ) {
+		return null;
+	}
+
+	$cached_content .= scm_build_served_debug_message( $config, $expert, $start_time );
+	$cached_content  = str_replace( '</body>', "\n" . scm_javascript() . "\n" . '</body>', $cached_content );
+
+	return $cached_content;
+}
+
+/**
  * Build the runtime exclusion configuration from the stored settings.
  *
  * Persists the normalized path list to scm_option_excluded_list_filtered.
@@ -390,6 +556,8 @@ function scm_sync_expert_mode_runtime() {
 
 	$setting['cache_driver']             = $driver_type;
 	$setting['cache_key_prefix']         = scm_get_cache_key_prefix();
+	$setting['site_url']      = rtrim( get_site_url(), '/' );
+	$setting['cache_enabled'] = 'enable' === get_option( 'scm_option_caching_status', 'disable' );
 	$setting['driver_advanced_settings'] = $advanced_setting;
 	$setting['driver_connection_type']   = $connection_type;
 	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
@@ -692,14 +860,26 @@ function scm_is_homepage_uri( $uri ) {
 }
 
 /**
- * Build the cache key for a request URI.
+ * Build a cache key from an explicit prefix and URI.
+ *
+ * @param string $prefix Cache key prefix.
+ * @param string $uri    Request URI or path.
+ *
+ * @return string
+ */
+function scm_build_cache_key( $prefix, $uri ) {
+	return md5( (string) $prefix . '|' . scm_normalize_cache_uri( $uri ) );
+}
+
+/**
+ * Build the cache key for a request URI using the stored prefix.
  *
  * @param string $uri Request URI or path.
  *
  * @return string
  */
 function scm_get_cache_key( $uri ) {
-	return md5( scm_get_cache_key_prefix() . '|' . scm_normalize_cache_uri( $uri ) );
+	return scm_build_cache_key( scm_get_cache_key_prefix(), $uri );
 }
 
 /**
@@ -713,6 +893,7 @@ function scm_get_default_config() {
 
 	return array(
 		'cache_driver'             => 'file',
+		'cache_enabled'            => true,
 		'cache_key_prefix'         => '',
 		'cache_max_entries'        => 0,
 		'nginx_direct_cache'       => false,
