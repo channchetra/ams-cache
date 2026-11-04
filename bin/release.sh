@@ -110,11 +110,6 @@ if [[ -f "$ROOT/package.json" ]]; then
     echo 'Updated package.json'
 fi
 
-# React about page version labels.
-update_regex_file "$ROOT/assets/src/admin.jsx" \
-    "s/(KH Speed Engine )[0-9]+\.[0-9]+\.[0-9]+/\${1}$VERSION/g" \
-    'React about page version labels'
-
 # CHANGELOG.md section.
 CHANGELOG="$ROOT/CHANGELOG.md"
 

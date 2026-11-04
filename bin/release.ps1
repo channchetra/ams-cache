@@ -229,12 +229,6 @@ Update-RegexFile `
 
 Update-FirstVersionFields -Path (Join-Path $root 'package.json') -Count 1 -Version $Version
 
-Update-RegexFile `
-    -Path (Join-Path $root 'assets/src/admin.jsx') `
-    -Pattern '(KH Speed Engine )([0-9]+\.[0-9]+\.[0-9]+)' `
-    -Label 'React about page version labels' `
-    -Replace { param($match) $match.Groups[1].Value + $Version }
-
 Ensure-ChangelogSection -Path (Join-Path $root 'CHANGELOG.md') -Version $Version -Note $Note
 
 $buildArgs = @(
