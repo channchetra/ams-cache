@@ -37,7 +37,7 @@ class ConfigContractTest extends WP_UnitTestCase {
 		update_option( 'khse_option_driver', 'redis' );
 		update_option( 'khse_option_advanced_driver_redis_connection_type', 'socket' );
 
-		khse_sync_expert_mode_runtime();
+		$this->assertTrue( khse_sync_expert_mode_runtime() );
 
 		$config = khse_get_config_data();
 
@@ -65,6 +65,13 @@ class ConfigContractTest extends WP_UnitTestCase {
 
 		$this->assertFalse( $cm->config['exclusion']['enable'] );
 		$this->assertSame( array(), $cm->config['exclusion']['excluded_list'] );
+	}
+
+	public function test_config_write_reports_success() {
+		@unlink( khse_get_config_path() );
+
+		$this->assertTrue( khse_update_config( array( 'cache_enabled' => true ) ) );
+		$this->assertFileExists( khse_get_config_path() );
 	}
 
 	public function test_expert_config_includes_read_switches() {

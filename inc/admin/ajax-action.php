@@ -570,13 +570,18 @@ function khse_ajax_dashboard_save_settings_callback() {
 	}
 
 	khse_ensure_permalink_structure();
-	khse_sync_expert_mode_runtime();
+	$runtime_synced = khse_sync_expert_mode_runtime();
 	khse_clear_all_cache();
+
+	$message = $runtime_synced
+		? __( 'Settings saved.', 'kh-speed-engine' )
+		: __( 'Settings saved, but the Expert Mode runtime file could not be written. Check the runtime directory permissions.', 'kh-speed-engine' );
 
 	wp_send_json_success(
 		array(
-			'message' => __( 'Settings saved.', 'kh-speed-engine' ),
-			'status'  => khse_dashboard_get_status_data(),
+			'message'       => $message,
+			'runtimeSynced' => (bool) $runtime_synced,
+			'status'        => khse_dashboard_get_status_data(),
 		)
 	);
 }

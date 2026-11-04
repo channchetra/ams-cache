@@ -641,7 +641,7 @@ function khse_get_runtime_exclusion_config() {
  *
  * @param array $setting The setting.
  *
- * @return void
+ * @return bool True when the runtime config file was written.
  */
 function khse_update_config( $setting ) {
 	$config = khse_get_config_data();
@@ -660,14 +660,40 @@ function khse_update_config( $setting ) {
 		$config['cache_key_prefix'] = khse_get_cache_key_prefix();
 	}
 
-	update_option( 'khse_config', $config );
+	$content = wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 
-	$file    = khse_get_config_path();
-	$content = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-	wp_mkdir_p( dirname( $file ) );
+	if ( false === $content ) {
+		return false;
+	}
+
+	$file = khse_get_config_path();
+	$dir  = dirname( $file );
+
+	if ( ! wp_mkdir_p( $dir ) ) {
+		return false;
+	}
+
+	$temp_file = $file . '.tmp';
 
 	// phpcs:ignore
-	@file_put_contents( $file, $content, LOCK_EX );
+	$written = @file_put_contents( $temp_file, $content, LOCK_EX );
+
+	if ( false === $written || strlen( $content ) !== $written ) {
+		@unlink( $temp_file );
+		return false;
+	}
+
+	if ( ! @rename( $temp_file, $file ) ) {
+		// Windows cannot always replace an existing file with rename().
+		$written = @file_put_contents( $file, $content, LOCK_EX );
+		@unlink( $temp_file );
+
+		if ( false === $written || strlen( $content ) !== $written ) {
+			return false;
+		}
+	}
+
+	update_option( 'khse_config', $config );
 
 	if ( function_exists( 'chmod' ) ) {
 		@chmod( $file, 0600 );
@@ -678,12 +704,14 @@ function khse_update_config( $setting ) {
 	if ( file_exists( $legacy_file ) && $legacy_file !== $file ) {
 		@unlink( $legacy_file );
 	}
+
+	return true;
 }
 
 /**
  * Sync runtime config and Expert Mode lock file.
  *
- * @return void
+ * @return bool True when config (and the lock, if enabled) was written.
  */
 function khse_sync_expert_mode_runtime() {
 	$driver_type      = khse_get_setting( 'cache', 'driver' );
@@ -700,20 +728,30 @@ function khse_sync_expert_mode_runtime() {
 	$setting['driver_connection_type']   = $connection_type;
 	$setting['exclusion']                = khse_get_runtime_exclusion_config();
 
-	khse_update_config( $setting );
-
-	$checkpoint = khse_get_expert_lock_path();
+	$config_written = khse_update_config( $setting );
+	$checkpoint     = khse_get_expert_lock_path();
 
 	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {
-		wp_mkdir_p( dirname( $checkpoint ) );
-		file_put_contents( $checkpoint, 'VOTE!' );
+		if ( ! $config_written || ! wp_mkdir_p( dirname( $checkpoint ) ) ) {
+			return false;
+		}
+
+		// phpcs:ignore
+		$lock_written = @file_put_contents( $checkpoint, 'VOTE!', LOCK_EX );
+
+		if ( false === $lock_written ) {
+			return false;
+		}
+
 		@chmod( $checkpoint, 0600 );
-		return;
+		return true;
 	}
 
 	if ( file_exists( $checkpoint ) ) {
-		unlink( $checkpoint );
+		@unlink( $checkpoint );
 	}
+
+	return $config_written;
 }
 
 /**
