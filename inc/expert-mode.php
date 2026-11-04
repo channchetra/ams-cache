@@ -156,7 +156,8 @@ function scm_run_expert_mode( $args ) {
 		// The cache key.
 		$key = md5( $cache_key_prefix . '|' . $request_path );
 
-		$setting = scm_get_driver_setting( $driver_type );
+		$resolved = scm_get_driver_settings( $driver_type, $advanced_settings, $advanced_conn_type );
+		$setting  = $resolved['setting'];
 
 		if ( 'mysql' === $driver_type ) {
 			$sql_queries++;
@@ -164,10 +165,6 @@ function scm_run_expert_mode( $args ) {
 
 		if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
 			$setting['storage'] = $plugin_upload_dir . '/' . $driver_type . '_driver';
-		}
-
-		if ( ! empty( $advanced_settings ) ) {
-			$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_conn_type ) );
 		}
 
 		$driver = new \Shieldon\SimpleCache\Cache( $driver_type, $setting );

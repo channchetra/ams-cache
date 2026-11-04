@@ -703,16 +703,11 @@ function scm_test_driver( $type = '' ) {
 		return false;
 	}
 
-	$setting                  = scm_get_driver_setting( $type );
-	$advanced_settings        = scm_get_driver_advanced_settings( $type );
-	$advanced_connection_type = scm_get_driver_connection_type( $type );
+	$resolved = scm_get_driver_settings( $type );
+	$setting  = $resolved['setting'];
 
 	if ( in_array( $type, array( 'file', 'sqlite' ), true ) && ! empty( $setting['storage'] ) && ! is_dir( $setting['storage'] ) ) {
 		wp_mkdir_p( $setting['storage'] );
-	}
-
-	if ( ! empty( $advanced_settings ) ) {
-		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_connection_type ) );
 	}
 
 	try {

@@ -1267,6 +1267,36 @@ function scm_get_driver_setting( $type ) {
 }
 
 /**
+ * Get the resolved driver settings and connection type.
+ *
+ * @param string      $type              Driver type.
+ * @param array|null  $advanced_settings Optional advanced settings; defaults to the stored option.
+ * @param string|null $connection_type   Optional connection type; defaults to the stored option.
+ *
+ * @return array
+ */
+function scm_get_driver_settings( $type, $advanced_settings = null, $connection_type = null ) {
+	$setting = scm_get_driver_setting( $type );
+
+	if ( null === $advanced_settings ) {
+		$advanced_settings = scm_get_driver_advanced_settings( $type );
+	}
+
+	if ( null === $connection_type ) {
+		$connection_type = scm_get_driver_connection_type( $type );
+	}
+
+	if ( ! empty( $advanced_settings ) ) {
+		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $connection_type ) );
+	}
+
+	return array(
+		'setting'         => $setting,
+		'connection_type' => $connection_type,
+	);
+}
+
+/**
  * Get the cache driver instance.
  *
  * @param string $type The type of the driver.
@@ -1281,13 +1311,8 @@ function scm_driver_factory( $type ) {
 		$type = 'file';
 	}
 
-	$setting                  = scm_get_driver_setting( $type );
-	$advanced_settings        = scm_get_driver_advanced_settings( $type );
-	$advanced_connection_type = scm_get_driver_connection_type( $type );
-
-	if ( ! empty( $advanced_settings ) ) {
-		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_connection_type ) );
-	}
+	$resolved = scm_get_driver_settings( $type );
+	$setting  = $resolved['setting'];
 
 	try {
 

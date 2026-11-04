@@ -82,4 +82,35 @@ class DriverSettingsTest extends WP_UnitTestCase {
 			scm_get_driver_setting( 'mysql' )
 		);
 	}
+
+	/**
+	 * Advanced settings are merged and normalized by the resolver.
+	 *
+	 * @return void
+	 */
+	public function test_driver_settings_merge_advanced_options() {
+		$resolved = scm_get_driver_settings(
+			'redis',
+			array(
+				'host' => '10.0.0.5',
+				'port' => '6380',
+			),
+			'tcp'
+		);
+
+		$this->assertSame( '10.0.0.5', $resolved['setting']['host'] );
+		$this->assertSame( 6380, $resolved['setting']['port'] );
+		$this->assertSame( 'tcp', $resolved['connection_type'] );
+	}
+
+	/**
+	 * An explicit socket connection type is preserved.
+	 *
+	 * @return void
+	 */
+	public function test_driver_settings_preserve_connection_type() {
+		$resolved = scm_get_driver_settings( 'redis', array(), 'socket' );
+
+		$this->assertSame( 'socket', $resolved['connection_type'] );
+	}
 }
