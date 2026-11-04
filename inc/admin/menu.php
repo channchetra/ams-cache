@@ -186,7 +186,7 @@ function scm_plugin_action_links( $links, $file ) {
  * @return array Combined links.
  */
 function scm_plugin_extend_links( $links, $file ) {
-	if ( ! current_user_can( 'install_plugins' ) ) {
+	if ( ! current_user_can( 'manage_options' ) ) {
 		return $links;
 	}
 
