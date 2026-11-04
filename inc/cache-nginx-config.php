@@ -17,6 +17,7 @@ if ( ! defined( 'SCM_INC' ) ) {
  */
 function scm_get_nginx_direct_cache_snippet() {
 	$relative_dir = '/' . trim( scm_get_nginx_static_cache_relative_dir(), '/' );
+	$relative_parent = dirname( $relative_dir );
 	$tracking_keys = array_map( 'preg_quote', scm_get_cache_tracking_query_vars() );
 	$tracking_keys = '(?:' . implode( '|', $tracking_keys ) . ')';
 	$tracking_query_pattern = '^' . $tracking_keys . '(?:=[^&]*)?(?:&' . $tracking_keys . '(?:=[^&]*)?)*$';
@@ -46,7 +47,7 @@ function scm_get_nginx_direct_cache_snippet() {
 		"gzip on;\n" .
 		"gzip_vary on;\n" .
 		"gzip_types text/plain text/css application/javascript application/json image/svg+xml application/xml;\n\n" .
-		"location ~* /wp-content/uploads/ams-cache/[^/]+/(?:config\\.json|expert\\.lock|optimization_work|optimization_reports)(?:/|$) {\n" .
+		"location ~* " . $relative_parent . "/(?:config\\.json|expert\\.lock|optimization_work|optimization_reports)(?:/|$) {\n" .
 		"    deny all;\n" .
 		"    return 404;\n" .
 		"}\n\n" .

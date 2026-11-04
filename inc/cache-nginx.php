@@ -17,10 +17,16 @@ function scm_is_nginx_direct_cache_enabled() {
 /**
  * Get Nginx direct cache relative directory.
  *
+ * Derived from the same upload base as the absolute directory so the
+ * generated snippet and the writer cannot diverge.
+ *
  * @return string
  */
 function scm_get_nginx_static_cache_relative_dir() {
-	return 'wp-content/uploads/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+	$base_path = wp_parse_url( content_url( '/uploads' ), PHP_URL_PATH );
+	$base_path = is_string( $base_path ) && '' !== $base_path ? $base_path : '/wp-content/uploads';
+
+	return trim( $base_path, '/' ) . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
 }
 
 /**
@@ -29,7 +35,7 @@ function scm_get_nginx_static_cache_relative_dir() {
  * @return string
  */
 function scm_get_nginx_static_cache_dir() {
-	return WP_CONTENT_DIR . '/uploads/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+	return scm_get_upload_dir() . '/nginx';
 }
 
 /**
