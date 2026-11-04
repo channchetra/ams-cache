@@ -47,17 +47,6 @@ foreach ( $register_clear_cache_action as $option ) {
 	add_action( 'update_option_' . $option, 'khse_clear_all_cache' );
 }
 
-// Update WooCommerce settings.
-$register_woocommerce_action = array(
-	'khse_option_woocommerce_status',
-	'khse_option_woocommerce_post_archives',
-	'khse_option_woocommerce_post_types',
-);
-
-foreach ( $register_woocommerce_action as $option ) {
-	add_action( 'update_option_' . $option, 'khse_update_woocommerce' );
-}
-
 // Update exclusion settings.
 $register_exclusion_action = array(
 	'khse_option_exclusion_status',
@@ -236,21 +225,6 @@ function khse_update_exclusion() {
 	$setting['exclusion'] = khse_get_runtime_exclusion_config();
 
 	khse_update_config( $setting );
-}
-
-/**
- * The update for:
- * - khse_option_woocommerce_status
- * - khse_option_woocommerce_post_archives
- * - khse_option_woocommerce_post_types
- *
- * @return void
- */
-function khse_update_woocommerce() {
-	$setting['woocommerce']['enable'] = 'yes' === get_option( 'khse_option_woocommerce_status', 'no' );
-
-	khse_update_config( $setting );
-	khse_clear_all_cache();
 }
 
 add_action( 'admin_init', 'khse_ensure_permalink_structure' );

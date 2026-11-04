@@ -579,18 +579,6 @@ function khse_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
 		if ( isset( $post_archives[ $archive_key ] ) && 'yes' === $post_archives[ $archive_key ] ) {
 			$add_url( get_post_type_archive_link( $post->post_type ) );
 		}
-
-		if ( 'yes' === get_option( 'khse_option_woocommerce_status', 'no' ) && 'product' === $post->post_type ) {
-			$woocommerce_archives = (array) get_option( 'khse_option_woocommerce_post_archives', array() );
-
-			foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
-				if ( isset( $woocommerce_archives[ $taxonomy ] ) && 'yes' === $woocommerce_archives[ $taxonomy ] ) {
-					foreach ( wp_get_post_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) ) as $term_id ) {
-						$add_url( get_term_link( (int) $term_id, $taxonomy ) );
-					}
-				}
-			}
-		}
 	} else {
 		foreach ( array( 'category' => 'get_category_link', 'tag' => 'get_tag_link' ) as $archive => $link_function ) {
 			if ( isset( $post_archives[ $archive ] ) && 'yes' === $post_archives[ $archive ] ) {
@@ -783,28 +771,6 @@ function khse_get_preload_urls( $limit = null, $priority_urls = null ) {
 
 			if ( $url ) {
 				$urls[] = $url;
-			}
-		}
-	}
-
-	$woocommerce_archives = (array) get_option( 'khse_option_woocommerce_post_archives', array() );
-
-	foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
-		if ( count( $urls ) >= $limit ) {
-			break;
-		}
-
-		if ( isset( $woocommerce_archives[ $taxonomy ] ) && 'yes' === $woocommerce_archives[ $taxonomy ] ) {
-			$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => true, 'fields' => 'ids', 'number' => $limit - count( $urls ) ) );
-
-			if ( ! is_wp_error( $terms ) ) {
-				foreach ( $terms as $term_id ) {
-					$url = get_term_link( (int) $term_id, $taxonomy );
-
-					if ( ! is_wp_error( $url ) ) {
-						$urls[] = $url;
-					}
-				}
 			}
 		}
 	}

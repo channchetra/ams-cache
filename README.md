@@ -20,7 +20,6 @@ KH Speed Engine is an extremely lightweight, high-performance cache plugin that 
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
 * Admin bar purge controls for clearing all cache or only the current page.
-* Compatible with the WooCommerce plugin.
 * And more...
 
 ## Modular Architecture
@@ -50,13 +49,13 @@ External UCSS is intentionally conservative. It reads only same-site `.css` file
 
 ## Preloading
 
-Preloading warms the homepage first (with a blocking request), then same-site links discovered on the homepage, before moving to configured post type, archive, and WooCommerce URLs. Enable Preload in thedashboard to start queueing immediately, or use the "Run Preload" button to trigger warming on demand.
+Preloading warms the homepage first (with a blocking request), then same-site links discovered on the homepage, before moving to configured post types and archives. Enable Preload in thedashboard to start queueing immediately, or use the "Run Preload" button to trigger warming on demand.
 
 Large sites can preload up to 1000 URLs. KH Speed Engine queues preload work in small batches so dashboard actions do not have to wait for every URL in one request. Remaining batches are processed via WordPress cron.
 
 ## Vite and Tailwind Admin Console
 
-KH Speed Engine uses native WordPress admin pages plus a Vite-built admin asset pipeline that bundles React and HeroUI. Tailwind CSS 4.3 is used as the design utility layer while the existing KH Speed Engine dashboard system remains the visual baseline. The console includes cache, preload, performance, rules, statistics, expert, benchmark, WooCommerce, and about views, with AJAX controls for refresh, preload, homepage purge, and full cache clear.
+KH Speed Engine uses native WordPress admin pages plus a Vite-built admin asset pipeline that bundles React and HeroUI. Tailwind CSS 4.3 is used as the design utility layer while the existing KH Speed Engine dashboard system remains the visual baseline. The console includes cache, preload, performance, rules, statistics, expert, benchmark, and about views, with AJAX controls for refresh, preload, homepage purge, and full cache clear.
 
 Development build:
 

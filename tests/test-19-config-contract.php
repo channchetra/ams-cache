@@ -29,7 +29,6 @@ class ConfigContractTest extends WP_UnitTestCase {
 		$this->assertSame( 'redis', $config['cache_driver'] );
 		$this->assertFalse( $config['exclusion']['enable'] );
 		$this->assertSame( array(), $config['exclusion']['excluded_list'] );
-		$this->assertFalse( $config['woocommerce']['enable'] );
 		$this->assertSame( 50, $config['preload']['limit'] );
 	}
 
@@ -66,7 +65,6 @@ class ConfigContractTest extends WP_UnitTestCase {
 
 		$this->assertFalse( $cm->config['exclusion']['enable'] );
 		$this->assertSame( array(), $cm->config['exclusion']['excluded_list'] );
-		$this->assertFalse( $cm->config['woocommerce']['enable'] );
 	}
 
 	public function test_expert_config_includes_read_switches() {

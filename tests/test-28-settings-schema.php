@@ -35,7 +35,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'excludedList', khse_get_settings_section_schema( 'rules' ) );
 		$this->assertArrayHasKey( 'enabled', khse_get_settings_section_schema( 'statistics' ) );
 		$this->assertArrayHasKey( 'widgetDisplay', khse_get_settings_section_schema( 'benchmark' ) );
-		$this->assertArrayHasKey( 'paymentComplete', khse_get_settings_section_schema( 'woocommerce' ) );
 		$this->assertSame( array(), khse_get_settings_section_schema( 'missing' ) );
 	}
 
@@ -96,7 +95,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		update_option( 'khse_option_preload_cache', 'yes' );
 		update_option( 'khse_option_preload_limit', '75' );
 		update_option( 'khse_option_preload_homepage_links', 'no' );
-		update_option( 'khse_option_woocommerce_status', 'yes' );
 		update_option( 'khse_option_html_debug_comment', 'no' );
 		update_option( 'khse_option_nginx_direct_cache_status', 'yes' );
 		update_option( 'khse_option_cache_max_entries', '25' );
@@ -109,7 +107,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertTrue( $config['preload']['enable'] );
 		$this->assertSame( 75, $config['preload']['limit'] );
 		$this->assertFalse( $config['preload']['crawl_homepage_links'] );
-		$this->assertTrue( $config['woocommerce']['enable'] );
 		$this->assertFalse( $config['html_debug_comment'] );
 		$this->assertTrue( $config['nginx_direct_cache'] );
 		$this->assertSame( 25, $config['cache_max_entries'] );
@@ -123,7 +120,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		update_option( 'khse_option_exclusion_status', 'yes' );
 		update_option( 'khse_option_statistics_status', 'enable' );
 		update_option( 'khse_option_benchmark_widget_display', 'icon' );
-		update_option( 'khse_option_woocommerce_status', 'yes' );
 
 		$dto = khse_dashboard_get_settings_data();
 
@@ -133,7 +129,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertTrue( $dto['rules']['enabled'] );
 		$this->assertTrue( $dto['statistics']['enabled'] );
 		$this->assertSame( 'icon', $dto['benchmark']['widgetDisplay'] );
-		$this->assertTrue( $dto['woocommerce']['enabled'] );
 	}
 
 	public function test_expert_sync_persists_schema_values() {
@@ -141,7 +136,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		update_option( 'khse_option_caching_status', 'enable' );
 		update_option( 'khse_option_driver', 'file' );
 		update_option( 'khse_option_preload_cache', 'yes' );
-		update_option( 'khse_option_woocommerce_status', 'no' );
 		update_option( 'khse_option_html_debug_comment', 'yes' );
 
 		khse_sync_expert_mode_runtime();
@@ -151,7 +145,6 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertTrue( $config['cache_enabled'] );
 		$this->assertSame( 'file', $config['cache_driver'] );
 		$this->assertTrue( $config['preload']['enable'] );
-		$this->assertFalse( $config['woocommerce']['enable'] );
 		$this->assertTrue( $config['html_debug_comment'] );
 		$this->assertArrayHasKey( 'exclusion', $config );
 	}

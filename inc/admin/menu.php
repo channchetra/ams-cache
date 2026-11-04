@@ -126,7 +126,6 @@ function khse_get_admin_console_view() {
 		'statistics',
 		'expert',
 		'benchmark',
-		'woocommerce',
 		'about',
 	);
 
@@ -159,9 +158,6 @@ function khse_get_admin_console_view() {
 
 			case 'benchmark':
 				return 'benchmark';
-
-			case 'woocommerce':
-				return 'woocommerce';
 
 			case 'exclusion':
 				return 'rules';
@@ -354,7 +350,6 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 						'statistics'  => __( 'Statistics', 'kh-speed-engine' ),
 						'expert'      => __( 'Expert Mode', 'kh-speed-engine' ),
 						'benchmark'   => __( 'Benchmark', 'kh-speed-engine' ),
-						'woocommerce' => __( 'WooCommerce', 'kh-speed-engine' ),
 						'about'       => __( 'About', 'kh-speed-engine' ),
 					),
 					'features' => array(

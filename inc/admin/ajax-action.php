@@ -516,12 +516,6 @@ function khse_ajax_dashboard_save_settings_callback() {
 		khse_ajax_dashboard_apply_option_schema( $benchmark, khse_get_settings_section_schema( 'benchmark' ) );
 	}
 
-	if ( isset( $settings['woocommerce'] ) && is_array( $settings['woocommerce'] ) ) {
-		$woocommerce = $settings['woocommerce'];
-
-		khse_ajax_dashboard_apply_option_schema( $woocommerce, khse_get_settings_section_schema( 'woocommerce' ) );
-	}
-
 	khse_ensure_permalink_structure();
 	khse_sync_expert_mode_runtime();
 	khse_clear_all_cache();

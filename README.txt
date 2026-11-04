@@ -30,7 +30,6 @@ First release date: October, 1, 2020
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
 * Optional WebP image optimizer for WordPress uploads with background queueing and offload-safe controls.
 * Admin bar purge controls for clearing all cache or only the current page.
-* Compatible with the WooCommerce plugin.
 * And more...
 
 == Nginx Direct Static Cache ==
@@ -47,7 +46,7 @@ Large sites can preload up to 1000 URLs. KH Speed Engine queues preload work in 
 
 == Vite and Tailwind Admin Console ==
 
-The KH Speed Engine admin console uses native WordPress admin screens, Vite-built assets that bundle React and HeroUI, and Tailwind CSS 4.3 design tokens. The console covers cache, preload, performance, rules, statistics, expert, benchmark, WooCommerce, and about views, with AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
+The KH Speed Engine admin console uses native WordPress admin screens, Vite-built assets that bundle React and HeroUI, and Tailwind CSS 4.3 design tokens. The console covers cache, preload, performance, rules, statistics, expert, benchmark, and about views, with AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
 
 Build assets with:
 
@@ -143,14 +142,13 @@ If there is no debug message in the source code, or if the cache status consiste
 3. Setting page - Advanced.
 4. Setting page - Perferences.
 5. Setting page - Benchmark.
-6. Setting page - WooCommerce.
-7. Setting page - Exclusion.
-8. Setting page - Expert mode.
-9. Setting page - Cache statistics.
-10. Setting page - About author.
-11. Front page - Benchmark (footer text)
-12. Debug message (Normal mode)
-13. Debug message (Expert mode)
+6. Setting page - Exclusion.
+7. Setting page - Expert mode.
+8. Setting page - Cache statistics.
+9. Setting page - About author.
+10. Front page - Benchmark (footer text)
+11. Debug message (Normal mode)
+12. Debug message (Expert mode)
 
 == Translation ==
 
@@ -201,10 +199,10 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 = 2.6.4 (5/15/2026) =
 
-* Rebuild checkbox options into consistent switch controls for Preload, Performance, WooCommerce, and other settings tabs.
+* Rebuild checkbox options into consistent switch controls for Preload, Performance, and other settings tabs.
 * Improve Advanced driver connection choices, including readable disabled TCP / Unix Socket controls.
 * Replace legacy Statistics layout with a searchable live table and per-row clear-cache actions.
-* Broaden settings form enhancement so Rules, Statistics, Expert Mode, Benchmark, and WooCommerce forms receive modern controls after tab changes.
+* Broaden settings form enhancement so Rules, Statistics, Expert Mode, and Benchmark forms receive modern controls after tab changes.
 
 = 2.6.3 (5/15/2026) =
 
@@ -226,7 +224,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 = 2.6.0 (5/15/2026) =
 
-* Rebuild KH Speed Engine admin as one Vue console with side navigation across cache, preload, performance, advanced, rules, statistics, expert, benchmark, WooCommerce, and about views.
+* Rebuild KH Speed Engine admin as one Vue console with side navigation across cache, preload, performance, advanced, rules, statistics, expert, benchmark, and about views.
 * Add recent page optimization reports with bytes before/after and feature-level Applied, No change, Disabled, or Pending engine states.
 * Restyle the admin with compact design tokens, modern surfaces, status pills, and report tables inspired by current Vue dashboard patterns.
 * Keep native WordPress Settings API forms underneath the Vue shell so existing settings continue to save normally.
@@ -322,8 +320,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 = 2.0.0 (10/27/2020) =
 
-* Support to WooCommerce plugin.
-* Add setting pages - WooCommerce, Exclusion,  Advanced settings.
+* Add setting pages - Exclusion,  Advanced settings.
 * Add an option - HTML debug comment.
 * Improve cache statistic page.
 * Update translation strings for zh_TW, zh_CN.

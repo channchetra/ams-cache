@@ -69,7 +69,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			'update-setting',
 			'functions',
 			'ajax-action',
-			'update-woocommerce',
 			'widgets',
 		);
 
@@ -122,10 +121,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 					'update-setting',         // Event: update settings.
 					'functions',              // Helper functions used in admin scope.
 				);
-
-				if ( 'yes' === get_option( 'khse_option_woocommerce_status' ) ) {
-					$required_files[] = 'update-woocommerce';
-				}
 
 				foreach ( $required_files as $file ) {
 					require_once KHSE_PLUGIN_DIR . 'inc/admin/' . $file . '.php';

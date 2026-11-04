@@ -29,7 +29,7 @@ function khse_get_default_page_optimization_settings() {
 			"\n",
 			array_merge(
 				khse_get_protected_ucss_safelist(),
-				array( 'woocommerce', 'wp-block', 'alignwide', 'alignfull' )
+				array( 'wp-block', 'alignwide', 'alignfull' )
 			)
 		),
 		'critical_image_count' => 1,
@@ -117,7 +117,6 @@ function khse_get_protected_js_exclusions() {
 	return array(
 		'jquery',
 		'wp-includes/js/jquery',
-		'woocommerce',
 		'cart',
 		'checkout',
 		'googletagmanager',

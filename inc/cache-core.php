@@ -150,10 +150,6 @@ function khse_get_settings_schema() {
 			'widgetDisplay' => array( 'option' => 'khse_option_benchmark_widget_display', 'default' => 'both', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'both', 'read' => 'raw' ),
 			'footerDisplay' => array( 'option' => 'khse_option_benchmark_footer_text_display', 'default' => 'text', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'text', 'read' => 'raw' ),
 		),
-		'woocommerce' => array(
-			'enabled'         => array( 'option' => 'khse_option_woocommerce_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'woocommerce.enable', 'config_type' => 'enabled' ),
-			'paymentComplete' => array( 'option' => 'khse_option_woocommerce_event_payment_complete', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
-		),
 	);
 }
 
@@ -395,12 +391,15 @@ function khse_normalize_config( $config ) {
 	$config   = is_array( $config ) ? $config : array();
 	$config   = array_merge( $defaults, $config );
 
-	foreach ( array( 'preload', 'woocommerce', 'exclusion' ) as $section ) {
+	foreach ( array( 'preload', 'exclusion' ) as $section ) {
 		$config[ $section ] = array_merge(
 			$defaults[ $section ],
 			isset( $config[ $section ] ) && is_array( $config[ $section ] ) ? $config[ $section ] : array()
 		);
 	}
+
+	// Drop the retired WooCommerce section from stored configs.
+	unset( $config['woocommerce'] );
 
 	return $config;
 }
@@ -459,20 +458,6 @@ function khse_is_cache_request_excluded( $config ) {
 					return true;
 				}
 			}
-		}
-	}
-
-	$woocommerce = isset( $config['woocommerce'] ) && is_array( $config['woocommerce'] ) ? $config['woocommerce'] : array();
-
-	if ( ! empty( $woocommerce['enable'] ) ) {
-		if ( isset( $_POST['add-to-cart'] ) && is_numeric( $_POST['add-to-cart'] ) ) {
-			return true;
-		}
-		if ( ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
-			return true;
-		}
-		if ( isset( $_GET['wc-ajax'] ) ) {
-			return true;
 		}
 	}
 
@@ -820,9 +805,6 @@ function khse_get_cache_bypass_cookie_prefixes() {
 		'wordpress_sec_',
 		'wp-postpass_',
 		'comment_author_',
-		'woocommerce_items_in_cart',
-		'woocommerce_cart_hash',
-		'wp_woocommerce_session_',
 	);
 }
 
@@ -1047,9 +1029,6 @@ function khse_get_default_config() {
 			'enable'               => false,
 			'limit'                => 50,
 			'crawl_homepage_links' => true,
-		),
-		'woocommerce'              => array(
-			'enable' => false,
 		),
 
 		'exclusion'                => array(

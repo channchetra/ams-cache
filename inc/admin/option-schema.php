@@ -42,13 +42,6 @@ function khse_get_option_schema() {
 			'date'     => 'yes',
 			'author'   => 'yes',
 		),
-		'woocommerce_post_types'                => array(
-			'product' => 'no',
-		),
-		'woocommerce_post_archives'             => array(
-			'product_tag' => 'no',
-			'product_cat' => 'no',
-		),
 	);
 
 	foreach ( khse_get_settings_schema() as $section ) {

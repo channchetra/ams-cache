@@ -48,8 +48,6 @@ class SettingsBooleansTest extends WP_UnitTestCase {
 		$this->assertIsBool( $data['statistics']['enabled'] );
 		$this->assertIsBool( $data['benchmark']['widget'] );
 		$this->assertIsBool( $data['benchmark']['footer'] );
-		$this->assertIsBool( $data['woocommerce']['enabled'] );
-		$this->assertIsBool( $data['woocommerce']['paymentComplete'] );
 
 		foreach ( array( 'status', 'minify_html', 'remove_comments', 'minify_inline_css', 'lazy_media', 'critical_images', 'preconnect_fonts', 'defer_js', 'external_ucss', 'local_ucss', 'js_analysis' ) as $key ) {
 			$this->assertIsBool( $data['performance'][ $key ] );

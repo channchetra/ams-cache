@@ -37,7 +37,6 @@ function khse_load_view( $template_path ) {
  */
 function khse_get_cache_type_list( $get_key = false ) {
 	$archive_note     = ' <small class="khse-badge">' . __( 'Archive', 'kh-speed-engine' ) . '</small>';
-	$woocommerce_note = ' <small class="khse-badge">' . __( 'WooCommerce', 'kh-speed-engine' ) . '</small>';
 
 	$list = array(
 		'homepage' => __( 'Homepage', 'kh-speed-engine' ),
@@ -81,9 +80,6 @@ function khse_get_cache_type_list( $get_key = false ) {
 		) . $archive_note;
 	}
 
-	$list['product']       = __( 'Product', 'kh-speed-engine' ) . $woocommerce_note;
-	$list['product_tag']   = __( 'Product tag', 'kh-speed-engine' ) . $woocommerce_note . $archive_note;
-	$list['product_cat']   = __( 'Product category', 'kh-speed-engine' ) . $woocommerce_note . $archive_note;
 	$list['uncategorised'] = __( 'Uncategorised', 'kh-speed-engine' );
 
 	if ( $get_key ) {
@@ -573,11 +569,6 @@ function khse_dashboard_get_settings_data() {
 			'footer'        => khse_get_setting( 'benchmark', 'footer' ),
 			'widgetDisplay' => khse_get_setting( 'benchmark', 'widgetDisplay' ),
 			'footerDisplay' => khse_get_setting( 'benchmark', 'footerDisplay' ),
-		),
-		'woocommerce' => array(
-			'enabled'         => khse_get_setting( 'woocommerce', 'enabled' ),
-			'paymentComplete' => khse_get_setting( 'woocommerce', 'paymentComplete' ),
-			'active'          => function_exists( 'is_plugin_active' ) && is_plugin_active( 'woocommerce/woocommerce.php' ),
 		),
 	);
 }

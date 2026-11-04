@@ -80,6 +80,25 @@ function khse_maybe_migrate_legacy_brand() {
 add_action( 'admin_init', 'khse_maybe_migrate_legacy_brand' );
 
 /**
+ * Remove WooCommerce options left over from earlier versions.
+ *
+ * @return void
+ */
+function khse_maybe_remove_woocommerce_options() {
+	if ( get_option( 'khse_woocommerce_removed' ) ) {
+		return;
+	}
+
+	foreach ( array( 'woocommerce_status', 'woocommerce_post_types', 'woocommerce_post_archives', 'woocommerce_event_payment_complete', 'woocommerce_taxonomies' ) as $key ) {
+		delete_option( 'khse_option_' . $key );
+	}
+
+	update_option( 'khse_woocommerce_removed', 1 );
+	khse_sync_expert_mode_runtime();
+}
+add_action( 'admin_init', 'khse_maybe_remove_woocommerce_options' );
+
+/**
  * Assign default setting values while activating this plugin.
  *
  * @return void
@@ -183,7 +202,7 @@ function khse_deactivation() {
 		}
 
 		// Legacy keys removed by the unified schema.
-		foreach ( array( 'excluded_get_variables', 'excluded_post_variables', 'excluded_cookie_variables', 'woocommerce_taxonomies' ) as $legacy_key ) {
+		foreach ( array( 'excluded_get_variables', 'excluded_post_variables', 'excluded_cookie_variables', 'woocommerce_status', 'woocommerce_post_types', 'woocommerce_post_archives', 'woocommerce_event_payment_complete', 'woocommerce_taxonomies' ) as $legacy_key ) {
 			delete_option( 'khse_option_' . $legacy_key );
 		}
 

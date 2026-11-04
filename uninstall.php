@@ -60,7 +60,12 @@ if ( 'yes' === $option_uninstall ) {
 	delete_option( 'khse_option_excluded_get_variables' );
 	delete_option( 'khse_option_excluded_post_variables' );
 	delete_option( 'khse_option_excluded_cookie_variables' );
+	delete_option( 'khse_option_woocommerce_status' );
+	delete_option( 'khse_option_woocommerce_post_types' );
+	delete_option( 'khse_option_woocommerce_post_archives' );
+	delete_option( 'khse_option_woocommerce_event_payment_complete' );
 	delete_option( 'khse_option_woocommerce_taxonomies' );
+	delete_option( 'khse_woocommerce_removed' );
 
 	delete_option( 'khse_last_reset_time' );
 	delete_option( 'khse_version' );

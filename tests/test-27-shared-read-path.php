@@ -69,7 +69,6 @@ class SharedReadPathTest extends WP_UnitTestCase {
 					'excluded_post_vars'   => array(),
 					'excluded_cookie_vars' => array(),
 				),
-				'woocommerce'               => array( 'enable' => false ),
 			),
 			$overrides
 		);
@@ -118,13 +117,6 @@ class SharedReadPathTest extends WP_UnitTestCase {
 		);
 
 		$this->assertNull( khse_serve_cached_response( $config, $driver ) );
-	}
-
-	public function test_skips_woocommerce_add_to_cart() {
-		$_POST['add-to-cart'] = '1';
-		$driver = $this->seed( $this->valid_content() );
-
-		$this->assertNull( khse_serve_cached_response( $this->config( array( 'woocommerce' => array( 'enable' => true ) ) ), $driver ) );
 	}
 
 	public function test_skips_invalid_payload() {

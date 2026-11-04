@@ -20,7 +20,7 @@ class PageOptimizationDefaultsTest extends WP_UnitTestCase {
 		$lines    = khse_get_lines_from_textarea( $defaults['ucss_safelist'] );
 		$expected = array_merge(
 			khse_get_protected_ucss_safelist(),
-			array( 'woocommerce', 'wp-block', 'alignwide', 'alignfull' )
+			array( 'wp-block', 'alignwide', 'alignfull' )
 		);
 
 		$this->assertSame( $expected, $lines );
