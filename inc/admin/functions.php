@@ -653,6 +653,7 @@ function khse_dashboard_get_status_data() {
 			'expertMode'    => 'enable' === get_option( 'khse_option_expert_mode_status', 'disable' ),
 			'expertReady'   => khse_is_expert_mode_code_ready(),
 			'nginxDirect'   => khse_is_nginx_direct_cache_enabled(),
+			'permalinkReady' => '' !== get_option( 'permalink_structure', '' ),
 			'progress'      => round( ( $cache_ready / count( $cache_checks ) ) * 100 ),
 		),
 		'optimization' => array(
@@ -684,6 +685,11 @@ function khse_dashboard_get_status_data() {
 		),
 		'stats'       => khse_dashboard_get_stats_summary(),
 		'settings'    => khse_dashboard_get_settings_data(),
+		'environment' => array(
+			'phpVersion'  => PHP_VERSION,
+			'wpVersion'   => get_bloginfo( 'version' ),
+			'memoryLimit' => ini_get( 'memory_limit' ),
+		),
 	);
 }
 

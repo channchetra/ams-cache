@@ -14,6 +14,7 @@ require_once __DIR__ . '/cache-core.php';
 require_once __DIR__ . '/cache-driver.php';
 require_once __DIR__ . '/cache-view.php';
 require_once __DIR__ . '/cache-nginx.php';
+require_once __DIR__ . '/cache-url-policy.php';
 require_once __DIR__ . '/cache-purger.php';
 require_once __DIR__ . '/cache-nginx-config.php';
 require_once __DIR__ . '/page-optimizer.php';

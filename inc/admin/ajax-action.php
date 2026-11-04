@@ -23,6 +23,8 @@ add_action( 'wp_ajax_khse_action_dashboard_reports', 'khse_ajax_dashboard_report
 add_action( 'wp_ajax_khse_action_dashboard_preload', 'khse_ajax_dashboard_preload_callback' );
 add_action( 'wp_ajax_khse_action_dashboard_purge_homepage', 'khse_ajax_dashboard_purge_homepage_callback' );
 add_action( 'wp_ajax_khse_action_dashboard_test_driver', 'khse_ajax_dashboard_test_driver_callback' );
+add_action( 'wp_ajax_khse_action_dashboard_test_url', 'khse_ajax_dashboard_test_url_callback' );
+add_action( 'wp_ajax_khse_action_dashboard_nginx_snippet', 'khse_ajax_dashboard_nginx_snippet_callback' );
 add_action( 'wp_ajax_khse_action_dashboard_save_settings', 'khse_ajax_dashboard_save_settings_callback' );
 
 /**
@@ -245,6 +247,59 @@ function khse_ajax_dashboard_test_driver_callback() {
 	}
 
 	wp_send_json_error( $response );
+}
+
+/**
+ * Test a URL against the page cache policy.
+ *
+ * @return void
+ */
+function khse_ajax_dashboard_test_url_callback() {
+	khse_ajax_dashboard_guard();
+
+	$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+
+	if ( '' === $url ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Enter a URL or path to test.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
+	$config              = khse_get_config_from_schema();
+	$config['exclusion'] = khse_get_runtime_exclusion_config();
+
+	wp_send_json_success( khse_evaluate_cache_url_policy( $url, $config ) );
+}
+
+/**
+ * Return the Nginx direct cache snippet and target directory.
+ *
+ * @return void
+ */
+function khse_ajax_dashboard_nginx_snippet_callback() {
+	khse_ajax_dashboard_guard();
+
+	if (
+		! function_exists( 'khse_get_nginx_direct_cache_snippet' ) ||
+		! function_exists( 'khse_is_nginx_direct_cache_enabled' ) ||
+		! function_exists( 'khse_get_nginx_static_cache_relative_dir' )
+	) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Nginx cache configuration is unavailable.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
+	wp_send_json_success(
+		array(
+			'snippet'   => khse_get_nginx_direct_cache_snippet(),
+			'enabled'   => khse_is_nginx_direct_cache_enabled(),
+			'directory' => khse_get_nginx_static_cache_relative_dir(),
+		)
+	);
 }
 
 /**
