@@ -278,6 +278,150 @@ function scm_get_config_data() {
 }
 
 /**
+ * Build the runtime exclusion configuration from the stored settings.
+ *
+ * Persists the normalized path list to scm_option_excluded_list_filtered.
+ *
+ * @return array {
+ *     @type bool  $enable               Whether exclusion rules are enabled.
+ *     @type array $excluded_list        Normalized excluded paths.
+ *     @type array $excluded_get_vars    Excluded GET variables.
+ *     @type array $excluded_post_vars   Excluded POST variables.
+ *     @type array $excluded_cookie_vars Excluded cookie variables.
+ * }
+ */
+function scm_get_runtime_exclusion_config() {
+	$list = array();
+
+	foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_list', '' ) ) as $item ) {
+		$path = parse_url( $item, PHP_URL_PATH );
+		$path = is_string( $path ) ? trim( $path ) : '';
+
+		if ( '' === $path ) {
+			continue;
+		}
+
+		if ( '/' !== $path[0] ) {
+			$path = '/' . $path;
+		}
+
+		$list[] = '/' === $path ? '/' : untrailingslashit( $path );
+	}
+
+	$variables = array();
+
+	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
+		$variables[ $type ] = array();
+
+		foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
+			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
+				$variables[ $type ][] = $item;
+			}
+		}
+	}
+
+	update_option( 'scm_option_excluded_list_filtered', implode( "\n", $list ) );
+
+	return array(
+		'enable'               => 'yes' === get_option( 'scm_option_exclusion_status', 'no' ),
+		'excluded_list'        => $list,
+		'excluded_get_vars'    => $variables['get'],
+		'excluded_post_vars'   => $variables['post'],
+		'excluded_cookie_vars' => $variables['cookie'],
+	);
+}
+
+/**
+ * Save the settings into the JSON runtime config.
+ *
+ * @param array $setting The setting.
+ *
+ * @return void
+ */
+function scm_update_config( $setting ) {
+	$config = scm_get_config_data();
+
+	if ( is_array( $setting ) ) {
+		$config = array_merge( $config, $setting );
+	}
+
+	$config = scm_normalize_config( $config );
+
+	if ( empty( $config['site_url'] ) ) {
+		$config['site_url'] = rtrim( get_site_url(), '/' );
+	}
+
+	if ( empty( $config['cache_key_prefix'] ) ) {
+		$config['cache_key_prefix'] = scm_get_cache_key_prefix();
+	}
+
+	update_option( 'scm_config', $config );
+
+	$file    = scm_get_config_path();
+	$content = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+	wp_mkdir_p( dirname( $file ) );
+
+	// phpcs:ignore
+	@file_put_contents( $file, $content, LOCK_EX );
+
+	if ( function_exists( 'chmod' ) ) {
+		@chmod( $file, 0600 );
+	}
+
+	$legacy_file = scm_get_upload_dir() . '/config.json';
+
+	if ( file_exists( $legacy_file ) && $legacy_file !== $file ) {
+		@unlink( $legacy_file );
+	}
+}
+
+/**
+ * Sync runtime config and Expert Mode lock file.
+ *
+ * @return void
+ */
+function scm_sync_expert_mode_runtime() {
+	$driver_type      = get_option( 'scm_option_driver', 'file' );
+	$connection_type  = scm_get_driver_connection_type( $driver_type );
+	$advanced_setting = scm_normalize_driver_settings(
+		scm_get_driver_advanced_settings( $driver_type ),
+		$connection_type
+	);
+
+	$setting['cache_driver']             = $driver_type;
+	$setting['cache_key_prefix']         = scm_get_cache_key_prefix();
+	$setting['driver_advanced_settings'] = $advanced_setting;
+	$setting['driver_connection_type']   = $connection_type;
+	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
+	$setting['html_debug_comment']       = 'yes' === get_option( 'scm_option_html_debug_comment', 'yes' );
+	$setting['woocommerce']              = array(
+		'enable' => 'yes' === get_option( 'scm_option_woocommerce_status', 'no' ),
+	);
+	$setting['exclusion']                = scm_get_runtime_exclusion_config();
+	$setting['preload']                  = array(
+		'enable'               => scm_is_preload_enabled(),
+		'limit'                => (int) get_option( 'scm_option_preload_limit', 50 ),
+		'crawl_homepage_links' => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
+	);
+	$setting['cache_max_entries']        = scm_get_cache_max_entries();
+
+	scm_update_config( $setting );
+
+	$checkpoint = scm_get_expert_lock_path();
+
+	if ( 'enable' === get_option( 'scm_option_expert_mode_status' ) ) {
+		wp_mkdir_p( dirname( $checkpoint ) );
+		file_put_contents( $checkpoint, 'VOTE!' );
+		@chmod( $checkpoint, 0600 );
+		return;
+	}
+
+	if ( file_exists( $checkpoint ) ) {
+		unlink( $checkpoint );
+	}
+}
+
+/**
  * Set channel Id.
  *
  * @return void

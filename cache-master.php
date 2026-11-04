@@ -68,9 +68,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			'register',
 			'menu',
 			'update-setting',
-			'update-post',
 			'functions',
-			'admin-bar',
 			'ajax-action',
 			'update-woocommerce',
 			'widgets',
@@ -83,6 +81,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once SCM_PLUGIN_DIR . 'vendor/autoload.php';
 		require_once SCM_PLUGIN_DIR . 'inc/lib/autoload.php';
 		require_once SCM_PLUGIN_DIR . 'inc/class-cache-master.php';
+		require_once SCM_PLUGIN_DIR . 'inc/update-post.php';
+		require_once SCM_PLUGIN_DIR . 'inc/admin-bar.php';
 
 		foreach ( $required_files as $file ) {
 			require_once SCM_PLUGIN_DIR . 'inc/admin/' . $file . '.php';
@@ -102,7 +102,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		scm_register_wordpress_hooks();
 		require_once SCM_PLUGIN_DIR . 'inc/lib/autoload.php';
 		// Post mutations can run through AJAX, REST, or frontend requests.
-		require_once SCM_PLUGIN_DIR . 'inc/admin/update-post.php';
+		require_once SCM_PLUGIN_DIR . 'inc/update-post.php';
+		require_once SCM_PLUGIN_DIR . 'inc/admin-bar.php';
 		// Benchmark widget registration must run on front-end and admin requests.
 		require_once SCM_PLUGIN_DIR . 'inc/admin/widgets.php';
 
@@ -121,7 +122,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 					'menu',                   // Display menu link and render setting page.
 					'update-setting',         // Event: update settings.
 					'functions',              // Helper functions used in admin scope.
-					'admin-bar',              // Add a "Clear Cache" button in admin bar.
 				);
 
 				if ( 'yes' === get_option( 'scm_option_woocommerce_status' ) ) {
@@ -134,7 +134,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			} else {
 
 				require_once SCM_PLUGIN_DIR . 'inc/class-cache-master.php';
-				require_once SCM_PLUGIN_DIR . 'inc/admin/admin-bar.php';
 
 				$cm = new Cache_Master();
 				$cm->init();

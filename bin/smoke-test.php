@@ -283,8 +283,8 @@ smoke_assert( ! empty( $requirements['php_css']['passed'] ) && ! empty( $require
 smoke_assert( ! isset( $requirements['purgecss'] ) && ! isset( $requirements['bun'] ), 'dashboard does not require runtime CLI tools' );
 
 $plugin_source = file_get_contents( dirname( __DIR__ ) . '/cache-master.php' );
-smoke_assert( false !== strpos( $plugin_source, "require_once SCM_PLUGIN_DIR . 'inc/admin/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
-$post_hooks_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/update-post.php' );
+smoke_assert( false !== strpos( $plugin_source, "require_once SCM_PLUGIN_DIR . 'inc/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
+$post_hooks_source = file_get_contents( dirname( __DIR__ ) . '/inc/update-post.php' );
 smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post', 'scm_purge_post_before_trash', 10, 2 );" ), 'trash purge hook runs before status change' );
 smoke_assert( false !== strpos( $post_hooks_source, 'scm_queue_critical_preload_urls( $post->ID, $driver );' ), 'status changes warm related post archives' );
 smoke_assert( false !== strpos( $post_hooks_source, 'scm_queue_critical_preload_urls( $post_ID, $driver );' ), 'new and updated posts warm their own page' );
