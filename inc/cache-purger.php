@@ -160,3 +160,25 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 		'removed' => $removed,
 	);
 }
+
+/**
+ * Purge a permalink, aborting on a missing or unparseable URL.
+ *
+ * @param string|false|null $url    Permalink.
+ * @param mixed             $driver Optional cache driver.
+ *
+ * @return array|false Purge result, or false when the URL is invalid.
+ */
+function scm_purge_permalink( $url, $driver = null ) {
+	if ( false === $url || null === $url || '' === trim( (string) $url ) ) {
+		return false;
+	}
+
+	$path = parse_url( (string) $url, PHP_URL_PATH );
+
+	if ( false === $path ) {
+		return false;
+	}
+
+	return scm_purge_cache_uri( $path, $driver );
+}

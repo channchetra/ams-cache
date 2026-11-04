@@ -51,7 +51,7 @@ function scm_update_post( $post_ID, $post, $update ) {
 		$driver_type = get_option( 'scm_option_driver' );
 		$driver      = scm_driver_factory( $driver_type );
 
-		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+		scm_purge_permalink( $post_url, $driver );
 		scm_preload_critical_urls( $post_ID, true, $driver );
 		scm_preload_url( $post_url );
 	}
@@ -86,7 +86,7 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 
 	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
 		if ( $post_url ) {
-			scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+			scm_purge_permalink( $post_url, $driver );
 		}
 
 		scm_preload_critical_urls( $post->ID, true, $driver );
@@ -100,7 +100,7 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 	$GLOBALS['scm_recently_published_post_ids'][ $post->ID ] = true;
 
 	if ( $post_url ) {
-		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+		scm_purge_permalink( $post_url, $driver );
 	}
 
 	scm_preload_critical_urls( $post->ID, true, $driver );
@@ -131,8 +131,8 @@ function scm_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 	$post_url = get_permalink( $post_ID );
 
 	if ( $post_url ) {
-		scm_purge_cache_uri(
-			parse_url( $post_url, PHP_URL_PATH ),
+		scm_purge_permalink(
+			$post_url,
 			scm_driver_factory( get_option( 'scm_option_driver', 'file' ) )
 		);
 	}
@@ -169,7 +169,7 @@ function scm_delete_post( $post_ID, $post = null ) {
 	$post_url = get_permalink( $post_ID );
 
 	if ( $post_url ) {
-		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+		scm_purge_permalink( $post_url, $driver );
 	}
 
 	scm_preload_critical_urls( $post_ID, true, $driver );

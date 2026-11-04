@@ -41,10 +41,10 @@ function scm_payment_complete( $order_id ) {
 		$product_id = absint( $item->get_product_id() );
 		$post_url   = $product_id ? get_permalink( $product_id ) : '';
 
-		if ( '' === $post_url ) {
+		if ( false === $post_url || '' === $post_url ) {
 			continue;
 		}
 
-		scm_purge_cache_uri( parse_url( $post_url, PHP_URL_PATH ), $driver );
+		scm_purge_permalink( $post_url, $driver );
 	}
 }
