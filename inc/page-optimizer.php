@@ -25,14 +25,20 @@ function scm_get_default_page_optimization_settings() {
 		'js_analysis'          => 'no',
 		'bun_path'             => '',
 		'purgecss_path'        => '',
-		'ucss_safelist'        => "active\nopen\nshow\nis-active\ncurrent\nmenu-item\nmenu-item-has-children\ncurrent-menu-item\ncurrent-menu-parent\ncurrent-menu-ancestor\nsub-menu\ndropdown\ndropdown-menu\ndropdown-toggle\nsfHover\nis-open\nis-visible\nslick\nslick-active\nslick-current\nslick-initialized\nswiper\nswiper-slide\nswiper-wrapper\nswiper-button-next\nswiper-button-prev\nrevslider\nrev_slider\nrs-module\nrs-layer\nrs-slide\nsr7\ntp-caption\nwoocommerce\nwp-block\nalignwide\nalignfull",
+		'ucss_safelist'        => implode(
+			"\n",
+			array_merge(
+				scm_get_protected_ucss_safelist(),
+				array( 'woocommerce', 'wp-block', 'alignwide', 'alignfull' )
+			)
+		),
 		'critical_image_count' => 1,
 		'external_ucss_max_file_size' => 307200,
 		'local_ucss_max_file_size' => 524288,
 		'js_analysis_max_script_bytes' => 262144,
 		'js_analysis_max_total_bytes' => 1048576,
 		'media_exclusions'     => "logo\navatar\ncaptcha",
-		'js_exclusions'        => "jquery\nwp-includes/js/jquery\nwoocommerce\ncart\ncheckout\ngoogletagmanager\ngtm\nrecaptcha\nstripe\npaypal\nrevslider\nrev_slider\nrs6\nsr7\nthemepunch\nrbtools\nslider-revolution\nrevolution\nslick\nswiper\nowl.carousel\nsmartmenus\nsuperfish\nbootstrap\ndropdown\nmenu-image\nmenu\nnavigation\nhoverIntent",
+		'js_exclusions'        => implode( "\n", scm_get_protected_js_exclusions() ),
 	);
 }
 
