@@ -7,9 +7,6 @@ composer.lock
 .vscode
 vendor
 node_modules/
-!vendor/psr
-!vendor/shieldon
-!vendor/autoload.php
 .phpunit.result.cache
 dist/
 *.zip
