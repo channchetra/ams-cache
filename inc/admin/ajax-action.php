@@ -455,20 +455,11 @@ function scm_ajax_dashboard_save_settings_callback() {
 	}
 
 	if ( isset( $settings['preload'] ) && is_array( $settings['preload'] ) ) {
-		$preload     = $settings['preload'];
-		$was_enabled = 'yes' === get_option( 'scm_option_preload_cache', 'no' );
+		$preload = $settings['preload'];
 
 		scm_ajax_dashboard_apply_option_schema( $preload, scm_get_settings_section_schema( 'preload' ) );
-		$now_enabled = get_option( 'scm_option_preload_cache' );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'scm_option_post_types' );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'scm_option_post_archives' );
-
-		if ( ! $was_enabled && 'yes' === $now_enabled ) {
-			scm_schedule_preload_cache( true );
-			if ( function_exists( 'spawn_cron' ) ) {
-				spawn_cron();
-			}
-		}
 	}
 
 	if ( isset( $settings['performance'] ) && is_array( $settings['performance'] ) ) {
@@ -531,6 +522,7 @@ function scm_ajax_dashboard_save_settings_callback() {
 		scm_ajax_dashboard_apply_option_schema( $woocommerce, scm_get_settings_section_schema( 'woocommerce' ) );
 	}
 
+	scm_ensure_permalink_structure();
 	scm_sync_expert_mode_runtime();
 	scm_clear_all_cache();
 

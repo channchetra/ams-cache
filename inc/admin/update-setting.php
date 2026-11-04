@@ -47,8 +47,6 @@ foreach ( $register_clear_cache_action as $option ) {
 	add_action( 'update_option_' . $option, 'scm_clear_all_cache' );
 }
 
-scm_ensure_permalink_structure();
-
 // Update WooCommerce settings.
 $register_woocommerce_action = array(
 	'scm_option_woocommerce_status',
@@ -193,6 +191,10 @@ function scm_update_scm_option_nginx_direct_cache_status() {
 function scm_update_scm_option_preload_cache() {
 	scm_update_runtime_config();
 	scm_schedule_preload_cache( true );
+
+	if ( function_exists( 'spawn_cron' ) ) {
+		spawn_cron();
+	}
 }
 
 /**
@@ -250,3 +252,5 @@ function scm_update_woocommerce() {
 	scm_update_config( $setting );
 	scm_clear_all_cache();
 }
+
+add_action( 'admin_init', 'scm_ensure_permalink_structure' );

@@ -155,4 +155,13 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertTrue( $config['html_debug_comment'] );
 		$this->assertArrayHasKey( 'exclusion', $config );
 	}
+
+	public function test_legacy_advanced_tab_maps_to_cache_view() {
+		$_GET['page'] = 'ams-cache-settings';
+		$_GET['tab']  = 'advanced';
+
+		$this->assertSame( 'cache', scm_get_admin_console_view() );
+
+		unset( $_GET['page'], $_GET['tab'] );
+	}
 }

@@ -141,6 +141,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		} else {
 			if ( is_admin() ) {
 				require_once SCM_PLUGIN_DIR . 'inc/admin/ajax-action.php';
+				// AJAX saves use the same option side-effect hooks as admin saves.
+				require_once SCM_PLUGIN_DIR . 'inc/admin/update-setting.php';
 			}
 		}
 	}

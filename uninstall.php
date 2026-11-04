@@ -15,6 +15,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	die;
 }
 
+if ( ! defined( 'SCM_INC' ) ) {
+	define( 'SCM_INC', true );
+}
+
+require_once __DIR__ . '/inc/cache-core.php';
 require_once __DIR__ . '/inc/admin/option-schema.php';
 
 $option_uninstall = get_option( 'scm_option_uninstall' );

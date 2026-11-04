@@ -103,7 +103,6 @@ function scm_get_admin_console_view() {
 		'cache',
 		'preload',
 		'performance',
-		'advanced',
 		'rules',
 		'statistics',
 		'expert',
@@ -131,7 +130,7 @@ function scm_get_admin_console_view() {
 	if ( 'ams-cache-settings' === $page ) {
 		switch ( $tab ) {
 			case 'advanced':
-				return 'advanced';
+				return 'cache';
 
 			case 'preferences':
 				return 'preload';
@@ -324,7 +323,6 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 						'cache'       => __( 'Cache', 'ams-cache' ),
 						'preload'     => __( 'Preload', 'ams-cache' ),
 						'performance' => __( 'Performance', 'ams-cache' ),
-						'advanced'    => __( 'Advanced', 'ams-cache' ),
 						'rules'       => __( 'Rules', 'ams-cache' ),
 						'statistics'  => __( 'Statistics', 'ams-cache' ),
 						'expert'      => __( 'Expert Mode', 'ams-cache' ),
