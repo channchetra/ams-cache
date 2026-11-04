@@ -662,7 +662,7 @@ function scm_ajax_dashboard_preload_callback() {
 		array(
 			'message' => sprintf(
 				/* translators: %s is the number of queued URLs. */
-				__( '%s preload URLs queued. First batch started.', 'ams-cache' ),
+				__( '%s preload URLs queued for background processing.', 'ams-cache' ),
 				$count
 			),
 			'status'  => scm_dashboard_get_status_data(),

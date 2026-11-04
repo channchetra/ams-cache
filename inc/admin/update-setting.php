@@ -199,8 +199,7 @@ function scm_update_scm_option_cache_max_entries() {
 function scm_update_scm_option_nginx_direct_cache_status() {
 	scm_update_runtime_config();
 	scm_clear_nginx_static_cache();
-	scm_preload_critical_urls();
-	scm_preload_homepage_priority_urls();
+	scm_schedule_preload_cache( true );
 }
 
 /**
@@ -210,8 +209,7 @@ function scm_update_scm_option_nginx_direct_cache_status() {
  */
 function scm_update_scm_option_preload_cache() {
 	scm_update_runtime_config();
-	scm_preload_homepage_priority_urls();
-	scm_schedule_preload_cache();
+	scm_schedule_preload_cache( true );
 }
 
 /**
@@ -221,8 +219,7 @@ function scm_update_scm_option_preload_cache() {
  */
 function scm_update_scm_option_preload_homepage_links() {
 	scm_update_runtime_config();
-	scm_preload_homepage_priority_urls();
-	scm_schedule_preload_cache();
+	scm_schedule_preload_cache( true );
 }
 
 /**

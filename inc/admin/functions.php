@@ -941,8 +941,6 @@ function scm_clear_all_cache() {
 	}
 
 	scm_clear_nginx_static_cache();
-	scm_preload_critical_urls( 0, true, $driver );
-	scm_preload_homepage_priority_urls();
 	scm_schedule_preload_cache();
 
 	return $i;
@@ -980,8 +978,6 @@ function scm_clear_cache_type( $cache_type ) {
 	}
 
 	scm_clear_nginx_static_cache();
-	scm_preload_critical_urls( 0, true, $driver );
-	scm_preload_homepage_priority_urls();
 	scm_schedule_preload_cache();
 
 	return $rows;

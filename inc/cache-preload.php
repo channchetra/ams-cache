@@ -647,23 +647,34 @@ function scm_get_critical_preload_urls( $post_id = 0, $limit = 25 ) {
  * @param bool                           $delete_existing Delete matching cache keys first.
  * @param \Shieldon\SimpleCache\Cache|null $driver        Cache driver.
  *
- * @return int Number of dispatched URLs.
+ * @return array Dispatched and failed URL counts.
  */
 function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driver = null ) {
 	if ( 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
-		return 0;
+		return array(
+			'dispatched' => 0,
+			'failed'     => 0,
+		);
 	}
 
 	$limit = (int) apply_filters( 'scm_critical_preload_limit', 25, $post_id );
 	$urls  = scm_get_critical_preload_urls( $post_id, $limit );
 
 	if ( empty( $urls ) ) {
-		return 0;
+		return array(
+			'dispatched' => 0,
+			'failed'     => 0,
+		);
 	}
 
 	if ( $delete_existing && null === $driver ) {
 		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
 	}
+
+	$result = array(
+		'dispatched' => 0,
+		'failed'     => 0,
+	);
 
 	foreach ( $urls as $url ) {
 		if ( $delete_existing && $driver ) {
@@ -673,13 +684,24 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 			scm_purge_cache_uri( $path, $driver );
 		}
 
-		scm_preload_url( $url, true, 8 );
+		$response = scm_preload_url( $url, true, 8 );
+		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+
+		if ( $status < 200 || $status >= 400 ) {
+			$result['failed']++;
+		} else {
+			$result['dispatched']++;
+		}
+	}
+
+	if ( $result['failed'] > 0 ) {
+		error_log( sprintf( '[AMS Cache] Critical preload failed for %d of %d URLs.', $result['failed'], count( $urls ) ) );
 	}
 
 	update_option( 'scm_last_critical_preload_time', time() );
 	update_option( 'scm_last_critical_preload_count', count( $urls ) );
 
-	return count( $urls );
+	return $result;
 }
 
 /**
@@ -789,7 +811,7 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
 }
 
 /**
- * Dispatch preload requests.
+ * Queue preload requests and schedule background processing.
  *
  * @param int|null $limit Maximum URLs.
  *
@@ -817,7 +839,7 @@ function scm_preload_cache( $limit = null ) {
 
 	set_transient( 'scm_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
 
-	scm_process_preload_queue();
+	scm_schedule_preload_queue();
 
 	return count( $urls );
 }
