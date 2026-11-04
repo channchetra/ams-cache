@@ -25,7 +25,7 @@ function khse_option() {
 
 	add_menu_page(
 		__( 'KH Speed Engine', 'kh-speed-engine' ),
-		__( 'KH Speed Engine', 'kh-speed-engine' ),
+		__( 'KH Speed', 'kh-speed-engine' ),
 		'manage_options',
 		'kh-speed-engine-dashboard',
 		'khse_dashboard_page',
@@ -304,7 +304,7 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 
 		wp_localize_script(
 			'kh-speed-engine-dashboard',
-			'amsCacheDashboard',
+			'khseDashboard',
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),

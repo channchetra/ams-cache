@@ -37,7 +37,7 @@ import {
 	Zap
 } from 'lucide-react';
 
-const boot = window.amsCacheDashboard || {};
+const boot = window.khseDashboard || {};
 const i18n = boot.i18n || {};
 
 const NAV = [

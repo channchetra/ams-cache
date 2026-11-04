@@ -1,6 +1,6 @@
 === KH Speed Engine ===
 
-Contributors: terrylin
+Contributors: chetrachann
 Tags: cache, redis, mongodb, memcached, apc, apcu
 Requires at least: 5.8
 Tested up to: 6.9.4

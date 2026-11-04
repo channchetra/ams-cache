@@ -63,6 +63,13 @@ function khse_maybe_migrate_legacy_brand() {
 		@rename( $old_runtime, $new_runtime );
 	}
 
+	$prefix = get_option( 'khse_option_cache_key_prefix' );
+
+	if ( is_string( $prefix ) && 0 === strpos( $prefix, 'scm_' ) ) {
+		update_option( 'khse_option_cache_key_prefix', 'khse_' . substr( $prefix, 4 ) );
+		khse_clear_all_cache();
+	}
+
 	update_option( 'khse_brand_migrated', 1 );
 
 	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {

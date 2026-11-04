@@ -39,8 +39,13 @@ function khse_get_dir_hash() {
  */
 function khse_generate_dir_hash() {
 	$salt = defined( 'AUTH_SALT' ) ? AUTH_SALT : '';
+	$site = defined( 'WP_HOME' ) ? WP_HOME : ( defined( 'ABSPATH' ) ? ABSPATH : __DIR__ );
 
-	return substr( wp_hash( get_site_url() . '|' . $salt ), 0, 8 );
+	if ( function_exists( 'wp_hash' ) ) {
+		return substr( wp_hash( $site . '|' . $salt ), 0, 8 );
+	}
+
+	return substr( hash( 'sha256', $site . '|' . $salt ), 0, 8 );
 }
 
 /**

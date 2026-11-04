@@ -32,5 +32,5 @@ namespaces are preserved, so plugin code and tests are unaffected.
 ## Updating
 
 When upgrading either library, copy the new `src/` contents over the matching
-subdirectory, keep the license file, re-apply any AMS-specific driver fixes, and
+subdirectory, keep the license file, re-apply any KHSE-specific driver fixes, and
 update the version numbers above.

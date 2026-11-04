@@ -3,9 +3,9 @@
  * KH Speed Engine helper functions.
  *
  * @package   KH Speed Engine
- * @author    Chetra Chann <terrylinooo>
+ * @author    Chetra Chann
  * @license   GPLv3 (or later)
- * @link      https://terryl.in
+ * @link      https://khspeed.com
  * @copyright 2020 Chetra Chann
  */
 
