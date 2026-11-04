@@ -66,7 +66,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 	if ( defined( 'SCM_PLUGIN_UNIT_TEST' ) ) {
 		$required_files = array(
 			'register',
-			'setting',
 			'menu',
 			'update-setting',
 			'update-post',
@@ -117,7 +116,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 				$required_files = array(
 					'register',               // Event: activate and uninstall plugin.
-					'setting',                // Define settings and register settings.
 					'menu',                   // Display menu link and render setting page.
 					'update-setting',         // Event: update settings.
 					'functions',              // Helper functions used in admin scope.
