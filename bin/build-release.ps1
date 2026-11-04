@@ -210,6 +210,7 @@ function Test-ReleaseExclude {
         'bin/',
         'graphify-out/',
         'node_modules/',
+        'vendor/',
         'vendor/bin/',
         'vendor/composer/tmp-',
         'vendor/phpunit/',
@@ -219,11 +220,7 @@ function Test-ReleaseExclude {
         'vendor/theseer/',
         'vendor/myclabs/',
         'vendor/nikic/',
-        'vendor/doctrine/',
-        'vendor/shieldon/simple-cache/.github/',
-        'vendor/shieldon/simple-cache/tests/',
-        'vendor/psr/simple-cache/.github/',
-        'vendor/psr/simple-cache/tests/'
+        'vendor/doctrine/'
     )
 
     if (-not $IncludeTests) {
@@ -251,11 +248,6 @@ function Test-ReleaseExclude {
         'yarn.lock',
         'pnpm-lock.yaml',
         '.phpunit.result.cache',
-        'vendor/shieldon/simple-cache/.gitignore',
-        'vendor/shieldon/simple-cache/.travis.yml',
-        'vendor/shieldon/simple-cache/.scrutinizer.yml',
-        'vendor/shieldon/simple-cache/phpunit.xml',
-        'vendor/psr/simple-cache/.editorconfig',
         'graphify-out',
         'AGENTS.md',
         'SESSION_MEMORY.md',
@@ -325,8 +317,8 @@ foreach ($file in $files) {
     $copied++
 }
 
-if (-not (Test-Path -LiteralPath (Join-Path $stagePlugin 'vendor/autoload.php'))) {
-    throw 'Release missing vendor/autoload.php. Runtime vendor files must be present before packaging.'
+if (-not (Test-Path -LiteralPath (Join-Path $stagePlugin 'inc/lib/autoload.php'))) {
+    throw 'Release missing inc/lib/autoload.php. Vendored cache library must be present before packaging.'
 }
 
 if (Test-Path -LiteralPath $zipPath) {

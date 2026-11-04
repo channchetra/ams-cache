@@ -143,8 +143,8 @@ function scm_run_expert_mode( $args ) {
 	// Start "reading-cache" procedure.
 	if ( strpos( $request_path, $site_path ) === 0 ) {
 
-		// Composer autoloader.
-		include_once( $plugin_dir . '/vendor/autoload.php' );
+		// Vendored PSR-16 cache library autoloader.
+		include_once( $plugin_dir . '/inc/lib/autoload.php' );
 		include_once( $plugin_dir . '/inc/helpers.php' );
 
 		if ( ! scm_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {

@@ -14,7 +14,7 @@ if ( ! defined( 'SCM_INC' ) ) {
 
 require_once SCM_PLUGIN_DIR . 'inc/helpers.php';
 require_once SCM_PLUGIN_DIR . 'inc/admin/functions.php';
-require_once SCM_PLUGIN_DIR . 'vendor/autoload.php';
+require_once SCM_PLUGIN_DIR . 'inc/lib/autoload.php';
 
 add_action( 'wp_ajax_scm_action_clear_cache', 'scm_ajax_clear_cache_callback' );
 add_action( 'wp_ajax_scm_action_purge_current_page', 'scm_ajax_purge_current_page_callback' );
