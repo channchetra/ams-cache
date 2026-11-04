@@ -31,4 +31,13 @@ class ViewVariablesTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'before', $data );
 		$this->assertArrayNotHasKey( 'after', $data );
 	}
+
+	public function test_svg_icon_returns_string_for_known_and_unknown_types() {
+		$status = scm_get_svg_icon( 'status' );
+
+		$this->assertIsString( $status );
+		$this->assertStringContainsString( '<svg', $status );
+
+		$this->assertSame( '', scm_get_svg_icon( 'unknown-type' ) );
+	}
 }
