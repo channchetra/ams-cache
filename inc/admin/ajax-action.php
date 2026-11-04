@@ -53,6 +53,37 @@ function scm_ajax_dashboard_guard( $nonce_action = 'scm_dashboard', $capability 
 }
 
 /**
+ * Check whether the current user may purge the cache for a URL.
+ *
+ * Users with edit_posts may purge only the canonical path of a post they
+ * can edit; every other same-site path requires manage_options.
+ *
+ * @param string $url Same-site URL.
+ *
+ * @return bool
+ */
+function scm_can_purge_url( $url ) {
+	$post_id = url_to_postid( $url );
+
+	if ( $post_id > 0 ) {
+		$permalink = get_permalink( $post_id );
+
+		if ( false !== $permalink ) {
+			$requested_path = parse_url( $url, PHP_URL_PATH );
+			$permalink_path = parse_url( $permalink, PHP_URL_PATH );
+			$requested_path = empty( $requested_path ) ? '/' : $requested_path;
+			$permalink_path = empty( $permalink_path ) ? '/' : $permalink_path;
+
+			if ( scm_normalize_cache_uri( $requested_path ) === scm_normalize_cache_uri( $permalink_path ) ) {
+				return current_user_can( 'edit_post', $post_id );
+			}
+		}
+	}
+
+	return current_user_can( 'manage_options' );
+}
+
+/**
  * AJAX callback.
  *
  * @return void
@@ -109,6 +140,14 @@ function scm_ajax_purge_current_page_callback() {
 		wp_send_json_error(
 			array(
 				'message' => __( 'Only same-site URLs can be purged.', 'ams-cache' ),
+			)
+		);
+	}
+
+	if ( ! scm_can_purge_url( $url ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Access denied.', 'ams-cache' ),
 			)
 		);
 	}
