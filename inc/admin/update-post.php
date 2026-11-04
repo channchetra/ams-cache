@@ -189,7 +189,7 @@ function scm_delete_post( $post_ID, $post = null ) {
  * Display message after updating post.
  *
  * @param array $messages The messages.
- * @return void
+ * @return array
  */
 function scm_notice_after_update_post( $messages ) {
 

@@ -292,7 +292,7 @@ trait SCM_Cache_Master_Debug {
 	 * Same as WordPress function wp_ob_end_flush_all, but leave the 
 	 * AMS Cache level for the final output buffering.
 	 *
-	 * @return string
+	 * @return void
 	 */
 	private function wp_ob_end_flush_all() {
 		$levels = ob_get_level();
@@ -304,7 +304,7 @@ trait SCM_Cache_Master_Debug {
 	/**
 	 * Return the WordPress timer.
 	 *
-	 * @return float
+	 * @return string
 	 */
 	private function wp_timer_stop() {
 		// timer_stop is WordPress function.
@@ -326,9 +326,9 @@ trait SCM_Cache_Master_Debug {
 	}
 
 	/**
-	 * Return a string that is the memory usage in Megabyte.
+	 * Return the memory usage in megabytes.
 	 *
-	 * @return string
+	 * @return float
 	 */
 	private function get_memory_usage() {
 		$memory_usage = memory_get_usage();
@@ -390,7 +390,7 @@ trait SCM_Cache_Master_Debug {
 	/**
 	 * The footer HTML.
 	 *
-	 * @return void
+	 * @return string
 	 */
 	private function footer_html() {
 		
