@@ -980,8 +980,10 @@ function khse_clear_all_cache() {
 					$key      = strstr( $filename, '.', true );
 
 					$driver->delete( $key );
-					unlink( $file->getPathname() );
-					$i++;
+
+					if ( @unlink( $file->getPathname() ) ) {
+						$i++;
+					}
 				}
 			}
 		}
@@ -1018,8 +1020,10 @@ function khse_clear_cache_type( $cache_type ) {
 				$key      = strstr( $filename, '.', true );
 
 				$driver->delete( $key );
-				unlink( $file->getPathname() );
-				$rows++;
+
+				if ( @unlink( $file->getPathname() ) ) {
+					$rows++;
+				}
 			}
 		}
 	}

@@ -51,8 +51,9 @@ function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $d
 			$driver->delete( $key );
 		}
 
-		unlink( $file->getPathname() );
-		$removed++;
+		if ( @unlink( $file->getPathname() ) ) {
+			$removed++;
+		}
 	}
 
 	return $removed;

@@ -508,6 +508,36 @@ function khse_build_served_debug_message( $config, $expert = false, $start_time 
 }
 
 /**
+ * Log a cache read failure once per request without leaking credentials.
+ *
+ * @param string     $driver_type Cache driver key.
+ * @param \Throwable $error       Caught exception.
+ *
+ * @return void
+ */
+function khse_log_cache_read_failure( $driver_type, $error ) {
+	static $logged = false;
+
+	if ( $logged || ! function_exists( 'error_log' ) ) {
+		return;
+	}
+
+	$logged = true;
+	$label   = function_exists( 'sanitize_key' )
+		? sanitize_key( (string) $driver_type )
+		: preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $driver_type ) );
+
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log(
+		sprintf(
+			'[KH Speed Engine] Cache read failed (%s): %s',
+			$label,
+			$error->getMessage()
+		)
+	);
+}
+
+/**
  * Serve a cached response for the current request.
  *
  * @param array                            $config       Runtime config.
@@ -540,8 +570,9 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 	$path = khse_normalize_cache_uri( $request_uri );
 	$key  = khse_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
 
+	$driver_type = isset( $config['cache_driver'] ) ? $config['cache_driver'] : 'file';
+
 	if ( ! $driver ) {
-		$driver_type = isset( $config['cache_driver'] ) ? $config['cache_driver'] : 'file';
 		$advanced    = isset( $config['driver_advanced_settings'] ) ? $config['driver_advanced_settings'] : array();
 		$connection  = isset( $config['driver_connection_type'] ) ? $config['driver_connection_type'] : 'tcp';
 
@@ -562,6 +593,7 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 		try {
 			$driver = new \Shieldon\SimpleCache\Cache( $driver_type, $setting );
 		} catch ( \Throwable $e ) {
+			khse_log_cache_read_failure( $driver_type, $e );
 			return null;
 		}
 	}
@@ -569,6 +601,7 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 	try {
 		$cached_content = $driver->get( $key );
 	} catch ( \Throwable $e ) {
+		khse_log_cache_read_failure( $driver_type, $e );
 		return null;
 	}
 
