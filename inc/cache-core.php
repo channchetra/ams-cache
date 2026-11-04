@@ -381,6 +381,33 @@ function scm_is_cache_tracking_query_var( $name ) {
 }
 
 /**
+ * Check whether a query string can share a page-cache identity.
+ *
+ * Only tracking variables are ignored by the cache key; any other query
+ * variable changes the response and must not be treated as the same page.
+ *
+ * @param string $query Query string without the leading "?".
+ *
+ * @return bool
+ */
+function scm_is_cacheable_query_string( $query ) {
+	if ( '' === (string) $query ) {
+		return true;
+	}
+
+	$query_vars = array();
+	parse_str( (string) $query, $query_vars );
+
+	foreach ( array_keys( $query_vars ) as $query_var ) {
+		if ( ! scm_is_cache_tracking_query_var( $query_var ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
  * Check if a path looks like a frontend HTML document.
  *
  * @param string $path Request path.
@@ -440,15 +467,8 @@ function scm_is_cacheable_request_uri( $request_uri = null ) {
 
 	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
 
-	if ( '' !== $query ) {
-		$query_vars = array();
-		parse_str( $query, $query_vars );
-
-		foreach ( array_keys( $query_vars ) as $query_var ) {
-			if ( ! scm_is_cache_tracking_query_var( $query_var ) ) {
-				return false;
-			}
-		}
+	if ( ! scm_is_cacheable_query_string( $query ) ) {
+		return false;
 	}
 
 	$path = scm_normalize_cache_uri( $request_uri );

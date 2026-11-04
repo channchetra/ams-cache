@@ -77,21 +77,34 @@ function scm_ajax_clear_cache_response() {
 /**
  * Check whether the current user may purge the cache for a URL.
  *
- * Users with edit_posts may purge only the canonical path of a post they
- * can edit; every other same-site path requires manage_options.
+ * Users with edit_posts may purge only the canonical path of a publicly
+ * viewable post they can edit, and only when the URL itself is cacheable;
+ * every other path requires manage_options.
  *
  * @param string $url Same-site URL.
  *
  * @return bool
  */
 function scm_can_purge_url( $url ) {
+	$parsed = parse_url( $url );
+
+	if ( false === $parsed ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
+
+	if ( ! scm_is_cacheable_query_string( $query ) ) {
+		return current_user_can( 'manage_options' );
+	}
+
 	$post_id = url_to_postid( $url );
 
-	if ( $post_id > 0 ) {
+	if ( $post_id > 0 && is_post_publicly_viewable( $post_id ) ) {
 		$permalink = get_permalink( $post_id );
 
 		if ( false !== $permalink ) {
-			$requested_path = parse_url( $url, PHP_URL_PATH );
+			$requested_path = isset( $parsed['path'] ) ? $parsed['path'] : '';
 			$permalink_path = parse_url( $permalink, PHP_URL_PATH );
 			$requested_path = empty( $requested_path ) ? '/' : $requested_path;
 			$permalink_path = empty( $permalink_path ) ? '/' : $permalink_path;
@@ -152,7 +165,27 @@ function scm_ajax_purge_current_page_callback() {
 		);
 	}
 
-	$path = parse_url( $url, PHP_URL_PATH );
+	$parsed = parse_url( $url );
+
+	if ( false === $parsed ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'This URL is not a cacheable page.', 'ams-cache' ),
+			)
+		);
+	}
+
+	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
+
+	if ( ! scm_is_cacheable_query_string( $query ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'This URL is not a cacheable page.', 'ams-cache' ),
+			)
+		);
+	}
+
+	$path = isset( $parsed['path'] ) ? $parsed['path'] : '';
 	$path = empty( $path ) ? '/' : $path;
 
 	if ( ! scm_is_cacheable_document_path( $path ) ) {
