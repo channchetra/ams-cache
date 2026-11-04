@@ -1,14 +1,14 @@
 {
-    "name": "ams/ams-cache",
-    "description": "AMS Cache is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly.",
+    "name": "khse/kh-speed-engine",
+    "description": "KH Speed Engine is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly.",
     "keywords": ["wordpress-plugin", "wordpress-cache", "cache-plugin"],
-    "homepage": "https://ams.com.kh/",
+    "homepage": "https://khspeed.com/",
     "license": "GPL-3.0-or-later",
     "authors": [
         {
-            "name": "Terry Lin",
-            "email": "contact@terryl.in",
-            "homepage": "https://terryl.in/zh/"
+            "name": "Chetra Chann",
+            "email": "contact@khspeed.com",
+            "homepage": "https://khspeed.com/"
         }
     ],
     "scripts": {

@@ -2,7 +2,7 @@
 /**
  * Class ActivationTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
@@ -18,16 +18,18 @@ class UninstallTest extends WP_UnitTestCase {
 	public function testUninstallPlugin() {
 
 		// Activate plugin again, create folders, and then we test uninstalling.
-		do_action( 'activate_' . SCM_PLUGIN_NAME );
+		$plugin = basename( untrailingslashit( KHSE_PLUGIN_DIR ) ) . '/kh-speed-engine.php';
 
-		update_option( 'scm_option_uninstall', 'yes' );
+		do_action( 'activate_' . KHSE_PLUGIN_NAME );
 
-		$found = uninstall_plugin( 'ams-cache/cache-master.php' );
+		update_option( 'khse_option_uninstall', 'yes' );
+
+		$found = uninstall_plugin( $plugin );
 
 		$this->assertTrue( $found );
 
-		$this->assertFalse( ( file_exists( scm_get_upload_dir() . '/file_driver' ) ) );
-		$this->assertFalse( ( file_exists( scm_get_upload_dir() . '/sqlite_driver' ) ) );
-		$this->assertFalse( ( file_exists( scm_get_upload_dir() ) ) );
+		$this->assertFalse( ( file_exists( khse_get_upload_dir() . '/file_driver' ) ) );
+		$this->assertFalse( ( file_exists( khse_get_upload_dir() . '/sqlite_driver' ) ) );
+		$this->assertFalse( ( file_exists( khse_get_upload_dir() ) ) );
 	}
 }

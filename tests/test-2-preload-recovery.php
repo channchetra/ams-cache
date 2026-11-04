@@ -2,14 +2,14 @@
 /**
  * Class PreloadRecoveryTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
  * Preload queue stall-recovery test case.
  *
- * Covers scm_maybe_schedule_preload_cache() resuming a stalled preload queue
- * when the scm_preload_queue_event cron event was lost.
+ * Covers khse_maybe_schedule_preload_cache() resuming a stalled preload queue
+ * when the khse_preload_queue_event cron event was lost.
  */
 class PreloadRecoveryTest extends WP_UnitTestCase {
 
@@ -21,15 +21,15 @@ class PreloadRecoveryTest extends WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 
-		update_option( 'scm_option_preload_cache', 'yes' );
-		update_option( 'scm_option_caching_status', 'enable' );
+		update_option( 'khse_option_preload_cache', 'yes' );
+		update_option( 'khse_option_caching_status', 'enable' );
 
-		wp_clear_scheduled_hook( 'scm_preload_queue_event' );
-		wp_clear_scheduled_hook( 'scm_preload_cache_event' );
-		delete_transient( 'scm_preload_queue' );
+		wp_clear_scheduled_hook( 'khse_preload_queue_event' );
+		wp_clear_scheduled_hook( 'khse_preload_cache_event' );
+		delete_transient( 'khse_preload_queue' );
 
 		// Keep the bootstrap branch quiet so tests only exercise queue recovery.
-		update_option( 'scm_preload_bootstrap_version', (string) SCM_PLUGIN_VERSION );
+		update_option( 'khse_preload_bootstrap_version', (string) KHSE_PLUGIN_VERSION );
 	}
 
 	/**
@@ -38,13 +38,13 @@ class PreloadRecoveryTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function testStalledQueueReschedulesEvent() {
-		set_transient( 'scm_preload_queue', array( home_url( '/' ), home_url( '/sample-page/' ) ), HOUR_IN_SECONDS );
+		set_transient( 'khse_preload_queue', array( home_url( '/' ), home_url( '/sample-page/' ) ), HOUR_IN_SECONDS );
 
-		$this->assertFalse( wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
 
-		scm_maybe_schedule_preload_cache();
+		khse_maybe_schedule_preload_cache();
 
-		$this->assertNotFalse( wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
 	}
 
 	/**
@@ -53,14 +53,14 @@ class PreloadRecoveryTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function testHealthyQueueIsNoOp() {
-		set_transient( 'scm_preload_queue', array( home_url( '/' ) ), HOUR_IN_SECONDS );
+		set_transient( 'khse_preload_queue', array( home_url( '/' ) ), HOUR_IN_SECONDS );
 
 		$timestamp = time() + 300;
-		wp_schedule_single_event( $timestamp, 'scm_preload_queue_event' );
+		wp_schedule_single_event( $timestamp, 'khse_preload_queue_event' );
 
-		scm_maybe_schedule_preload_cache();
+		khse_maybe_schedule_preload_cache();
 
-		$this->assertSame( $timestamp, wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertSame( $timestamp, wp_next_scheduled( 'khse_preload_queue_event' ) );
 	}
 
 	/**
@@ -69,18 +69,18 @@ class PreloadRecoveryTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function testEmptyQueueDoesNotSchedule() {
-		delete_transient( 'scm_preload_queue' );
+		delete_transient( 'khse_preload_queue' );
 
-		scm_maybe_schedule_preload_cache();
+		khse_maybe_schedule_preload_cache();
 
-		$this->assertFalse( wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
 
 		// Invalid (non-array) queue payload must also be ignored.
-		set_transient( 'scm_preload_queue', 'corrupted', HOUR_IN_SECONDS );
+		set_transient( 'khse_preload_queue', 'corrupted', HOUR_IN_SECONDS );
 
-		scm_maybe_schedule_preload_cache();
+		khse_maybe_schedule_preload_cache();
 
-		$this->assertFalse( wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
 	}
 
 	/**
@@ -89,11 +89,11 @@ class PreloadRecoveryTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function testDisabledPreloadSkipsRecovery() {
-		update_option( 'scm_option_preload_cache', 'no' );
-		set_transient( 'scm_preload_queue', array( home_url( '/' ) ), HOUR_IN_SECONDS );
+		update_option( 'khse_option_preload_cache', 'no' );
+		set_transient( 'khse_preload_queue', array( home_url( '/' ) ), HOUR_IN_SECONDS );
 
-		scm_maybe_schedule_preload_cache();
+		khse_maybe_schedule_preload_cache();
 
-		$this->assertFalse( wp_next_scheduled( 'scm_preload_queue_event' ) );
+		$this->assertFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
 	}
 }

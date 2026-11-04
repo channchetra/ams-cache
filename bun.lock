@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ams-cache",
+      "name": "kh-speed-engine",
       "devDependencies": {
         "@heroui/react": "^3.0.5",
         "@heroui/styles": "^3.0.5",

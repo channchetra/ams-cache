@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# One-command AMS Cache version sync and release build.
+# One-command KH Speed Engine version sync and release build.
 # Bash port of bin/release.ps1 for Ubuntu/Linux/macOS/Git-Bash.
 #
 # Examples:
@@ -12,7 +12,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MAIN_FILE="$ROOT/cache-master.php"
+MAIN_FILE="$ROOT/kh-speed-engine.php"
 BUILD_SCRIPT="$SCRIPT_DIR/build-release.sh"
 
 VERSION=''
@@ -47,7 +47,7 @@ fail() {
     exit 1
 }
 
-[[ -f "$MAIN_FILE" ]] || fail "Cannot find cache-master.php at $MAIN_FILE"
+[[ -f "$MAIN_FILE" ]] || fail "Cannot find kh-speed-engine.php at $MAIN_FILE"
 [[ "$BUMP" =~ ^(major|minor|patch)$ ]] || fail "Invalid --bump '$BUMP'. Use major, minor, or patch."
 
 CURRENT_VERSION="$(grep -Po '^\s*\*\s*Version:\s*\K[^\r\n]+' "$MAIN_FILE" | head -n 1 | tr -d '[:space:]')"
@@ -89,15 +89,15 @@ update_regex_file() {
     fi
 }
 
-# cache-master.php plugin header.
+# kh-speed-engine.php plugin header.
 update_regex_file "$MAIN_FILE" \
     "s/^(\s*\*\s*Version:\s*)[^\r\n]+/\${1}$VERSION/m" \
-    'cache-master.php plugin header'
+    'kh-speed-engine.php plugin header'
 
-# SCM_PLUGIN_VERSION define.
+# KHSE_PLUGIN_VERSION define.
 update_regex_file "$MAIN_FILE" \
-    "s/^(define\(\s*'SCM_PLUGIN_VERSION'\s*,\s*')[^']+('\s*\);)/\${1}$VERSION\${2}/m" \
-    'SCM_PLUGIN_VERSION'
+    "s/^(define\(\s*'KHSE_PLUGIN_VERSION'\s*,\s*')[^']+('\s*\);)/\${1}$VERSION\${2}/m" \
+    'KHSE_PLUGIN_VERSION'
 
 # README.txt stable tag.
 update_regex_file "$ROOT/README.txt" \
@@ -112,7 +112,7 @@ fi
 
 # React about page version labels.
 update_regex_file "$ROOT/assets/src/admin.jsx" \
-    "s/(AMS Cache )[0-9]+\.[0-9]+\.[0-9]+/\${1}$VERSION/g" \
+    "s/(KH Speed Engine )[0-9]+\.[0-9]+\.[0-9]+/\${1}$VERSION/g" \
     'React about page version labels'
 
 # CHANGELOG.md section.
@@ -128,8 +128,8 @@ if [[ -f "$CHANGELOG" ]]; then
 ### Changed
 - $NOTE
 "
-        SCM_ENTRY="$ENTRY" perl -0777 -pi -e '
-            my $entry = $ENV{SCM_ENTRY} . "\n";
+        KHSE_ENTRY="$ENTRY" perl -0777 -pi -e '
+            my $entry = $ENV{KHSE_ENTRY} . "\n";
             unless (s/(\A#\s+Changelog\s*\r?\n\r?\n)/$1$entry/) {
                 $_ = "# Changelog\n\n" . $entry . $_;
             }

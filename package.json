@@ -1,9 +1,9 @@
 {
-  "name": "ams-cache",
+  "name": "kh-speed-engine",
   "version": "3.1.5",
   "private": true,
   "type": "module",
-  "description": "Build tooling and optional local optimizers for the AMS Cache WordPress plugin.",
+  "description": "Build tooling and optional local optimizers for the KH Speed Engine WordPress plugin.",
   "scripts": {
     "dev": "bunx vite --host 127.0.0.1",
     "build": "bunx vite build",

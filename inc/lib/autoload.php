@@ -2,10 +2,10 @@
 /**
  * Local autoloader for the vendored PSR-16 cache library.
  *
- * @package AMS Cache
+ * @package KH Speed Engine
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 

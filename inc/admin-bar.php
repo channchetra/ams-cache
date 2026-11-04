@@ -1,18 +1,18 @@
 <?php
 /**
- * AMS Cache - Admin bar.
+ * KH Speed Engine - Admin bar.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-add_action( 'admin_bar_menu', 'scm_button_clear_cache', 999 );
-add_action( 'admin_footer', 'scm_footer_js_clear_cache' );
-add_action( 'wp_footer', 'scm_footer_js_clear_cache' );
+add_action( 'admin_bar_menu', 'khse_button_clear_cache', 999 );
+add_action( 'admin_footer', 'khse_footer_js_clear_cache' );
+add_action( 'wp_footer', 'khse_footer_js_clear_cache' );
 
 /**
  * Add a clear cache button on admin bar.
@@ -21,12 +21,12 @@ add_action( 'wp_footer', 'scm_footer_js_clear_cache' );
  *
  * @return void
  */
-function scm_button_clear_cache( $admin_bar ) {
+function khse_button_clear_cache( $admin_bar ) {
 	if ( is_admin() && current_user_can( 'manage_options' ) ) {
 		$admin_bar->add_menu(
 			array(
-				'id'    => 'scm-clear-cache',
-				'title' => '<span class="ab-icon dashicons dashicons-trash" style="top: 2px"></span><span class="ab-label">' . __( 'Clear Cache', 'ams-cache' ) . '</span>',
+				'id'    => 'khse-clear-cache',
+				'title' => '<span class="ab-icon dashicons dashicons-trash" style="top: 2px"></span><span class="ab-label">' . __( 'Clear Cache', 'kh-speed-engine' ) . '</span>',
 				'href'  => '#',
 			)
 		);
@@ -35,8 +35,8 @@ function scm_button_clear_cache( $admin_bar ) {
 	if ( ! is_admin() && current_user_can( 'edit_posts' ) ) {
 		$admin_bar->add_menu(
 			array(
-				'id'    => 'scm-purge-current-page',
-				'title' => '<span class="ab-icon dashicons dashicons-update" style="top: 2px"></span><span class="ab-label">' . __( 'Purge Current Page', 'ams-cache' ) . '</span>',
+				'id'    => 'khse-purge-current-page',
+				'title' => '<span class="ab-icon dashicons dashicons-update" style="top: 2px"></span><span class="ab-label">' . __( 'Purge Current Page', 'kh-speed-engine' ) . '</span>',
 				'href'  => '#',
 			)
 		);
@@ -48,7 +48,7 @@ function scm_button_clear_cache( $admin_bar ) {
  *
  * @return void
  */
-function scm_footer_js_clear_cache() {
+function khse_footer_js_clear_cache() {
 	if ( ! is_admin_bar_showing() || ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_posts' ) ) ) {
 		return;
 	}
@@ -58,13 +58,13 @@ function scm_footer_js_clear_cache() {
 		(function() {
 			var scmAjaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 			var scmActions = {
-				'#wp-admin-bar-scm-clear-cache .ab-item': {
-					action: 'scm_action_clear_cache',
-					nonce: <?php echo wp_json_encode( wp_create_nonce( 'scm_clear_cache_' . scm_get_dir_hash() ) ); ?>
+				'#wp-admin-bar-khse-clear-cache .ab-item': {
+					action: 'khse_action_clear_cache',
+					nonce: <?php echo wp_json_encode( wp_create_nonce( 'khse_clear_cache_' . khse_get_dir_hash() ) ); ?>
 				},
-				'#wp-admin-bar-scm-purge-current-page .ab-item': {
-					action: 'scm_action_purge_current_page',
-					nonce: <?php echo wp_json_encode( wp_create_nonce( 'scm_purge_current_page_' . scm_get_dir_hash() ) ); ?>
+				'#wp-admin-bar-khse-purge-current-page .ab-item': {
+					action: 'khse_action_purge_current_page',
+					nonce: <?php echo wp_json_encode( wp_create_nonce( 'khse_purge_current_page_' . khse_get_dir_hash() ) ); ?>
 				}
 			};
 
@@ -80,7 +80,7 @@ function scm_footer_js_clear_cache() {
 					var action = scmActions[selector];
 					var data = new URLSearchParams({action: action.action, _wpnonce: action.nonce});
 
-					if ('scm_action_purge_current_page' === action.action) {
+					if ('khse_action_purge_current_page' === action.action) {
 						data.set('url', window.location.href);
 					}
 
@@ -93,9 +93,9 @@ function scm_footer_js_clear_cache() {
 						.then(function(response) { return response.json(); })
 						.then(function(response) {
 							var payload = response && response.data ? response.data : response;
-							alert(payload && payload.message ? payload.message : 'AMS Cache request completed.');
+							alert(payload && payload.message ? payload.message : 'KH Speed Engine request completed.');
 						})
-						.catch(function() { alert('AMS Cache request failed.'); });
+						.catch(function() { alert('KH Speed Engine request failed.'); });
 
 					return true;
 				});

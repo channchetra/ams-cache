@@ -2,7 +2,7 @@
 /**
  * Class ActivationTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
@@ -20,9 +20,9 @@ class ActivationTest extends WP_UnitTestCase {
 	 */
 	public function testActivateWithSupport() {
 
-		do_action( 'activate_' . SCM_PLUGIN_NAME );
+		do_action( 'activate_' . KHSE_PLUGIN_NAME );
 
-		$this->assertTrue( ( file_exists( scm_get_upload_dir() . '/file_driver' ) ) );
-		$this->assertTrue( ( file_exists( scm_get_upload_dir() . '/sqlite_driver' ) ) );
+		$this->assertTrue( ( file_exists( khse_get_upload_dir() . '/file_driver' ) ) );
+		$this->assertTrue( ( file_exists( khse_get_upload_dir() . '/sqlite_driver' ) ) );
 	}
 }

@@ -2,7 +2,7 @@
 /**
  * Class LocalSimpleCacheTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class LocalSimpleCacheTest extends WP_UnitTestCase {

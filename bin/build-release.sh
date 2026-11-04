@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Build a WordPress-ready AMS Cache release zip with version management.
+# Build a WordPress-ready KH Speed Engine release zip with version management.
 # Bash port of bin/build-release.ps1 for Ubuntu/Linux/macOS/Git-Bash.
 #
 # Examples:
@@ -11,10 +11,10 @@
 
 set -euo pipefail
 
-PLUGIN_SLUG='ams-cache'
+PLUGIN_SLUG='kh-speed-engine'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MAIN_FILE="$ROOT/cache-master.php"
+MAIN_FILE="$ROOT/kh-speed-engine.php"
 
 VERSION=''
 BUMP=''
@@ -48,7 +48,7 @@ fail() {
     exit 1
 }
 
-[[ -f "$MAIN_FILE" ]] || fail "Cannot find cache-master.php at $MAIN_FILE"
+[[ -f "$MAIN_FILE" ]] || fail "Cannot find kh-speed-engine.php at $MAIN_FILE"
 
 read_plugin_version() {
     grep -Po '^\s*\*\s*Version:\s*\K[^\r\n]+' "$MAIN_FILE" | head -n 1 | tr -d '[:space:]'
@@ -73,7 +73,7 @@ bump_version() {
 
 if [[ -z "$VERSION" ]]; then
     CURRENT_VERSION="$(read_plugin_version)"
-    [[ -n "$CURRENT_VERSION" ]] || fail 'Cannot read plugin Version from cache-master.php'
+    [[ -n "$CURRENT_VERSION" ]] || fail 'Cannot read plugin Version from kh-speed-engine.php'
 
     if [[ -n "$BUMP" ]]; then
         VERSION="$(bump_version "$CURRENT_VERSION" "$BUMP")"
@@ -87,7 +87,7 @@ fi
 
 if [[ $SET_VERSION -eq 1 ]]; then
     perl -0777 -pi -e "s/^(\s*\*\s*Version:\s*)[^\r\n]+/\${1}$VERSION/m" "$MAIN_FILE"
-    echo "Updated cache-master.php header version to $VERSION"
+    echo "Updated kh-speed-engine.php header version to $VERSION"
 
     if [[ -f "$ROOT/README.txt" ]]; then
         perl -0777 -pi -e "my \$done = 0; s/^(\s*Stable tag:\s*)[^\r\n]+/\$done++ ? \$& : \$1 . '$VERSION'/me" "$ROOT/README.txt"

@@ -2,14 +2,14 @@
 /**
  * Class CacheIdentityTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
- * Cache identity policy and Cache_Master request-gating regression tests.
+ * Cache identity policy and KHSE_Cache request-gating regression tests.
  *
- * Covers the cache-poisoning regression where Cache_Master::init() passed a
- * path-only URI to scm_is_cacheable_request_uri(), bypassing the query-string
+ * Covers the cache-poisoning regression where KHSE_Cache::init() passed a
+ * path-only URI to khse_is_cacheable_request_uri(), bypassing the query-string
  * allow-list, and where unparseable authority-form URIs such as "//?p=1" were
  * treated as having no query string.
  */
@@ -84,14 +84,14 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$this->original_cookie = $_COOKIE;
 		$_COOKIE               = array();
 
-		update_option( 'scm_option_driver', 'file' );
-		update_option( 'scm_config', scm_get_default_config() );
+		update_option( 'khse_option_driver', 'file' );
+		update_option( 'khse_config', khse_get_default_config() );
 
 		$this->config_path   = null;
 		$this->config_backup = null;
 
-		if ( function_exists( 'scm_get_config_path' ) ) {
-			$this->config_path = scm_get_config_path();
+		if ( function_exists( 'khse_get_config_path' ) ) {
+			$this->config_path = khse_get_config_path();
 
 			if ( file_exists( $this->config_path ) ) {
 				$this->config_backup = file_get_contents( $this->config_path );
@@ -174,14 +174,14 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		// Arrange: set_up() resets method and cookies to a cacheable baseline.
 
 		// Act.
-		$actual = scm_is_cacheable_request_uri( $uri );
+		$actual = khse_is_cacheable_request_uri( $uri );
 
 		// Assert.
 		$this->assertSame(
 			$expected,
 			$actual,
 			sprintf(
-				'scm_is_cacheable_request_uri( %s ) should be %s.',
+				'khse_is_cacheable_request_uri( %s ) should be %s.',
 				var_export( $uri, true ),
 				$expected ? 'true' : 'false'
 			)
@@ -198,36 +198,36 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$_SERVER['REQUEST_URI'] = '/?p=123';
 
 		// Act.
-		$unknown_var_cacheable = scm_is_cacheable_request_uri();
+		$unknown_var_cacheable = khse_is_cacheable_request_uri();
 
 		// Assert.
 		$this->assertFalse(
 			$unknown_var_cacheable,
-			'scm_is_cacheable_request_uri() must reject $_SERVER["REQUEST_URI"] of /?p=123.'
+			'khse_is_cacheable_request_uri() must reject $_SERVER["REQUEST_URI"] of /?p=123.'
 		);
 
 		// Arrange.
 		$_SERVER['REQUEST_URI'] = '/?utm_source=newsletter';
 
 		// Act.
-		$tracking_cacheable = scm_is_cacheable_request_uri();
+		$tracking_cacheable = khse_is_cacheable_request_uri();
 
 		// Assert.
 		$this->assertTrue(
 			$tracking_cacheable,
-			'scm_is_cacheable_request_uri() must accept $_SERVER["REQUEST_URI"] of /?utm_source=newsletter.'
+			'khse_is_cacheable_request_uri() must accept $_SERVER["REQUEST_URI"] of /?utm_source=newsletter.'
 		);
 	}
 
 	/**
-	 * Cache_Master must not register cache hooks for an unknown query string.
+	 * KHSE_Cache must not register cache hooks for an unknown query string.
 	 *
 	 * @return void
 	 */
 	public function test_cache_master_rejects_unknown_query_string() {
 		// Arrange.
 		$_SERVER['REQUEST_URI'] = '/?p=123';
-		$cm                     = new Cache_Master();
+		$cm                     = new KHSE_Cache();
 
 		// Act.
 		$cm->init();
@@ -248,14 +248,14 @@ class CacheIdentityTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Cache_Master must not register cache hooks for an unparseable URI.
+	 * KHSE_Cache must not register cache hooks for an unparseable URI.
 	 *
 	 * @return void
 	 */
 	public function test_cache_master_rejects_unparseable_request_uri() {
 		// Arrange.
 		$_SERVER['REQUEST_URI'] = '//?p=1';
-		$cm                     = new Cache_Master();
+		$cm                     = new KHSE_Cache();
 
 		// Act.
 		$cm->init();
@@ -275,7 +275,7 @@ class CacheIdentityTest extends WP_UnitTestCase {
 	public function test_init_rejects_php_endpoint_with_tracking_query() {
 		// Arrange: a tracking-only query would pass the query policy; only the .php guard can reject it.
 		$_SERVER['REQUEST_URI'] = '/index.php?utm_source=newsletter';
-		$cm                     = new Cache_Master();
+		$cm                     = new KHSE_Cache();
 
 		// Act.
 		$cm->init();
@@ -288,14 +288,14 @@ class CacheIdentityTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Cache_Master must register cache hooks for tracking-only query strings.
+	 * KHSE_Cache must register cache hooks for tracking-only query strings.
 	 *
 	 * @return void
 	 */
 	public function test_cache_master_accepts_tracking_query_string() {
 		// Arrange.
 		$_SERVER['REQUEST_URI'] = '/?utm_source=newsletter';
-		$cm                     = new Cache_Master();
+		$cm                     = new KHSE_Cache();
 
 		// Act.
 		$cm->init();
@@ -326,8 +326,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$tracking_ok = '/?utm_source=newsletter';
 
 		// Act.
-		$path_key     = scm_get_cache_key( $path_uri );
-		$tracking_key = scm_get_cache_key( $tracking_ok );
+		$path_key     = khse_get_cache_key( $path_uri );
+		$tracking_key = khse_get_cache_key( $tracking_ok );
 
 		// Assert.
 		$this->assertSame(
@@ -344,11 +344,11 @@ class CacheIdentityTest extends WP_UnitTestCase {
 	 */
 	public function test_cache_key_format_is_pinned() {
 		// Arrange.
-		update_option( 'scm_option_cache_key_prefix', 'fixture' );
+		update_option( 'khse_option_cache_key_prefix', 'fixture' );
 
 		// Act.
-		$sample_key  = scm_get_cache_key( '/sample-page/' );
-		$homepage_key = scm_get_cache_key( '/' );
+		$sample_key  = khse_get_cache_key( '/sample-page/' );
+		$homepage_key = khse_get_cache_key( '/' );
 
 		// Assert.
 		$this->assertSame(
@@ -373,7 +373,7 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$_SERVER['REQUEST_METHOD'] = 'POST';
 
 		// Act.
-		$cacheable = scm_is_cacheable_request_uri( '/' );
+		$cacheable = khse_is_cacheable_request_uri( '/' );
 
 		// Assert.
 		$this->assertFalse( $cacheable, 'POST requests must not be cacheable.' );
@@ -389,7 +389,7 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$_SERVER['REQUEST_METHOD'] = 'HEAD';
 
 		// Act.
-		$cacheable = scm_is_cacheable_request_uri( '/' );
+		$cacheable = khse_is_cacheable_request_uri( '/' );
 
 		// Assert.
 		$this->assertTrue( $cacheable, 'HEAD requests must be cacheable.' );
@@ -405,7 +405,7 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$_COOKIE['wordpress_logged_in_abc'] = 'user';
 
 		// Act.
-		$cacheable = scm_is_cacheable_request_uri( '/' );
+		$cacheable = khse_is_cacheable_request_uri( '/' );
 
 		// Assert.
 		$this->assertFalse( $cacheable, 'Requests with WordPress auth cookies must not be cacheable.' );
@@ -422,8 +422,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		$static_uri = '/image.jpg?utm_source=x';
 
 		// Act.
-		$admin_cacheable  = scm_is_cacheable_request_uri( $admin_uri );
-		$static_cacheable = scm_is_cacheable_request_uri( $static_uri );
+		$admin_cacheable  = khse_is_cacheable_request_uri( $admin_uri );
+		$static_cacheable = khse_is_cacheable_request_uri( $static_uri );
 
 		// Assert.
 		$this->assertFalse( $admin_cacheable, '/wp-admin/ must not be cacheable.' );

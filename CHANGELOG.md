@@ -19,7 +19,7 @@
 
 ### Added
 - Cross-platform release tooling: `bin/release.sh` and `bin/build-release.sh` bash ports for Ubuntu/Linux/macOS with `bun`/`pnpm`/`npm` and `zip`/`python3` fallbacks, plus matching `release:sh*` package scripts.
-- Preload queue stall recovery: `init` hook reschedules `scm_preload_queue_event` when the queue transient survives but its cron event was lost (object cache flush, deploy mid-run).
+- Preload queue stall recovery: `init` hook reschedules `khse_preload_queue_event` when the queue transient survives but its cron event was lost (object cache flush, deploy mid-run).
 - PHPUnit coverage for preload queue recovery (`tests/test-2-preload-recovery.php`).
 
 ### Changed
@@ -141,12 +141,12 @@
 ### Fixed
 - Prevent automatic upload optimization from filling the manual image batch queue.
 - Keep compatible offload metadata timing for Advanced Media Offloader and WP Offload Media.
-- Move WordPress admin footer below the AMS Cache console and preserve rounded card bottoms.
+- Move WordPress admin footer below the KH Speed Engine console and preserve rounded card bottoms.
 
 ## [2.8.1] - 2026-05-22
 
 ### Added
-- Rebuild the AMS Cache admin console with React, HeroUI components, lucide icons, and Tailwind CSS 4.3.
+- Rebuild the KH Speed Engine admin console with React, HeroUI components, lucide icons, and Tailwind CSS 4.3.
 - Add a compact React settings payload and authenticated AJAX save bridge for cache, preload, performance, rules, statistics, benchmark, WooCommerce, and image optimizer settings.
 - Add React driver cards, preload option groups, Expert Mode code preview, and primary upload image format selection.
 
@@ -159,7 +159,7 @@
 ### Fixed
 - Generate image variants during upload before offload plugins read attachment metadata, and promote the chosen primary variant to the attachment file for new uploads.
 - Persist generated variant metadata into WordPress attachment `sources` so HTML rewriting and compatible offload plugins can discover the new files.
-- Restore full-width dashboard alignment, reduce AMS sidebar height so the WordPress menu stays normal, and rebuild Cache, Preload, Expert Mode, Benchmark, and About surfaces around card layouts.
+- Restore full-width dashboard alignment, reduce KHSE sidebar height so the WordPress menu stays normal, and rebuild Cache, Preload, Expert Mode, Benchmark, and About surfaces around card layouts.
 - Remove the obsolete Vue fallback script and table-transformer bridge from the runtime.
 - Fix README.txt stable-tag syncing in the release script.
 
@@ -308,11 +308,11 @@
 - NPM-less Vue 3 dashboard loaded from CDN inside native WordPress admin screens.
 - Live dashboard status cards for cache health, page optimization, server requirements, and preload progress.
 - Dashboard AJAX actions for refresh, run preload, purge homepage, and clear all cache.
-- Cache footprint and optimization requirement summaries on the main AMS Cache page.
+- Cache footprint and optimization requirement summaries on the main KH Speed Engine page.
 
 ### Changed
 
-- AMS Cache now opens to a dedicated Dashboard page, with Settings, Expert Mode, Statistics, and About as secondary pages.
+- KH Speed Engine now opens to a dedicated Dashboard page, with Settings, Expert Mode, Statistics, and About as secondary pages.
 - Admin styling refreshed for a more compact, interactive cache console.
 
 ## [2.4.3] - 2026-05-14
@@ -325,7 +325,7 @@
 
 ### Changed
 
-- AMS Cache admin bar controls now load on frontend for logged-in users.
+- KH Speed Engine admin bar controls now load on frontend for logged-in users.
 - Homepage-discovered preload URLs now run first with blocking requests before the rest of the preload queue.
 - Cache clear and preload setting changes now immediately warm homepage-discovered URLs when preload is enabled.
 
@@ -392,8 +392,8 @@
 - Expert Mode snippet now explains that runtime settings are read from `config.json`.
 - Expert Mode snippet now emits normalized paths for Windows/local development.
 - Frontend benchmark JavaScript no longer depends on jQuery.
-- Shared-store cache clearing deletes known AMS Cache keys instead of flushing entire shared stores.
-- Plugin branding changed to AMS Cache.
+- Shared-store cache clearing deletes known KH Speed Engine keys instead of flushing entire shared stores.
+- Plugin branding changed to KH Speed Engine.
 - WordPress compatibility metadata tested up to 6.9.4.
 - Preload loopback timeout increased for more reliable non-blocking warm requests.
 - Cache statistics now keep URI metadata while remaining compatible with older size-only stat files.

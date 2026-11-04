@@ -1,17 +1,17 @@
 <?php
 /**
- * AMS Cache — cache-preload.php
+ * KH Speed Engine — cache-preload.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
-function scm_is_preload_enabled() {
-	return 'yes' === get_option( 'scm_option_preload_cache', 'no' );
+function khse_is_preload_enabled() {
+	return 'yes' === get_option( 'khse_option_preload_cache', 'no' );
 }
 
 /**
@@ -21,9 +21,9 @@ function scm_is_preload_enabled() {
  *
  * @return int
  */
-function scm_get_preload_limit( $limit = null ) {
-	$limit     = is_null( $limit ) ? (int) get_option( 'scm_option_preload_limit', 50 ) : (int) $limit;
-	$max_limit = (int) apply_filters( 'scm_preload_max_limit', 1000 );
+function khse_get_preload_limit( $limit = null ) {
+	$limit     = is_null( $limit ) ? (int) get_option( 'khse_option_preload_limit', 50 ) : (int) $limit;
+	$max_limit = (int) apply_filters( 'khse_preload_max_limit', 1000 );
 	$max_limit = max( 1, min( 5000, $max_limit ) );
 
 	return max( 1, min( $max_limit, $limit ) );
@@ -34,8 +34,8 @@ function scm_get_preload_limit( $limit = null ) {
  *
  * @return int
  */
-function scm_get_preload_batch_size() {
-	$batch_size = (int) apply_filters( 'scm_preload_batch_size', 25 );
+function khse_get_preload_batch_size() {
+	$batch_size = (int) apply_filters( 'khse_preload_batch_size', 25 );
 
 	return max( 1, min( 100, $batch_size ) );
 }
@@ -47,17 +47,17 @@ function scm_get_preload_batch_size() {
  *
  * @return void
  */
-function scm_schedule_preload_cache( $force = false ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) || ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+function khse_schedule_preload_cache( $force = false ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
 		return;
 	}
 
 	if ( $force && function_exists( 'wp_clear_scheduled_hook' ) ) {
-		wp_clear_scheduled_hook( 'scm_preload_cache_event' );
+		wp_clear_scheduled_hook( 'khse_preload_cache_event' );
 	}
 
-	if ( $force || ! wp_next_scheduled( 'scm_preload_cache_event' ) ) {
-		wp_schedule_single_event( time() + 5, 'scm_preload_cache_event' );
+	if ( $force || ! wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		wp_schedule_single_event( time() + 5, 'khse_preload_cache_event' );
 	}
 }
 
@@ -68,13 +68,13 @@ function scm_schedule_preload_cache( $force = false ) {
  *
  * @return void
  */
-function scm_schedule_preload_queue( $delay = 15 ) {
+function khse_schedule_preload_queue( $delay = 15 ) {
 	if ( ! function_exists( 'wp_schedule_single_event' ) ) {
 		return;
 	}
 
-	if ( ! wp_next_scheduled( 'scm_preload_queue_event' ) ) {
-		wp_schedule_single_event( time() + max( 1, (int) $delay ), 'scm_preload_queue_event' );
+	if ( ! wp_next_scheduled( 'khse_preload_queue_event' ) ) {
+		wp_schedule_single_event( time() + max( 1, (int) $delay ), 'khse_preload_queue_event' );
 	}
 }
 
@@ -83,39 +83,39 @@ function scm_schedule_preload_queue( $delay = 15 ) {
  *
  * @return void
  */
-function scm_maybe_schedule_preload_cache() {
-	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) || ! function_exists( 'wp_next_scheduled' ) ) {
+function khse_maybe_schedule_preload_cache() {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) || ! function_exists( 'wp_next_scheduled' ) ) {
 		return;
 	}
 
 	// Resume a stalled queue whose cron event was lost (object cache flush, deploy mid-run).
 	// Cheap in-memory cron check first; queue transient (DB query) fetched only when the event is missing.
-	if ( ! wp_next_scheduled( 'scm_preload_queue_event' ) ) {
-		$queue = get_transient( 'scm_preload_queue' );
+	if ( ! wp_next_scheduled( 'khse_preload_queue_event' ) ) {
+		$queue = get_transient( 'khse_preload_queue' );
 
 		if ( ! empty( $queue ) && is_array( $queue ) ) {
-			scm_schedule_preload_queue();
+			khse_schedule_preload_queue();
 		}
 	}
 
-	$signature = defined( 'SCM_PLUGIN_VERSION' ) ? (string) SCM_PLUGIN_VERSION : 'ams-cache';
+	$signature = defined( 'KHSE_PLUGIN_VERSION' ) ? (string) KHSE_PLUGIN_VERSION : 'kh-speed-engine';
 
-	if ( wp_next_scheduled( 'scm_preload_cache_event' ) ) {
-		if ( $signature !== get_option( 'scm_preload_bootstrap_version', '' ) ) {
-			update_option( 'scm_preload_bootstrap_version', $signature );
+	if ( wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		if ( $signature !== get_option( 'khse_preload_bootstrap_version', '' ) ) {
+			update_option( 'khse_preload_bootstrap_version', $signature );
 		}
 
 		return;
 	}
 
-	if ( $signature === get_option( 'scm_preload_bootstrap_version', '' ) ) {
+	if ( $signature === get_option( 'khse_preload_bootstrap_version', '' ) ) {
 		return;
 	}
 
-	scm_schedule_preload_cache();
+	khse_schedule_preload_cache();
 
-	if ( wp_next_scheduled( 'scm_preload_cache_event' ) ) {
-		update_option( 'scm_preload_bootstrap_version', $signature );
+	if ( wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		update_option( 'khse_preload_bootstrap_version', $signature );
 	}
 }
 
@@ -126,7 +126,7 @@ function scm_maybe_schedule_preload_cache() {
  *
  * @return bool
  */
-function scm_preload_host_is_loopback( $host ) {
+function khse_preload_host_is_loopback( $host ) {
 	static $results = array();
 
 	$host = strtolower( trim( (string) $host ) );
@@ -169,11 +169,11 @@ function scm_preload_host_is_loopback( $host ) {
  *
  * @return bool
  */
-function scm_preload_sslverify( $url ) {
-	$verify    = (bool) apply_filters( 'scm_preload_sslverify', true );
+function khse_preload_sslverify( $url ) {
+	$verify    = (bool) apply_filters( 'khse_preload_sslverify', true );
 	$url_parts = parse_url( $url );
 
-	if ( $verify && ! empty( $url_parts['host'] ) && 'https' === strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) && scm_preload_host_is_loopback( $url_parts['host'] ) ) {
+	if ( $verify && ! empty( $url_parts['host'] ) && 'https' === strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) && khse_preload_host_is_loopback( $url_parts['host'] ) ) {
 		return false;
 	}
 
@@ -189,7 +189,7 @@ function scm_preload_sslverify( $url ) {
  *
  * @return array|\WP_Error|null
  */
-function scm_preload_url( $url, $blocking = true, $timeout = 8 ) {
+function khse_preload_url( $url, $blocking = true, $timeout = 8 ) {
 	if ( empty( $url ) || ! function_exists( 'wp_remote_get' ) ) {
 		return null;
 	}
@@ -213,8 +213,8 @@ function scm_preload_url( $url, $blocking = true, $timeout = 8 ) {
 			'blocking'    => (bool) $blocking,
 			'timeout'     => max( 1, (int) $timeout ),
 			'redirection' => 2,
-			'sslverify'   => scm_preload_sslverify( $url ),
-			'user-agent'  => 'AMS Cache Preloader/' . SCM_PLUGIN_VERSION,
+			'sslverify'   => khse_preload_sslverify( $url ),
+			'user-agent'  => 'KH Speed Engine Preloader/' . KHSE_PLUGIN_VERSION,
 		)
 	);
 }
@@ -224,8 +224,8 @@ function scm_preload_url( $url, $blocking = true, $timeout = 8 ) {
  *
  * @return array
  */
-function scm_get_preload_post_types() {
-	$post_types = (array) get_option( 'scm_option_post_types', array() );
+function khse_get_preload_post_types() {
+	$post_types = (array) get_option( 'khse_option_post_types', array() );
 	$post_types = array_keys(
 		array_filter(
 			$post_types,
@@ -241,7 +241,7 @@ function scm_get_preload_post_types() {
 		$post_types = array( 'post' );
 	}
 
-	return apply_filters( 'scm_preload_post_types', $post_types );
+	return apply_filters( 'khse_preload_post_types', $post_types );
 }
 
 /**
@@ -252,7 +252,7 @@ function scm_get_preload_post_types() {
  *
  * @return string
  */
-function scm_normalize_homepage_link_url( $href, $base_url ) {
+function khse_normalize_homepage_link_url( $href, $base_url ) {
 	$href = trim( html_entity_decode( (string) $href, ENT_QUOTES, 'UTF-8' ) );
 
 	if ( '' === $href || '#' === $href || preg_match( '#^(?:javascript|mailto|tel|data):#i', $href ) ) {
@@ -295,9 +295,9 @@ function scm_normalize_homepage_link_url( $href, $base_url ) {
 		$path      = ( '/' === $base_dir ? '' : $base_dir ) . '/' . $href;
 	}
 
-	$path = scm_normalize_cache_uri( $path );
+	$path = khse_normalize_cache_uri( $path );
 
-	if ( ! scm_is_cacheable_document_path( $path ) ) {
+	if ( ! khse_is_cacheable_document_path( $path ) ) {
 		return '';
 	}
 
@@ -311,13 +311,13 @@ function scm_normalize_homepage_link_url( $href, $base_url ) {
  *
  * @return array
  */
-function scm_get_homepage_discovered_urls( $limit = 100 ) {
+function khse_get_homepage_discovered_urls( $limit = 100 ) {
 	if ( ! function_exists( 'wp_remote_get' ) ) {
 		return array();
 	}
 
-	$limit  = scm_get_preload_limit( $limit );
-	$cached = get_transient( 'scm_homepage_discovered_urls' );
+	$limit  = khse_get_preload_limit( $limit );
+	$cached = get_transient( 'khse_homepage_discovered_urls' );
 
 	if ( is_array( $cached ) && isset( $cached['urls'], $cached['limit'] ) && (int) $cached['limit'] >= $limit ) {
 		return array_slice( (array) $cached['urls'], 0, $limit );
@@ -330,41 +330,41 @@ function scm_get_homepage_discovered_urls( $limit = 100 ) {
 			'blocking'    => true,
 			'timeout'     => 8,
 			'redirection' => 3,
-			'sslverify'   => scm_preload_sslverify( $home_url ),
-			'user-agent'  => 'AMS Cache Preload Crawler/' . SCM_PLUGIN_VERSION,
+			'sslverify'   => khse_preload_sslverify( $home_url ),
+			'user-agent'  => 'KH Speed Engine Preload Crawler/' . KHSE_PLUGIN_VERSION,
 		)
 	);
 
 	if ( is_wp_error( $result ) ) {
-		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
 		return array();
 	}
 
 	$status = (int) wp_remote_retrieve_response_code( $result );
 
 	if ( $status < 200 || $status >= 400 ) {
-		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
 		return array();
 	}
 
 	$html = wp_remote_retrieve_body( $result );
 
 	if ( empty( $html ) ) {
-		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
 		return array();
 	}
 
 	preg_match_all( '/<a\b[^>]*\shref\s*=\s*(["\'])(.*?)\1/i', $html, $matches );
 
 	if ( empty( $matches[2] ) ) {
-		set_transient( 'scm_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
 		return array();
 	}
 
 	$urls = array();
 
 	foreach ( $matches[2] as $href ) {
-		$url = scm_normalize_homepage_link_url( $href, $home_url );
+		$url = khse_normalize_homepage_link_url( $href, $home_url );
 
 		if ( '' === $url || in_array( $url, $urls, true ) ) {
 			continue;
@@ -378,7 +378,7 @@ function scm_get_homepage_discovered_urls( $limit = 100 ) {
 	}
 
 	set_transient(
-		'scm_homepage_discovered_urls',
+		'khse_homepage_discovered_urls',
 		array(
 			'urls'  => $urls,
 			'limit' => $limit,
@@ -386,7 +386,7 @@ function scm_get_homepage_discovered_urls( $limit = 100 ) {
 		5 * MINUTE_IN_SECONDS
 	);
 
-	return apply_filters( 'scm_homepage_discovered_preload_urls', $urls, $limit );
+	return apply_filters( 'khse_homepage_discovered_preload_urls', $urls, $limit );
 }
 
 /**
@@ -397,8 +397,8 @@ function scm_get_homepage_discovered_urls( $limit = 100 ) {
  *
  * @return array
  */
-function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls = array() ) {
-	$limit = scm_get_preload_limit( $limit );
+function khse_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls = array() ) {
+	$limit = khse_get_preload_limit( $limit );
 
 	if ( $limit <= 0 ) {
 		return array();
@@ -407,13 +407,13 @@ function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls =
 	$existing_map = array();
 
 	foreach ( (array) $existing_urls as $url ) {
-		$existing_map[ scm_normalize_cache_uri( $url ) ] = true;
+		$existing_map[ khse_normalize_cache_uri( $url ) ] = true;
 	}
 
 	$urls  = array();
 	$posts = get_posts(
 		array(
-			'post_type'           => scm_get_preload_post_types(),
+			'post_type'           => khse_get_preload_post_types(),
 			'post_status'         => 'publish',
 			'posts_per_page'      => $limit,
 			'fields'              => 'ids',
@@ -426,7 +426,7 @@ function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls =
 
 	foreach ( $posts as $post_id ) {
 		$url = get_permalink( $post_id );
-		$key = scm_normalize_cache_uri( $url );
+		$key = khse_normalize_cache_uri( $url );
 
 		if ( empty( $url ) || isset( $existing_map[ $key ] ) ) {
 			continue;
@@ -440,7 +440,7 @@ function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls =
 		}
 	}
 
-	return apply_filters( 'scm_homepage_priority_fallback_urls', $urls, $limit, $existing_urls );
+	return apply_filters( 'khse_homepage_priority_fallback_urls', $urls, $limit, $existing_urls );
 }
 
 /**
@@ -450,16 +450,16 @@ function scm_get_homepage_priority_fallback_urls( $limit = 100, $existing_urls =
  *
  * @return array
  */
-function scm_get_homepage_priority_preload_urls( $limit = null ) {
-	$limit = scm_get_preload_limit( $limit );
+function khse_get_homepage_priority_preload_urls( $limit = null ) {
+	$limit = khse_get_preload_limit( $limit );
 	$urls  = array();
 
-	if ( 'yes' === get_option( 'scm_option_post_homepage', 'yes' ) ) {
+	if ( 'yes' === get_option( 'khse_option_post_homepage', 'yes' ) ) {
 		$urls[] = home_url( '/' );
 	}
 
-	if ( 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ) && count( $urls ) < $limit ) {
-		$discovered_urls = scm_get_homepage_discovered_urls( $limit - count( $urls ) );
+	if ( 'yes' === get_option( 'khse_option_preload_homepage_links', 'yes' ) && count( $urls ) < $limit ) {
+		$discovered_urls = khse_get_homepage_discovered_urls( $limit - count( $urls ) );
 
 		foreach ( $discovered_urls as $url ) {
 			$urls[] = $url;
@@ -469,10 +469,10 @@ function scm_get_homepage_priority_preload_urls( $limit = null ) {
 			}
 		}
 
-		$minimum_discovered = (int) apply_filters( 'scm_homepage_priority_min_discovered_urls', 25 );
+		$minimum_discovered = (int) apply_filters( 'khse_homepage_priority_min_discovered_urls', 25 );
 
 		if ( count( $discovered_urls ) < $minimum_discovered && count( $urls ) < $limit ) {
-			foreach ( scm_get_homepage_priority_fallback_urls( $limit - count( $urls ), $urls ) as $url ) {
+			foreach ( khse_get_homepage_priority_fallback_urls( $limit - count( $urls ), $urls ) as $url ) {
 				$urls[] = $url;
 
 				if ( count( $urls ) >= $limit ) {
@@ -484,7 +484,7 @@ function scm_get_homepage_priority_preload_urls( $limit = null ) {
 
 	$urls = array_values( array_unique( array_filter( $urls ) ) );
 
-	return array_slice( apply_filters( 'scm_homepage_priority_preload_urls', $urls, $limit ), 0, $limit );
+	return array_slice( apply_filters( 'khse_homepage_priority_preload_urls', $urls, $limit ), 0, $limit );
 }
 
 /**
@@ -495,24 +495,24 @@ function scm_get_homepage_priority_preload_urls( $limit = null ) {
  *
  * @return int
  */
-function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
-	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+function khse_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
 		return 0;
 	}
 
-	$urls           = scm_get_homepage_priority_preload_urls( $limit );
+	$urls           = khse_get_homepage_priority_preload_urls( $limit );
 	$dispatch_limit = count( $urls );
 
 	if ( $blocking ) {
-		$dispatch_limit = min( $dispatch_limit, (int) apply_filters( 'scm_homepage_priority_blocking_limit', 1 ) );
+		$dispatch_limit = min( $dispatch_limit, (int) apply_filters( 'khse_homepage_priority_blocking_limit', 1 ) );
 	}
 
 	foreach ( array_slice( $urls, 0, $dispatch_limit ) as $url ) {
-		scm_preload_url( $url, $blocking, $blocking ? 8 : 1 );
+		khse_preload_url( $url, $blocking, $blocking ? 8 : 1 );
 	}
 
-	update_option( 'scm_last_homepage_priority_preload_time', time() );
-	update_option( 'scm_last_homepage_priority_preload_count', count( $urls ) );
+	update_option( 'khse_last_homepage_priority_preload_time', time() );
+	update_option( 'khse_last_homepage_priority_preload_count', count( $urls ) );
 
 	return $dispatch_limit;
 }
@@ -525,8 +525,8 @@ function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
  *
  * @return array
  */
-function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
-	$limit = scm_get_preload_limit( $limit );
+function khse_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
+	$limit = khse_get_preload_limit( $limit );
 	$urls  = array();
 	$post  = $post_id ? get_post( $post_id ) : null;
 
@@ -542,11 +542,11 @@ function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
 		$urls[] = (string) $url;
 	};
 
-	if ( 'yes' === get_option( 'scm_option_post_homepage', 'yes' ) ) {
+	if ( 'yes' === get_option( 'khse_option_post_homepage', 'yes' ) ) {
 		$add_url( home_url( '/' ) );
 	}
 
-	$post_archives = (array) get_option( 'scm_option_post_archives', array() );
+	$post_archives = (array) get_option( 'khse_option_post_archives', array() );
 
 	if ( $post ) {
 		if ( isset( $post_archives['category'] ) && 'yes' === $post_archives['category'] ) {
@@ -580,8 +580,8 @@ function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
 			$add_url( get_post_type_archive_link( $post->post_type ) );
 		}
 
-		if ( 'yes' === get_option( 'scm_option_woocommerce_status', 'no' ) && 'product' === $post->post_type ) {
-			$woocommerce_archives = (array) get_option( 'scm_option_woocommerce_post_archives', array() );
+		if ( 'yes' === get_option( 'khse_option_woocommerce_status', 'no' ) && 'product' === $post->post_type ) {
+			$woocommerce_archives = (array) get_option( 'khse_option_woocommerce_post_archives', array() );
 
 			foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
 				if ( isset( $woocommerce_archives[ $taxonomy ] ) && 'yes' === $woocommerce_archives[ $taxonomy ] ) {
@@ -637,7 +637,7 @@ function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
 
 	$urls = array_values( array_unique( array_filter( $urls ) ) );
 
-	return array_slice( apply_filters( 'scm_critical_preload_urls', $urls, $post_id, $limit ), 0, $limit );
+	return array_slice( apply_filters( 'khse_critical_preload_urls', $urls, $post_id, $limit ), 0, $limit );
 }
 
 /**
@@ -649,16 +649,16 @@ function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
  *
  * @return array Dispatched and failed URL counts.
  */
-function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driver = null ) {
-	if ( 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+function khse_preload_critical_urls( $post_id = 0, $delete_existing = true, $driver = null ) {
+	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
 		return array(
 			'dispatched' => 0,
 			'failed'     => 0,
 		);
 	}
 
-	$limit = (int) apply_filters( 'scm_critical_preload_limit', 25, $post_id );
-	$urls  = scm_get_critical_preload_urls( $limit, $post_id );
+	$limit = (int) apply_filters( 'khse_critical_preload_limit', 25, $post_id );
+	$urls  = khse_get_critical_preload_urls( $limit, $post_id );
 
 	if ( empty( $urls ) ) {
 		return array(
@@ -668,7 +668,7 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 	}
 
 	if ( $delete_existing && null === $driver ) {
-		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
 	}
 
 	if ( is_wp_error( $driver ) ) {
@@ -685,10 +685,10 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 			$path = parse_url( $url, PHP_URL_PATH );
 			$path = empty( $path ) ? '/' : $path;
 
-			scm_purge_cache_uri( $path, $driver );
+			khse_purge_cache_uri( $path, $driver );
 		}
 
-		$response = scm_preload_url( $url, true, 8 );
+		$response = khse_preload_url( $url, true, 8 );
 		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 
 		if ( $status < 200 || $status >= 400 ) {
@@ -699,11 +699,11 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 	}
 
 	if ( $result['failed'] > 0 ) {
-		error_log( sprintf( '[AMS Cache] Critical preload failed for %d of %d URLs.', $result['failed'], count( $urls ) ) );
+		error_log( sprintf( '[KH Speed Engine] Critical preload failed for %d of %d URLs.', $result['failed'], count( $urls ) ) );
 	}
 
-	update_option( 'scm_last_critical_preload_time', time() );
-	update_option( 'scm_last_critical_preload_count', count( $urls ) );
+	update_option( 'khse_last_critical_preload_time', time() );
+	update_option( 'khse_last_critical_preload_count', count( $urls ) );
 
 	return $result;
 }
@@ -715,11 +715,11 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
  *
  * @return array
  */
-function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
-	$limit = scm_get_preload_limit( $limit );
-	$urls  = is_array( $priority_urls ) ? $priority_urls : scm_get_homepage_priority_preload_urls( $limit );
+function khse_get_preload_urls( $limit = null, $priority_urls = null ) {
+	$limit = khse_get_preload_limit( $limit );
+	$urls  = is_array( $priority_urls ) ? $priority_urls : khse_get_homepage_priority_preload_urls( $limit );
 
-	$post_types = scm_get_preload_post_types();
+	$post_types = khse_get_preload_post_types();
 
 	if ( ! empty( $post_types ) && count( $urls ) < $limit ) {
 		$remaining = $limit - count( $urls );
@@ -742,7 +742,7 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
 		}
 	}
 
-	$post_archives = (array) get_option( 'scm_option_post_archives', array() );
+	$post_archives = (array) get_option( 'khse_option_post_archives', array() );
 
 	if ( count( $urls ) < $limit && isset( $post_archives['category'] ) && 'yes' === $post_archives['category'] ) {
 		$terms = get_terms( array( 'taxonomy' => 'category', 'hide_empty' => true, 'fields' => 'ids', 'number' => $limit - count( $urls ) ) );
@@ -787,7 +787,7 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
 		}
 	}
 
-	$woocommerce_archives = (array) get_option( 'scm_option_woocommerce_post_archives', array() );
+	$woocommerce_archives = (array) get_option( 'khse_option_woocommerce_post_archives', array() );
 
 	foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
 		if ( count( $urls ) >= $limit ) {
@@ -811,7 +811,7 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
 
 	$urls = array_values( array_unique( array_filter( $urls ) ) );
 
-	return array_slice( apply_filters( 'scm_preload_urls', $urls, $limit ), 0, $limit );
+	return array_slice( apply_filters( 'khse_preload_urls', $urls, $limit ), 0, $limit );
 }
 
 /**
@@ -821,29 +821,29 @@ function scm_get_preload_urls( $limit = null, $priority_urls = null ) {
  *
  * @return int Number of queued URLs.
  */
-function scm_preload_cache( $limit = null ) {
-	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
+function khse_preload_cache( $limit = null ) {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
 		return 0;
 	}
 
-	$limit         = scm_get_preload_limit( $limit );
-	delete_transient( 'scm_homepage_discovered_urls' );
-	$priority_urls = scm_get_homepage_priority_preload_urls( $limit );
-	$urls          = scm_get_preload_urls( $limit, $priority_urls );
+	$limit         = khse_get_preload_limit( $limit );
+	delete_transient( 'khse_homepage_discovered_urls' );
+	$priority_urls = khse_get_homepage_priority_preload_urls( $limit );
+	$urls          = khse_get_preload_urls( $limit, $priority_urls );
 
-	update_option( 'scm_last_preload_time', time() );
-	update_option( 'scm_last_preload_count', count( $urls ) );
-	update_option( 'scm_last_preload_priority_count', count( $priority_urls ) );
-	update_option( 'scm_preload_queue_total', count( $urls ) );
-	update_option( 'scm_preload_queue_processed', 0 );
-	update_option( 'scm_preload_queue_failed', 0 );
-	update_option( 'scm_preload_queue_remaining', count( $urls ) );
-	update_option( 'scm_preload_queue_started_time', time() );
-	update_option( 'scm_preload_queue_finished_time', 0 );
+	update_option( 'khse_last_preload_time', time() );
+	update_option( 'khse_last_preload_count', count( $urls ) );
+	update_option( 'khse_last_preload_priority_count', count( $priority_urls ) );
+	update_option( 'khse_preload_queue_total', count( $urls ) );
+	update_option( 'khse_preload_queue_processed', 0 );
+	update_option( 'khse_preload_queue_failed', 0 );
+	update_option( 'khse_preload_queue_remaining', count( $urls ) );
+	update_option( 'khse_preload_queue_started_time', time() );
+	update_option( 'khse_preload_queue_finished_time', 0 );
 
-	set_transient( 'scm_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
+	set_transient( 'khse_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
 
-	scm_schedule_preload_queue();
+	khse_schedule_preload_queue();
 
 	return count( $urls );
 }
@@ -855,21 +855,21 @@ function scm_preload_cache( $limit = null ) {
  *
  * @return int Number of new URLs queued.
  */
-function scm_queue_preload_urls( $urls ) {
+function khse_queue_preload_urls( $urls ) {
 	$urls = array_values( array_unique( array_filter( array_map( 'strval', (array) $urls ) ) ) );
 
 	if ( empty( $urls ) ) {
 		return 0;
 	}
 
-	$queue = get_transient( 'scm_preload_queue' );
+	$queue = get_transient( 'khse_preload_queue' );
 	$queue = is_array( $queue ) ? $queue : array();
 	$before = count( $queue );
 	$queue = array_values( array_unique( array_merge( $queue, $urls ) ) );
 
-	set_transient( 'scm_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
-	update_option( 'scm_preload_queue_remaining', count( $queue ) );
-	scm_schedule_preload_queue();
+	set_transient( 'khse_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
+	update_option( 'khse_preload_queue_remaining', count( $queue ) );
+	khse_schedule_preload_queue();
 
 	return count( $queue ) - $before;
 }
@@ -882,8 +882,8 @@ function scm_queue_preload_urls( $urls ) {
  *
  * @return int Number of URLs queued.
  */
-function scm_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
-	$urls = scm_get_critical_preload_urls( 25, $post_id );
+function khse_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
+	$urls = khse_get_critical_preload_urls( 25, $post_id );
 
 	if ( $post_id > 0 ) {
 		$post_url = get_permalink( $post_id );
@@ -904,11 +904,11 @@ function scm_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
 			$path = parse_url( $url, PHP_URL_PATH );
 			$path = empty( $path ) ? '/' : $path;
 
-			scm_purge_cache_uri( $path, $driver );
+			khse_purge_cache_uri( $path, $driver );
 		}
 	}
 
-	return scm_queue_preload_urls( $urls );
+	return khse_queue_preload_urls( $urls );
 }
 
 /**
@@ -916,30 +916,30 @@ function scm_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
  *
  * @return int Number of dispatched URLs.
  */
-function scm_process_preload_queue() {
-	if ( ! scm_is_preload_enabled() || 'enable' !== get_option( 'scm_option_caching_status', 'disable' ) ) {
-		delete_transient( 'scm_preload_queue' );
-		update_option( 'scm_preload_queue_remaining', 0 );
+function khse_process_preload_queue() {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_remaining', 0 );
 		return 0;
 	}
 
-	$queue = get_transient( 'scm_preload_queue' );
+	$queue = get_transient( 'khse_preload_queue' );
 
 	if ( empty( $queue ) || ! is_array( $queue ) ) {
-		delete_transient( 'scm_preload_queue' );
-		update_option( 'scm_preload_queue_remaining', 0 );
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_remaining', 0 );
 		return 0;
 	}
 
 	$queue      = array_values( array_unique( array_filter( $queue ) ) );
-	$batch_size = scm_get_preload_batch_size();
+	$batch_size = khse_get_preload_batch_size();
 	$batch      = array_slice( $queue, 0, $batch_size );
 	$remaining  = array_slice( $queue, count( $batch ) );
-	$processed  = (int) get_option( 'scm_preload_queue_processed', 0 );
-	$failed     = (int) get_option( 'scm_preload_queue_failed', 0 );
+	$processed  = (int) get_option( 'khse_preload_queue_processed', 0 );
+	$failed     = (int) get_option( 'khse_preload_queue_failed', 0 );
 
 	foreach ( $batch as $url ) {
-		$response = scm_preload_url( $url, true, 8 );
+		$response = khse_preload_url( $url, true, 8 );
 		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 		$body     = is_wp_error( $response ) ? '' : wp_remote_retrieve_body( $response );
 
@@ -951,25 +951,25 @@ function scm_process_preload_queue() {
 		$processed++;
 	}
 
-	update_option( 'scm_preload_queue_processed', $processed );
-	update_option( 'scm_preload_queue_failed', $failed );
-	update_option( 'scm_preload_queue_remaining', count( $remaining ) );
+	update_option( 'khse_preload_queue_processed', $processed );
+	update_option( 'khse_preload_queue_failed', $failed );
+	update_option( 'khse_preload_queue_remaining', count( $remaining ) );
 
 	if ( empty( $remaining ) ) {
-		delete_transient( 'scm_preload_queue' );
-		update_option( 'scm_preload_queue_finished_time', time() );
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_finished_time', time() );
 		return count( $batch );
 	}
 
-	set_transient( 'scm_preload_queue', $remaining, 12 * HOUR_IN_SECONDS );
-	scm_schedule_preload_queue();
+	set_transient( 'khse_preload_queue', $remaining, 12 * HOUR_IN_SECONDS );
+	khse_schedule_preload_queue();
 
 	return count( $batch );
 }
 
 if ( function_exists( 'add_action' ) ) {
 	// Recover the preload event after deployments that keep the option enabled.
-	add_action( 'init', 'scm_maybe_schedule_preload_cache', 20 );
-	add_action( 'scm_preload_cache_event', 'scm_preload_cache' );
-	add_action( 'scm_preload_queue_event', 'scm_process_preload_queue' );
+	add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );
+	add_action( 'khse_preload_cache_event', 'khse_preload_cache' );
+	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
 }

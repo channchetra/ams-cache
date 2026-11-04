@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-One-command AMS Cache version sync and release build.
+One-command KH Speed Engine version sync and release build.
 
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File .\bin\release.ps1
@@ -28,7 +28,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
-$mainFile = Join-Path $root 'cache-master.php'
+$mainFile = Join-Path $root 'kh-speed-engine.php'
 $buildScript = Join-Path $PSScriptRoot 'build-release.ps1'
 
 function Write-Utf8NoBom {
@@ -193,7 +193,7 @@ function Ensure-ChangelogSection {
 }
 
 if (-not (Test-Path -LiteralPath $mainFile)) {
-    throw "Cannot find cache-master.php at $mainFile"
+    throw "Cannot find kh-speed-engine.php at $mainFile"
 }
 
 $currentVersion = Get-Plugin-Version -Path $mainFile
@@ -212,13 +212,13 @@ if ($Version -notmatch '^[0-9A-Za-z._-]+$') {
 Update-RegexFile `
     -Path $mainFile `
     -Pattern '(?m)^(\s*\*\s*Version:\s*)[^\r\n]+(\s*)$' `
-    -Label 'cache-master.php plugin header' `
+    -Label 'kh-speed-engine.php plugin header' `
     -Replace { param($match) $match.Groups[1].Value + $Version + $match.Groups[2].Value }
 
 Update-RegexFile `
     -Path $mainFile `
-    -Pattern "(?m)^(define\(\s*'SCM_PLUGIN_VERSION'\s*,\s*')[^']+('\s*\);\s*)$" `
-    -Label 'SCM_PLUGIN_VERSION' `
+    -Pattern "(?m)^(define\(\s*'KHSE_PLUGIN_VERSION'\s*,\s*')[^']+('\s*\);\s*)$" `
+    -Label 'KHSE_PLUGIN_VERSION' `
     -Replace { param($match) $match.Groups[1].Value + $Version + $match.Groups[2].Value }
 
 Update-RegexFile `
@@ -231,7 +231,7 @@ Update-FirstVersionFields -Path (Join-Path $root 'package.json') -Count 1 -Versi
 
 Update-RegexFile `
     -Path (Join-Path $root 'assets/src/admin.jsx') `
-    -Pattern '(AMS Cache )([0-9]+\.[0-9]+\.[0-9]+)' `
+    -Pattern '(KH Speed Engine )([0-9]+\.[0-9]+\.[0-9]+)' `
     -Label 'React about page version labels' `
     -Replace { param($match) $match.Groups[1].Value + $Version }
 

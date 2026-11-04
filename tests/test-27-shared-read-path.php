@@ -2,7 +2,7 @@
 /**
  * Class SharedReadPathTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class SharedReadPathTest extends WP_UnitTestCase {
@@ -21,7 +21,7 @@ class SharedReadPathTest extends WP_UnitTestCase {
 		$this->original_post   = $_POST;
 		$this->original_cookie = $_COOKIE;
 
-		$this->storage = sys_get_temp_dir() . '/ams-shared-read-' . uniqid();
+		$this->storage = sys_get_temp_dir() . '/khse-shared-read-' . uniqid();
 		wp_mkdir_p( $this->storage );
 
 		$_SERVER['REQUEST_METHOD'] = 'GET';
@@ -77,7 +77,7 @@ class SharedReadPathTest extends WP_UnitTestCase {
 
 	private function seed( $content, $uri = '/shared-read-test/' ) {
 		$driver = new \Shieldon\SimpleCache\Cache( 'file', array( 'storage' => $this->storage ) );
-		$driver->set( scm_build_cache_key( 'test_prefix_', $uri ), $content, 300 );
+		$driver->set( khse_build_cache_key( 'test_prefix_', $uri ), $content, 300 );
 
 		return $driver;
 	}
@@ -89,17 +89,17 @@ class SharedReadPathTest extends WP_UnitTestCase {
 	public function test_serves_valid_cache_entry_with_debug_and_js() {
 		$driver = $this->seed( $this->valid_content() );
 
-		$served = scm_serve_cached_response( $this->config(), $driver );
+		$served = khse_serve_cached_response( $this->config(), $driver );
 
 		$this->assertIsString( $served );
-		$this->assertStringContainsString( 'ams-cache-plugin', $served );
+		$this->assertStringContainsString( 'kh-speed-engine-plugin', $served );
 		$this->assertStringContainsString( 'After', $served );
 	}
 
 	public function test_skips_when_cache_disabled() {
 		$driver = $this->seed( $this->valid_content() );
 
-		$this->assertNull( scm_serve_cached_response( $this->config( array( 'cache_enabled' => false ) ), $driver ) );
+		$this->assertNull( khse_serve_cached_response( $this->config( array( 'cache_enabled' => false ) ), $driver ) );
 	}
 
 	public function test_skips_excluded_request() {
@@ -117,34 +117,34 @@ class SharedReadPathTest extends WP_UnitTestCase {
 			)
 		);
 
-		$this->assertNull( scm_serve_cached_response( $config, $driver ) );
+		$this->assertNull( khse_serve_cached_response( $config, $driver ) );
 	}
 
 	public function test_skips_woocommerce_add_to_cart() {
 		$_POST['add-to-cart'] = '1';
 		$driver = $this->seed( $this->valid_content() );
 
-		$this->assertNull( scm_serve_cached_response( $this->config( array( 'woocommerce' => array( 'enable' => true ) ) ), $driver ) );
+		$this->assertNull( khse_serve_cached_response( $this->config( array( 'woocommerce' => array( 'enable' => true ) ) ), $driver ) );
 	}
 
 	public function test_skips_invalid_payload() {
 		$driver = $this->seed( 'too short' );
 
-		$this->assertNull( scm_serve_cached_response( $this->config(), $driver ) );
+		$this->assertNull( khse_serve_cached_response( $this->config(), $driver ) );
 	}
 
 	public function test_debug_comment_can_be_disabled() {
 		$driver = $this->seed( $this->valid_content() );
 
-		$served = scm_serve_cached_response( $this->config( array( 'html_debug_comment' => false ) ), $driver );
+		$served = khse_serve_cached_response( $this->config( array( 'html_debug_comment' => false ) ), $driver );
 
 		$this->assertIsString( $served );
-		$this->assertStringContainsString( 'ams-cache-plugin', $served );
+		$this->assertStringContainsString( 'kh-speed-engine-plugin', $served );
 		$this->assertStringNotContainsString( 'After', $served );
 	}
 
 	public function test_expert_debug_marks_expert_mode() {
-		$message = scm_build_served_debug_message( $this->config(), true, microtime( true ) );
+		$message = khse_build_served_debug_message( $this->config(), true, microtime( true ) );
 
 		$this->assertStringContainsString( '(running in Expert Mode)', $message );
 	}

@@ -2,7 +2,7 @@
 /**
  * Class PageOptimizationDefaultsTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
@@ -16,10 +16,10 @@ class PageOptimizationDefaultsTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_default_ucss_safelist_is_generated_from_protected_list() {
-		$defaults = scm_get_default_page_optimization_settings();
-		$lines    = scm_get_lines_from_textarea( $defaults['ucss_safelist'] );
+		$defaults = khse_get_default_page_optimization_settings();
+		$lines    = khse_get_lines_from_textarea( $defaults['ucss_safelist'] );
 		$expected = array_merge(
-			scm_get_protected_ucss_safelist(),
+			khse_get_protected_ucss_safelist(),
 			array( 'woocommerce', 'wp-block', 'alignwide', 'alignfull' )
 		);
 
@@ -32,9 +32,9 @@ class PageOptimizationDefaultsTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_default_js_exclusions_match_protected_list() {
-		$defaults = scm_get_default_page_optimization_settings();
-		$lines    = scm_get_lines_from_textarea( $defaults['js_exclusions'] );
+		$defaults = khse_get_default_page_optimization_settings();
+		$lines    = khse_get_lines_from_textarea( $defaults['js_exclusions'] );
 
-		$this->assertSame( scm_get_protected_js_exclusions(), $lines );
+		$this->assertSame( khse_get_protected_js_exclusions(), $lines );
 	}
 }

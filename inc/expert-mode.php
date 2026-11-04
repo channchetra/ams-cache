@@ -1,19 +1,19 @@
 <?php
 /**
- * AMS Cache helper functions.
+ * KH Speed Engine helper functions.
  *
- * @package   AMS Cache
- * @author    Terry Lin <terrylinooo>
+ * @package   KH Speed Engine
+ * @author    Chetra Chann <terrylinooo>
  * @license   GPLv3 (or later)
  * @link      https://terryl.in
- * @copyright 2020 Terry Lin
+ * @copyright 2020 Chetra Chann
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 
-define( 'SCM_INC', true );
+define( 'KHSE_INC', true );
 
 /**
  * Use the "Expert Mode", see explanation in setting page.
@@ -22,7 +22,7 @@ define( 'SCM_INC', true );
  * 
  * @return void
  */
-function scm_run_expert_mode( $args ) {
+function khse_run_expert_mode( $args ) {
 
 	// Raise memory early (Expert Mode runs before WP_MEMORY_LIMIT is applied).
 	// Default FPM 128M can be exhausted reading multi-MB cache files from the file driver.
@@ -41,8 +41,8 @@ function scm_run_expert_mode( $args ) {
 	$plugin_upload_dir = rtrim( $args['plugin_upload_dir'], '/' );
 	$runtime_dir       = isset( $args['runtime_dir'] ) ? rtrim( $args['runtime_dir'], '/' ) : '';
 
-	// Make sure that AMS Cache exists.
-	if ( ! file_exists( $plugin_dir . '/cache-master.php' ) ) {
+	// Make sure that KH Speed Engine exists.
+	if ( ! file_exists( $plugin_dir . '/kh-speed-engine.php' ) ) {
 		return;
 	}
 
@@ -91,7 +91,7 @@ function scm_run_expert_mode( $args ) {
 		$config['cache_enabled'] = true;
 	}
 
-	$cached_content = scm_serve_cached_response( $config, null, $plugin_upload_dir, true, $microtime_before );
+	$cached_content = khse_serve_cached_response( $config, null, $plugin_upload_dir, true, $microtime_before );
 
 	if ( null !== $cached_content ) {
 		echo $cached_content;

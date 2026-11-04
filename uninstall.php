@@ -1,11 +1,11 @@
 <?php
 /**
- * Uninstall AMS Cache plugin.
+ * Uninstall KH Speed Engine plugin.
  *
- * @author Terry Lin
- * @link https://terryl.in/
+ * @author Chetra Chann
+ * @link https://khspeed.com/
  *
- * @package AMS Cache
+ * @package KH Speed Engine
  * @since 1.0.0
  * @version 1.3.0
  */
@@ -15,14 +15,14 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	die;
 }
 
-if ( ! defined( 'SCM_INC' ) ) {
-	define( 'SCM_INC', true );
+if ( ! defined( 'KHSE_INC' ) ) {
+	define( 'KHSE_INC', true );
 }
 
 require_once __DIR__ . '/inc/cache-core.php';
 require_once __DIR__ . '/inc/admin/option-schema.php';
 
-$option_uninstall = get_option( 'scm_option_uninstall' );
+$option_uninstall = get_option( 'khse_option_uninstall' );
 $runtime_root     = '';
 $runtime_candidates = array();
 
@@ -45,48 +45,49 @@ foreach ( $runtime_candidates as $candidate ) {
 	}
 }
 
-$runtime_hash     = get_option( 'scm_dir_hash', '' );
-$runtime_blog     = get_option( 'scm_blog_id', 1 );
+$runtime_hash     = get_option( 'khse_dir_hash', '' );
+$runtime_blog     = get_option( 'khse_blog_id', 1 );
 
 if ( 'yes' === $option_uninstall ) {
 
-	$options = scm_get_option_keys();
+	$options = khse_get_option_keys();
 
 	foreach ( $options as $option ) {
-		delete_option( 'scm_option_' . $option );
+		delete_option( 'khse_option_' . $option );
 	}
 
 	// Legacy keys removed by the unified schema.
-	delete_option( 'scm_option_excluded_get_variables' );
-	delete_option( 'scm_option_excluded_post_variables' );
-	delete_option( 'scm_option_excluded_cookie_variables' );
-	delete_option( 'scm_option_woocommerce_taxonomies' );
+	delete_option( 'khse_option_excluded_get_variables' );
+	delete_option( 'khse_option_excluded_post_variables' );
+	delete_option( 'khse_option_excluded_cookie_variables' );
+	delete_option( 'khse_option_woocommerce_taxonomies' );
 
-	delete_option( 'scm_last_reset_time' );
-	delete_option( 'scm_version' );
-	delete_option( 'scm_dir_hash' );
-	delete_option( 'scm_blog_id' );
-	delete_option( 'scm_last_preload_time' );
-	delete_option( 'scm_last_preload_count' );
-	delete_option( 'scm_last_preload_priority_count' );
-	delete_option( 'scm_last_homepage_priority_preload_time' );
-	delete_option( 'scm_last_homepage_priority_preload_count' );
-	delete_option( 'scm_last_cache_prune_count' );
-	delete_option( 'scm_last_critical_preload_time' );
-	delete_option( 'scm_last_critical_preload_count' );
-	delete_option( 'scm_preload_queue_total' );
-	delete_option( 'scm_preload_queue_processed' );
-	delete_option( 'scm_preload_queue_remaining' );
-	delete_option( 'scm_preload_queue_started_time' );
-	delete_option( 'scm_preload_queue_finished_time' );
+	delete_option( 'khse_last_reset_time' );
+	delete_option( 'khse_version' );
+	delete_option( 'khse_brand_migrated' );
+	delete_option( 'khse_dir_hash' );
+	delete_option( 'khse_blog_id' );
+	delete_option( 'khse_last_preload_time' );
+	delete_option( 'khse_last_preload_count' );
+	delete_option( 'khse_last_preload_priority_count' );
+	delete_option( 'khse_last_homepage_priority_preload_time' );
+	delete_option( 'khse_last_homepage_priority_preload_count' );
+	delete_option( 'khse_last_cache_prune_count' );
+	delete_option( 'khse_last_critical_preload_time' );
+	delete_option( 'khse_last_critical_preload_count' );
+	delete_option( 'khse_preload_queue_total' );
+	delete_option( 'khse_preload_queue_processed' );
+	delete_option( 'khse_preload_queue_remaining' );
+	delete_option( 'khse_preload_queue_started_time' );
+	delete_option( 'khse_preload_queue_finished_time' );
 
 	$dirs = array(
-		WP_CONTENT_DIR . '/uploads/ams-cache',
+		WP_CONTENT_DIR . '/uploads/kh-speed-engine',
 		WP_CONTENT_DIR . '/uploads/' . 'cache' . '-master',
 	);
 
 	if ( '' !== $runtime_root && '' !== $runtime_hash ) {
-		$runtime_dir = rtrim( str_replace( '\\', '/', $runtime_root ), '/' ) . '/ams-cache/' . absint( $runtime_blog ) . '_' . sanitize_key( $runtime_hash );
+		$runtime_dir = rtrim( str_replace( '\\', '/', $runtime_root ), '/' ) . '/kh-speed-engine/' . absint( $runtime_blog ) . '_' . sanitize_key( $runtime_hash );
 		$public_root = rtrim( str_replace( '\\', '/', ABSPATH ), '/' ) . '/';
 
 		if ( 0 !== strncasecmp( $runtime_dir . '/', $public_root, strlen( $public_root ) ) ) {

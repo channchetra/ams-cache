@@ -1,15 +1,15 @@
-# AMS Cache: Persistent Expert Mode Runtime
+# KH Speed Engine: Persistent Expert Mode Runtime
 
-Use a persistent private directory for AMS Cache Expert Mode. Do not rely on `/tmp`; Docker restarts and host cleanup can remove it.
+Use a persistent private directory for KH Speed Engine Expert Mode. Do not rely on `/tmp`; Docker restarts and host cleanup can remove it.
 
 ## cPanel
 
 Create the directory outside `public_html`:
 
 ```bash
-mkdir -p /home/CPUSER/ams-cache-runtime
-chown -R CPUSER:CPUSER /home/CPUSER/ams-cache-runtime
-chmod 700 /home/CPUSER/ams-cache-runtime
+mkdir -p /home/CPUSER/kh-speed-engine-runtime
+chown -R CPUSER:CPUSER /home/CPUSER/kh-speed-engine-runtime
+chmod 700 /home/CPUSER/kh-speed-engine-runtime
 ```
 
 Replace `CPUSER` with the real cPanel account and PHP user.
@@ -20,35 +20,35 @@ Mount persistent storage outside the web root:
 
 ```yaml
 volumes:
-  ams_cache_runtime:
+  khse_cache_runtime:
 
 services:
   wordpress:
     volumes:
-      - ams_cache_runtime:/var/lib/ams-cache-runtime
+      - khse_cache_runtime:/var/lib/kh-speed-engine-runtime
 ```
 
 Ensure the PHP/WordPress user owns the mounted directory and it has mode `700`.
 
 ## `wp-config.php`
 
-Add this before the AMS Cache Expert Mode block. Use the path for the current environment:
+Add this before the KH Speed Engine Expert Mode block. Use the path for the current environment:
 
 ```php
 if ( ! defined( 'WP_TEMP_DIR' ) ) {
-    define( 'WP_TEMP_DIR', '/var/lib/ams-cache-runtime' );
+    define( 'WP_TEMP_DIR', '/var/lib/kh-speed-engine-runtime' );
 }
 ```
 
 cPanel example:
 
 ```php
-define( 'WP_TEMP_DIR', '/home/CPUSER/ams-cache-runtime' );
+define( 'WP_TEMP_DIR', '/home/CPUSER/kh-speed-engine-runtime' );
 ```
 
 ## Regenerate Expert Mode
 
-1. Open AMS Cache settings.
+1. Open KH Speed Engine settings.
 2. Save Expert Mode again.
 3. Replace the old generated `runtime_dir` value in `wp-config.php` with the newly generated value.
 4. Do not copy another site's hash or keep the old `/tmp/...` path.
@@ -56,7 +56,7 @@ define( 'WP_TEMP_DIR', '/home/CPUSER/ams-cache-runtime' );
 The generated path normally includes the site's cache subdirectory, for example:
 
 ```php
-'runtime_dir' => '/var/lib/ams-cache-runtime/ams-cache/1_<site-hash>',
+'runtime_dir' => '/var/lib/kh-speed-engine-runtime/kh-speed-engine/1_<site-hash>',
 ```
 
 ## Permissions
@@ -64,8 +64,8 @@ The generated path normally includes the site's cache subdirectory, for example:
 The runtime directory must be private. After Expert Mode creates its files:
 
 ```bash
-find /var/lib/ams-cache-runtime -type d -exec chmod 700 {} \;
-find /var/lib/ams-cache-runtime -type f -exec chmod 600 {} \;
+find /var/lib/kh-speed-engine-runtime -type d -exec chmod 700 {} \;
+find /var/lib/kh-speed-engine-runtime -type f -exec chmod 600 {} \;
 ```
 
 Use the cPanel path instead when applicable. Never use `777`, and never place this directory under `public_html` or the Docker web root.

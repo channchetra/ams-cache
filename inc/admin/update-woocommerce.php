@@ -1,24 +1,24 @@
 <?php
 /**
- * AMS Cache - WooCommerce hooks.
+ * KH Speed Engine - WooCommerce hooks.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-add_action( 'woocommerce_payment_complete', 'scm_payment_complete' );
+add_action( 'woocommerce_payment_complete', 'khse_payment_complete' );
 
 /**
  * Delete the cache of the post that is just updated.
  *
  * @return void
  */
-function scm_payment_complete( $order_id ) {
-	if ( 'yes' !== get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ) ) {
+function khse_payment_complete( $order_id ) {
+	if ( 'yes' !== get_option( 'khse_option_woocommerce_event_payment_complete', 'no' ) ) {
 		return;
 	}
 
@@ -29,7 +29,7 @@ function scm_payment_complete( $order_id ) {
 	}
 
 	$items = $order->get_items();
-	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
 
 	if ( is_wp_error( $driver ) ) {
 		$driver = null;
@@ -47,6 +47,6 @@ function scm_payment_complete( $order_id ) {
 			continue;
 		}
 
-		scm_purge_permalink( $post_url, $driver );
+		khse_purge_permalink( $post_url, $driver );
 	}
 }

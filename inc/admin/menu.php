@@ -1,80 +1,80 @@
 <?php
 /**
- * AMS Cache - Admin menu and assets.
+ * KH Speed Engine - Admin menu and assets.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-add_action( 'admin_menu', 'scm_option' );
-add_action( 'admin_enqueue_scripts', 'scm_admin_enqueue_scripts' );
-add_action( 'admin_enqueue_scripts', 'scm_admin_enqueue_styles' );
-add_filter( 'plugin_action_links_' . SCM_PLUGIN_NAME, 'scm_plugin_action_links', 10, 5 );
-add_filter( 'plugin_row_meta', 'scm_plugin_extend_links', 10, 2 );
+add_action( 'admin_menu', 'khse_option' );
+add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_scripts' );
+add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_styles' );
+add_filter( 'plugin_action_links_' . KHSE_PLUGIN_NAME, 'khse_plugin_action_links', 10, 5 );
+add_filter( 'plugin_row_meta', 'khse_plugin_extend_links', 10, 2 );
 
 /**
  * Register the plugin setting page.
  *
  * @return void
  */
-function scm_option() {
+function khse_option() {
 
 	add_menu_page(
-		__( 'AMS Cache', 'ams-cache' ),
-		__( 'AMS Cache', 'ams-cache' ),
+		__( 'KH Speed Engine', 'kh-speed-engine' ),
+		__( 'KH Speed Engine', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-dashboard',
-		'scm_dashboard_page',
+		'kh-speed-engine-dashboard',
+		'khse_dashboard_page',
 		'dashicons-superhero'
 	);
 
 	add_submenu_page(
-		'ams-cache-dashboard',
-		__( 'Dashboard', 'ams-cache' ),
-		__( 'Dashboard', 'ams-cache' ),
+		'kh-speed-engine-dashboard',
+		__( 'Dashboard', 'kh-speed-engine' ),
+		__( 'Dashboard', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-dashboard',
-		'scm_dashboard_page'
+		'kh-speed-engine-dashboard',
+		'khse_dashboard_page'
 	);
 
 	add_submenu_page(
-		'ams-cache-dashboard',
-		__( 'Settings', 'ams-cache' ),
-		__( 'Settings', 'ams-cache' ),
+		'kh-speed-engine-dashboard',
+		__( 'Settings', 'kh-speed-engine' ),
+		__( 'Settings', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-settings',
-		'scm_dashboard_page'
+		'kh-speed-engine-settings',
+		'khse_dashboard_page'
 	);
 
 	add_submenu_page(
-		'ams-cache-dashboard',
-		__( 'Expert Mode', 'ams-cache' ),
-		__( 'Expert Mode', 'ams-cache' ),
+		'kh-speed-engine-dashboard',
+		__( 'Expert Mode', 'kh-speed-engine' ),
+		__( 'Expert Mode', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-expert-mode',
-		'scm_dashboard_page'
+		'kh-speed-engine-expert-mode',
+		'khse_dashboard_page'
 	);
 
 	add_submenu_page(
-		'ams-cache-dashboard',
-		__( 'Statistics', 'ams-cache' ),
-		__( 'Statistics', 'ams-cache' ),
+		'kh-speed-engine-dashboard',
+		__( 'Statistics', 'kh-speed-engine' ),
+		__( 'Statistics', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-statistics',
-		'scm_dashboard_page'
+		'kh-speed-engine-statistics',
+		'khse_dashboard_page'
 	);
 
 	add_submenu_page(
-		'ams-cache-dashboard',
-		__( 'About', 'ams-cache' ),
-		__( 'About', 'ams-cache' ),
+		'kh-speed-engine-dashboard',
+		__( 'About', 'kh-speed-engine' ),
+		__( 'About', 'kh-speed-engine' ),
 		'manage_options',
-		'ams-cache-about',
-		'scm_dashboard_page'
+		'kh-speed-engine-about',
+		'khse_dashboard_page'
 	);
 }
 
@@ -83,10 +83,10 @@ function scm_option() {
  *
  * @return void
  */
-function scm_dashboard_page() {
-	scm_show_settings_header();
-	echo scm_load_view( 'page_dashboard' );
-	scm_show_settings_footer();
+function khse_dashboard_page() {
+	khse_show_settings_header();
+	echo khse_load_view( 'page_dashboard' );
+	khse_show_settings_footer();
 }
 
 /**
@@ -94,8 +94,8 @@ function scm_dashboard_page() {
  *
  * @return string
  */
-function scm_get_admin_console_view() {
-	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'ams-cache-dashboard';
+function khse_get_admin_console_view() {
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'kh-speed-engine-dashboard';
 	$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
 	$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : '';
 	$allowed_views = array(
@@ -115,19 +115,19 @@ function scm_get_admin_console_view() {
 		return $view;
 	}
 
-	if ( 'ams-cache-expert-mode' === $page ) {
+	if ( 'kh-speed-engine-expert-mode' === $page ) {
 		return 'expert';
 	}
 
-	if ( 'ams-cache-statistics' === $page ) {
+	if ( 'kh-speed-engine-statistics' === $page ) {
 		return 'statistics';
 	}
 
-	if ( 'ams-cache-about' === $page ) {
+	if ( 'kh-speed-engine-about' === $page ) {
 		return 'about';
 	}
 
-	if ( 'ams-cache-settings' === $page ) {
+	if ( 'kh-speed-engine-settings' === $page ) {
 		switch ( $tab ) {
 			case 'advanced':
 				return 'cache';
@@ -163,13 +163,13 @@ function scm_get_admin_console_view() {
  *
  * @return array Combined links.
  */
-function scm_plugin_action_links( $links, $file ) {
+function khse_plugin_action_links( $links, $file ) {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return $links;
 	}
 
-	if ( SCM_PLUGIN_NAME === $file ) {
-		$links[] = '<a href="' . admin_url( 'admin.php?page=ams-cache-settings' ) . '">' . __( 'Settings', 'ams-cache' ) . '</a>';
+	if ( KHSE_PLUGIN_NAME === $file ) {
+		$links[] = '<a href="' . admin_url( 'admin.php?page=kh-speed-engine-settings' ) . '">' . __( 'Settings', 'kh-speed-engine' ) . '</a>';
 		return $links;
 	}
 }
@@ -182,13 +182,13 @@ function scm_plugin_action_links( $links, $file ) {
  *
  * @return array Combined links.
  */
-function scm_plugin_extend_links( $links, $file ) {
+function khse_plugin_extend_links( $links, $file ) {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return $links;
 	}
 
-	if ( SCM_PLUGIN_NAME === $file ) {
-		$links[] = '<a href="https://ams.com.kh/" target="_blank">' . __( 'Source code', 'ams-cache' ) . '</a>';
+	if ( KHSE_PLUGIN_NAME === $file ) {
+		$links[] = '<a href="https://khspeed.com/" target="_blank">' . __( 'Source code', 'kh-speed-engine' ) . '</a>';
 	}
 	return $links;
 }
@@ -198,7 +198,7 @@ function scm_plugin_extend_links( $links, $file ) {
  *
  * @return array
  */
-function scm_get_admin_build_asset_entry() {
+function khse_get_admin_build_asset_entry() {
 	static $entry = null;
 
 	if ( null !== $entry ) {
@@ -206,7 +206,7 @@ function scm_get_admin_build_asset_entry() {
 	}
 
 	$entry = array();
-	$manifest_path = SCM_PLUGIN_DIR . 'inc/assets/build/.vite/manifest.json';
+	$manifest_path = KHSE_PLUGIN_DIR . 'inc/assets/build/.vite/manifest.json';
 
 	if ( ! file_exists( $manifest_path ) ) {
 		return $entry;
@@ -235,8 +235,8 @@ function scm_get_admin_build_asset_entry() {
  *
  * @return string
  */
-function scm_get_admin_build_asset_url( $file ) {
-	return SCM_PLUGIN_URL . 'inc/assets/build/' . ltrim( $file, '/' );
+function khse_get_admin_build_asset_url( $file ) {
+	return KHSE_PLUGIN_URL . 'inc/assets/build/' . ltrim( $file, '/' );
 }
 
 /**
@@ -246,109 +246,109 @@ function scm_get_admin_build_asset_url( $file ) {
  *
  * @return string
  */
-function scm_get_admin_build_asset_version( $file ) {
-	$path = SCM_PLUGIN_DIR . 'inc/assets/build/' . ltrim( $file, '/' );
+function khse_get_admin_build_asset_version( $file ) {
+	$path = KHSE_PLUGIN_DIR . 'inc/assets/build/' . ltrim( $file, '/' );
 
-	return file_exists( $path ) ? (string) filemtime( $path ) : SCM_PLUGIN_VERSION;
+	return file_exists( $path ) ? (string) filemtime( $path ) : KHSE_PLUGIN_VERSION;
 }
 
 /**
- * Load specfic CSS file for the AMS Cache setting page.
+ * Load specfic CSS file for the KH Speed Engine setting page.
  */
-function scm_admin_enqueue_styles( $hook_suffix ) {
+function khse_admin_enqueue_styles( $hook_suffix ) {
 
-	if ( false === strpos( $hook_suffix, 'ams-cache' ) ) {
+	if ( false === strpos( $hook_suffix, 'kh-speed-engine' ) ) {
 		return;
 	}
 
-	$entry = scm_get_admin_build_asset_entry();
+	$entry = khse_get_admin_build_asset_entry();
 	$css_files = array();
 
 	if ( ! empty( $entry['css'] ) && is_array( $entry['css'] ) ) {
 		$css_files = $entry['css'];
-	} elseif ( file_exists( SCM_PLUGIN_DIR . 'inc/assets/build/admin.css' ) ) {
+	} elseif ( file_exists( KHSE_PLUGIN_DIR . 'inc/assets/build/admin.css' ) ) {
 		$css_files = array( 'admin.css' );
 	}
 
 	if ( ! empty( $css_files ) ) {
 		foreach ( $css_files as $index => $css_file ) {
-			wp_enqueue_style( 'ams-cache-admin-built-' . $index, scm_get_admin_build_asset_url( $css_file ), array(), scm_get_admin_build_asset_version( $css_file ), 'all' );
+			wp_enqueue_style( 'kh-speed-engine-admin-built-' . $index, khse_get_admin_build_asset_url( $css_file ), array(), khse_get_admin_build_asset_version( $css_file ), 'all' );
 		}
 	} else {
-		wp_enqueue_style( 'ams-cache-admin-css', SCM_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), SCM_PLUGIN_VERSION, 'all' );
+		wp_enqueue_style( 'kh-speed-engine-admin-css', KHSE_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), KHSE_PLUGIN_VERSION, 'all' );
 	}
 
-	wp_enqueue_style( 'ams-cache-code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), SCM_PLUGIN_VERSION, 'all' );
+	wp_enqueue_style( 'kh-speed-engine-code-highlight', KHSE_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), KHSE_PLUGIN_VERSION, 'all' );
 	wp_enqueue_style( 'wp-jquery-ui-dialog' );
 }
 
 /**
  * Register JS files.
  */
-function scm_admin_enqueue_scripts( $hook_suffix ) {
+function khse_admin_enqueue_scripts( $hook_suffix ) {
 
-	if ( false === strpos( $hook_suffix, 'ams-cache' ) ) {
+	if ( false === strpos( $hook_suffix, 'kh-speed-engine' ) ) {
 		return;
 	}
-	wp_enqueue_script( 'ams-cache-code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/highlight.pack.js', array(), SCM_PLUGIN_VERSION, 'all' );
+	wp_enqueue_script( 'kh-speed-engine-code-highlight', KHSE_PLUGIN_URL . 'inc/assets/highlight/highlight.pack.js', array(), KHSE_PLUGIN_VERSION, 'all' );
 	wp_enqueue_script( 'jquery-ui-dialog' );
 
-	if ( false !== strpos( $hook_suffix, 'ams-cache' ) ) {
-		$entry = scm_get_admin_build_asset_entry();
+	if ( false !== strpos( $hook_suffix, 'kh-speed-engine' ) ) {
+		$entry = khse_get_admin_build_asset_entry();
 
 		if ( empty( $entry['file'] ) ) {
 			return;
 		}
 
-		wp_enqueue_script( 'ams-cache-dashboard', scm_get_admin_build_asset_url( $entry['file'] ), array(), scm_get_admin_build_asset_version( $entry['file'] ), true );
+		wp_enqueue_script( 'kh-speed-engine-dashboard', khse_get_admin_build_asset_url( $entry['file'] ), array(), khse_get_admin_build_asset_version( $entry['file'] ), true );
 
 		wp_localize_script(
-			'ams-cache-dashboard',
+			'kh-speed-engine-dashboard',
 			'amsCacheDashboard',
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'scm_dashboard_' . scm_get_dir_hash() ),
-				'view'    => scm_get_admin_console_view(),
-				'status'  => scm_dashboard_get_status_data(),
+				'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),
+				'view'    => khse_get_admin_console_view(),
+				'status'  => khse_dashboard_get_status_data(),
 				'i18n'    => array(
-					'loading' => __( 'Working...', 'ams-cache' ),
-					'failed'  => __( 'Request failed.', 'ams-cache' ),
-					'saving'  => __( 'Saving...', 'ams-cache' ),
-					'saved'   => __( 'Settings saved.', 'ams-cache' ),
-					'saveFail'=> __( 'Settings could not be saved.', 'ams-cache' ),
-					'yes'     => __( 'Yes', 'ams-cache' ),
-					'no'      => __( 'No', 'ams-cache' ),
+					'loading' => __( 'Working...', 'kh-speed-engine' ),
+					'failed'  => __( 'Request failed.', 'kh-speed-engine' ),
+					'saving'  => __( 'Saving...', 'kh-speed-engine' ),
+					'saved'   => __( 'Settings saved.', 'kh-speed-engine' ),
+					'saveFail'=> __( 'Settings could not be saved.', 'kh-speed-engine' ),
+					'yes'     => __( 'Yes', 'kh-speed-engine' ),
+					'no'      => __( 'No', 'kh-speed-engine' ),
 					'views'   => array(
-						'overview'    => __( 'Overview', 'ams-cache' ),
-						'cache'       => __( 'Cache', 'ams-cache' ),
-						'preload'     => __( 'Preload', 'ams-cache' ),
-						'performance' => __( 'Performance', 'ams-cache' ),
-						'rules'       => __( 'Rules', 'ams-cache' ),
-						'statistics'  => __( 'Statistics', 'ams-cache' ),
-						'expert'      => __( 'Expert Mode', 'ams-cache' ),
-						'benchmark'   => __( 'Benchmark', 'ams-cache' ),
-						'woocommerce' => __( 'WooCommerce', 'ams-cache' ),
-						'about'       => __( 'About', 'ams-cache' ),
+						'overview'    => __( 'Overview', 'kh-speed-engine' ),
+						'cache'       => __( 'Cache', 'kh-speed-engine' ),
+						'preload'     => __( 'Preload', 'kh-speed-engine' ),
+						'performance' => __( 'Performance', 'kh-speed-engine' ),
+						'rules'       => __( 'Rules', 'kh-speed-engine' ),
+						'statistics'  => __( 'Statistics', 'kh-speed-engine' ),
+						'expert'      => __( 'Expert Mode', 'kh-speed-engine' ),
+						'benchmark'   => __( 'Benchmark', 'kh-speed-engine' ),
+						'woocommerce' => __( 'WooCommerce', 'kh-speed-engine' ),
+						'about'       => __( 'About', 'kh-speed-engine' ),
 					),
 					'features' => array(
-						'minify_html'       => __( 'Minify HTML', 'ams-cache' ),
-						'remove_comments'   => __( 'Remove comments', 'ams-cache' ),
-						'minify_inline_css' => __( 'Minify inline CSS', 'ams-cache' ),
-						'lazy_media'        => __( 'Lazy media', 'ams-cache' ),
-						'critical_images'   => __( 'Critical images', 'ams-cache' ),
-						'preconnect_fonts'  => __( 'Font preconnect', 'ams-cache' ),
-						'defer_js'          => __( 'Defer JavaScript', 'ams-cache' ),
-						'external_ucss'     => __( 'External UCSS', 'ams-cache' ),
-						'local_ucss'        => __( 'Local UCSS', 'ams-cache' ),
-						'js_analysis'       => __( 'JS analysis', 'ams-cache' ),
+						'minify_html'       => __( 'Minify HTML', 'kh-speed-engine' ),
+						'remove_comments'   => __( 'Remove comments', 'kh-speed-engine' ),
+						'minify_inline_css' => __( 'Minify inline CSS', 'kh-speed-engine' ),
+						'lazy_media'        => __( 'Lazy media', 'kh-speed-engine' ),
+						'critical_images'   => __( 'Critical images', 'kh-speed-engine' ),
+						'preconnect_fonts'  => __( 'Font preconnect', 'kh-speed-engine' ),
+						'defer_js'          => __( 'Defer JavaScript', 'kh-speed-engine' ),
+						'external_ucss'     => __( 'External UCSS', 'kh-speed-engine' ),
+						'local_ucss'        => __( 'Local UCSS', 'kh-speed-engine' ),
+						'js_analysis'       => __( 'JS analysis', 'kh-speed-engine' ),
 					),
 					'statuses' => array(
-						'applied'        => __( 'Applied', 'ams-cache' ),
-						'no_change'      => __( 'No change', 'ams-cache' ),
-						'disabled'       => __( 'Disabled', 'ams-cache' ),
-						'pending_engine' => __( 'Pending engine', 'ams-cache' ),
-						'failed'         => __( 'Failed', 'ams-cache' ),
-						'unknown'        => __( 'Unknown', 'ams-cache' ),
+						'applied'        => __( 'Applied', 'kh-speed-engine' ),
+						'no_change'      => __( 'No change', 'kh-speed-engine' ),
+						'disabled'       => __( 'Disabled', 'kh-speed-engine' ),
+						'pending_engine' => __( 'Pending engine', 'kh-speed-engine' ),
+						'failed'         => __( 'Failed', 'kh-speed-engine' ),
+						'unknown'        => __( 'Unknown', 'kh-speed-engine' ),
 					),
 				),
 			)
@@ -361,15 +361,15 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
  *
  * @return void
  */
-function scm_show_settings_header() {
-	echo '<div class="wrap scm-wrap">';
+function khse_show_settings_header() {
+	echo '<div class="wrap khse-wrap">';
 
 	if ( '' === get_option( 'permalink_structure' ) ) {
-		$url_html = '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/options-permalink.php">' . __( 'Permalink Setting', 'ams-cache' ) . '</a>';
+		$url_html = '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/options-permalink.php">' . __( 'Permalink Setting', 'kh-speed-engine' ) . '</a>';
 		echo '<div class="notice notice-error is-dismissible"><p>';
-		echo __( 'AMS Cache supports only static URL structure.', 'ams-cache' ) . ' ';
+		echo __( 'KH Speed Engine supports only static URL structure.', 'kh-speed-engine' ) . ' ';
 		// translators: %s: permalink setting url.
-		printf( __( 'You need to go to the %s page and change the permalink settings.', 'ams-cache' ), $url_html );
+		printf( __( 'You need to go to the %s page and change the permalink settings.', 'kh-speed-engine' ), $url_html );
 		echo '</p></div>';
 	}
 }
@@ -379,6 +379,6 @@ function scm_show_settings_header() {
  *
  * @return void
  */
-function scm_show_settings_footer() {
+function khse_show_settings_footer() {
 	echo '</div>';
 }

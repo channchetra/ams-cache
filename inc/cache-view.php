@@ -1,12 +1,12 @@
 <?php
 /**
- * AMS Cache — cache-view.php
+ * KH Speed Engine — cache-view.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
@@ -19,7 +19,7 @@ if ( ! defined( 'SCM_INC' ) ) {
  *
  * @return string
  */
-function scm_get_svg_icon( $type ) {
+function khse_get_svg_icon( $type ) {
 	$svg = '';
 
 	switch ( $type ) {
@@ -46,7 +46,7 @@ function scm_get_svg_icon( $type ) {
 /**
  * Read or write the page performance variable state.
  *
- * Internal helper; use scm_set_view_variable() / scm_drain_view_variables().
+ * Internal helper; use khse_set_view_variable() / khse_drain_view_variables().
  *
  * @param string|null $key      Variable name, or null to drain.
  * @param mixed       $value    Variable value.
@@ -54,7 +54,7 @@ function scm_get_svg_icon( $type ) {
  *
  * @return string|null JSON when draining, null otherwise.
  */
-function scm_view_variable_state( $key = null, $value = '', $position = 'before' ) {
+function khse_view_variable_state( $key = null, $value = '', $position = 'before' ) {
 	static $vars = array();
 
 	if ( null === $key ) {
@@ -78,8 +78,8 @@ function scm_view_variable_state( $key = null, $value = '', $position = 'before'
  *
  * @return void
  */
-function scm_set_view_variable( $key, $value = '', $position = 'before' ) {
-	scm_view_variable_state( $key, $value, $position );
+function khse_set_view_variable( $key, $value = '', $position = 'before' ) {
+	khse_view_variable_state( $key, $value, $position );
 }
 
 /**
@@ -87,8 +87,8 @@ function scm_set_view_variable( $key, $value = '', $position = 'before' ) {
  *
  * @return string
  */
-function scm_drain_view_variables() {
-	return (string) scm_view_variable_state( null );
+function khse_drain_view_variables() {
+	return (string) khse_view_variable_state( null );
 }
 
 /**
@@ -98,45 +98,45 @@ function scm_drain_view_variables() {
  *
  * @return string
  */
-function scm_javascript() {
-	$cache_status_empty = function_exists( '__' ) ? __( 'No', 'ams-cache' ) : 'No';
-	$cache_status_hit   = function_exists( '__' ) ? __( 'Yes', 'ams-cache' ) : 'Yes';
+function khse_javascript() {
+	$cache_status_empty = function_exists( '__' ) ? __( 'No', 'kh-speed-engine' ) : 'No';
+	$cache_status_hit   = function_exists( '__' ) ? __( 'Yes', 'kh-speed-engine' ) : 'Yes';
 	$cache_status_empty_js = json_encode( $cache_status_empty );
 	$cache_status_hit_js   = json_encode( $cache_status_hit );
 
 	$script = '
-		<script id="ams-cache-plugin">
-			var cache_master = \'' . scm_drain_view_variables() . '\';
-			var scm_report   = JSON.parse(cache_master);
+		<script id="kh-speed-engine-plugin">
+			var cache_master = \'' . khse_drain_view_variables() . '\';
+			var khse_report   = JSON.parse(cache_master);
 
-			var scm_text_cache_status = "";
-			var scm_text_memory_usage = "";
-			var scm_text_sql_queries  = "";
-			var scm_text_page_generation_time = "";
+			var khse_text_cache_status = "";
+			var khse_text_memory_usage = "";
+			var khse_text_sql_queries  = "";
+			var khse_text_page_generation_time = "";
 
-			if ("before" in scm_report) {
-				scm_text_cache_status = ' . $cache_status_empty_js . ';
-				scm_text_memory_usage = scm_report["before"]["memory_usage"];
-				scm_text_sql_queries = scm_report["before"]["sql_queries"];
-				scm_text_page_generation_time = scm_report["before"]["page_generation_time"];
+			if ("before" in khse_report) {
+				khse_text_cache_status = ' . $cache_status_empty_js . ';
+				khse_text_memory_usage = khse_report["before"]["memory_usage"];
+				khse_text_sql_queries = khse_report["before"]["sql_queries"];
+				khse_text_page_generation_time = khse_report["before"]["page_generation_time"];
 			}
-			if ("after" in scm_report) {
-				scm_text_cache_status = ' . $cache_status_hit_js . ';
-				scm_text_memory_usage = scm_report["after"]["memory_usage"];
-				scm_text_sql_queries = scm_report["after"]["sql_queries"];
-				scm_text_page_generation_time = scm_report["after"]["page_generation_time"];
+			if ("after" in khse_report) {
+				khse_text_cache_status = ' . $cache_status_hit_js . ';
+				khse_text_memory_usage = khse_report["after"]["memory_usage"];
+				khse_text_sql_queries = khse_report["after"]["sql_queries"];
+				khse_text_page_generation_time = khse_report["after"]["page_generation_time"];
 			}
-			var scm_field_cache_status = document.querySelector(".scm-field-cache-status");
-			if (null !== scm_field_cache_status) { scm_field_cache_status.textContent = scm_text_cache_status; }
-			var scm_field_memory_usage = document.querySelector(".scm-field-memory-usage");
-			if (null !== scm_field_memory_usage) { scm_field_memory_usage.textContent = scm_text_memory_usage; }
-			var scm_field_sql_queries = document.querySelector(".scm-field-sql-queries");
-			if (null !== scm_field_sql_queries) { scm_field_sql_queries.textContent = scm_text_sql_queries; }
-			var scm_field_page_generation_time = document.querySelector(".scm-field-page-generation-time");
-			if (null !== scm_field_page_generation_time) { scm_field_page_generation_time.textContent = scm_text_page_generation_time; }
-			var cache_master_benchmark_report = document.querySelector(".ams-cache-benchmark-report");
+			var khse_field_cache_status = document.querySelector(".khse-field-cache-status");
+			if (null !== khse_field_cache_status) { khse_field_cache_status.textContent = khse_text_cache_status; }
+			var khse_field_memory_usage = document.querySelector(".khse-field-memory-usage");
+			if (null !== khse_field_memory_usage) { khse_field_memory_usage.textContent = khse_text_memory_usage; }
+			var khse_field_sql_queries = document.querySelector(".khse-field-sql-queries");
+			if (null !== khse_field_sql_queries) { khse_field_sql_queries.textContent = khse_text_sql_queries; }
+			var khse_field_page_generation_time = document.querySelector(".khse-field-page-generation-time");
+			if (null !== khse_field_page_generation_time) { khse_field_page_generation_time.textContent = khse_text_page_generation_time; }
+			var cache_master_benchmark_report = document.querySelector(".kh-speed-engine-benchmark-report");
 			if (null !== cache_master_benchmark_report) { cache_master_benchmark_report.setAttribute("style", ""); }
-			var cache_master_plugin_widget_wrapper = document.querySelector(".ams-cache-plugin-widget-wrapper");
+			var cache_master_plugin_widget_wrapper = document.querySelector(".kh-speed-engine-plugin-widget-wrapper");
 			if (null !== cache_master_plugin_widget_wrapper) { cache_master_plugin_widget_wrapper.setAttribute("style", ""); }
 		</script>
 	';
@@ -151,35 +151,35 @@ function scm_javascript() {
  *
  * @return string
  */
-function scm_render_benchmark_metrics( $layout = 'footer' ) {
+function khse_render_benchmark_metrics( $layout = 'footer' ) {
 	$metrics = array(
 		array(
 			'key'    => 'cache-status',
-			'label'  => __( 'Cache status', 'ams-cache' ),
-			'title'  => __( 'Cache status powered by AMS Cache plugin', 'ams-cache' ),
+			'label'  => __( 'Cache status', 'kh-speed-engine' ),
+			'title'  => __( 'Cache status powered by KH Speed Engine plugin', 'kh-speed-engine' ),
 			'icon'   => 'status',
 			'suffix' => '',
 		),
 		array(
 			'key'    => 'memory-usage',
-			'label'  => __( 'Memory usage', 'ams-cache' ),
-			'title'  => __( 'Memory usage', 'ams-cache' ),
+			'label'  => __( 'Memory usage', 'kh-speed-engine' ),
+			'title'  => __( 'Memory usage', 'kh-speed-engine' ),
 			'icon'   => 'memory',
 			'suffix' => ' MB',
 		),
 		array(
 			'key'    => 'sql-queries',
-			'label'  => __( 'SQL queries', 'ams-cache' ),
-			'title'  => __( 'SQL queries', 'ams-cache' ),
+			'label'  => __( 'SQL queries', 'kh-speed-engine' ),
+			'title'  => __( 'SQL queries', 'kh-speed-engine' ),
 			'icon'   => 'database',
 			'suffix' => '',
 		),
 		array(
 			'key'    => 'page-generation-time',
-			'label'  => __( 'Page generation time', 'ams-cache' ),
-			'title'  => __( 'Page generation time', 'ams-cache' ),
+			'label'  => __( 'Page generation time', 'kh-speed-engine' ),
+			'title'  => __( 'Page generation time', 'kh-speed-engine' ),
 			'icon'   => 'speed',
-			'suffix' => ' (' . __( 'seconds', 'ams-cache' ) . ')',
+			'suffix' => ' (' . __( 'seconds', 'kh-speed-engine' ) . ')',
 		),
 	);
 
@@ -188,14 +188,14 @@ function scm_render_benchmark_metrics( $layout = 'footer' ) {
 
 	foreach ( $metrics as $metric ) {
 		$index++;
-		$icon  = '<span class="scm-img scm-img-' . $index . '" title="' . esc_attr( $metric['title'] ) . '">' . scm_get_svg_icon( $metric['icon'] ) . '</span>';
-		$label = '<span class="scm-text">' . esc_html( $metric['label'] ) . ( 'footer' === $layout ? ': ' : '' ) . '</span>';
-		$value = '<span class="scm-field-' . esc_attr( $metric['key'] ) . '">-</span>' . esc_html( $metric['suffix'] );
+		$icon  = '<span class="khse-img khse-img-' . $index . '" title="' . esc_attr( $metric['title'] ) . '">' . khse_get_svg_icon( $metric['icon'] ) . '</span>';
+		$label = '<span class="khse-text">' . esc_html( $metric['label'] ) . ( 'footer' === $layout ? ': ' : '' ) . '</span>';
+		$value = '<span class="khse-field-' . esc_attr( $metric['key'] ) . '">-</span>' . esc_html( $metric['suffix'] );
 
 		if ( 'widget' === $layout ) {
-			$html .= '<div class="scm-tr"><div class="scm-td">' . $icon . $label . '</div><div class="scm-td">' . $value . '</div></div>';
+			$html .= '<div class="khse-tr"><div class="khse-td">' . $icon . $label . '</div><div class="khse-td">' . $value . '</div></div>';
 		} else {
-			$html .= '<div class="scm-td">' . $icon . $label . '<span class="scm-value">' . $value . '</span></div>';
+			$html .= '<div class="khse-td">' . $icon . $label . '<span class="khse-value">' . $value . '</span></div>';
 		}
 	}
 

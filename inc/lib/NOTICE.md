@@ -1,7 +1,7 @@
 # Third-Party Libraries
 
-AMS Cache vendors the following MIT-licensed libraries in this directory. They
-were copied from the Composer packages (`vendor/`) so that AMS Cache can
+KH Speed Engine vendors the following MIT-licensed libraries in this directory. They
+were copied from the Composer packages (`vendor/`) so that KH Speed Engine can
 maintain and patch them in-repo instead of relying on `composer install` at
 runtime.
 

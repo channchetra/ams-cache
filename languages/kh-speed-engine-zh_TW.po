@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AMS Cache\n"
+"Project-Id-Version: KH Speed Engine\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-10-27 06:45+0000\n"
 "PO-Revision-Date: 2023-05-28 17:25+0000\n"
-"Last-Translator: Terry Lin <contact@terryl.in>\n"
+"Last-Translator: Chetra Chann <contact@khspeed.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -48,7 +48,7 @@ msgstr "連線禁止。"
 msgid "Advanced"
 msgstr "進階"
 
-#: inc/class-cache-master.php:480
+#: inc/class-kh-speed-engine.php:480
 msgid "After"
 msgstr "快取後"
 
@@ -67,7 +67,7 @@ msgstr "總是顯示快取網頁給訪客。"
 msgid ""
 "Any request containing those variables, even if its value is empty, will be "
 "ignored by Caster Master."
-msgstr "含有這些變數的任何請求，即便為空值，AMS Cache 也會略過處理。"
+msgstr "含有這些變數的任何請求，即便為空值，KH Speed Engine 也會略過處理。"
 
 #: inc/admin/views/option-driver.php:22
 msgid "APC"
@@ -96,14 +96,14 @@ msgstr "基本設定"
 #: inc/admin/views/option-expert-mode-status.php:20
 #, fuzzy
 #| msgid ""
-#| "Because AMS Cache works after all plguins installed, it can only save "
+#| "Because KH Speed Engine works after all plguins installed, it can only save "
 #| "a maximum of 20-25 percent memory."
 msgid ""
-"Because AMS Cache works after all plugins are installed, it can only save "
+"Because KH Speed Engine works after all plugins are installed, it can only save "
 "a maximum of 20-25 percent memory."
-msgstr "因為AMS Cache在所有外掛載入後運作，最多只能節省 20-25 百分比的記憶體。"
+msgstr "因為KH Speed Engine在所有外掛載入後運作，最多只能節省 20-25 百分比的記憶體。"
 
-#: inc/class-cache-master.php:497
+#: inc/class-kh-speed-engine.php:497
 msgid "Before"
 msgstr "快取前"
 
@@ -117,7 +117,7 @@ msgid ""
 "generation time and page caching status."
 msgstr "基準分析資訊由記憶體使用量、資料庫讀取次數、頁面產生耗費時間及頁面快取狀態所組成。"
 
-#: inc/admin/classes/class-scm-benchmark-widget.php:33
+#: inc/admin/classes/class-khse-benchmark-widget.php:33
 msgid "Benchmark Report"
 msgstr "資準分析報告"
 
@@ -136,40 +136,40 @@ msgstr "快取已被清除。"
 
 #. Name of the plugin
 #: inc/admin/menu.php:29 inc/admin/menu.php:30 inc/admin/update-post.php:52
-#: inc/admin/classes/class-scm-benchmark-widget.php:105
-msgid "AMS Cache"
-msgstr "AMS Cache"
+#: inc/admin/classes/class-khse-benchmark-widget.php:105
+msgid "KH Speed Engine"
+msgstr "KH Speed Engine"
 
 #. %s is the plugin name.
 #: inc/admin/views/page-settings-page.php:44
 #, php-format
 msgid ""
-"AMS Cache cannot work with the plugin \"%s\" becasue of output buffer "
+"KH Speed Engine cannot work with the plugin \"%s\" becasue of output buffer "
 "conflicts."
-msgstr "AMS Cache無法和此外掛「%s」一同運作，因為緩衝區輸出衝突的關係。"
+msgstr "KH Speed Engine無法和此外掛「%s」一同運作，因為緩衝區輸出衝突的關係。"
 
 #. %1$s: Terry L. %2$s: Taiwan
 #: inc/admin/views/page-about.php:24
 #, php-format
 msgid ""
-"AMS Cache is brought to you by <a href=\"%1$s\">Terry L.</a> from <a "
+"KH Speed Engine is brought to you by <a href=\"%1$s\">Terry L.</a> from <a "
 "href=\"%2$s\">Taiwan</a>."
 msgstr ""
-"來自<a href=\"%2$s\">台灣</a>的<a href=\"%1$s\">Terry L.</a> 帶給您 AMS Cache。"
+"來自<a href=\"%2$s\">台灣</a>的<a href=\"%1$s\">Terry L.</a> 帶給您 KH Speed Engine。"
 
 #: inc/admin/menu.php:213
-msgid "AMS Cache supports only static URL structure."
-msgstr "AMS Cache只支援靜態網址結構。"
+msgid "KH Speed Engine supports only static URL structure."
+msgstr "KH Speed Engine只支援靜態網址結構。"
 
-#: inc/class-cache-master.php:672
-#: inc/admin/classes/class-scm-benchmark-widget.php:55
+#: inc/class-kh-speed-engine.php:672
+#: inc/admin/classes/class-khse-benchmark-widget.php:55
 msgid "Cache status"
 msgstr "快取狀態"
 
-#: inc/class-cache-master.php:671
-#: inc/admin/classes/class-scm-benchmark-widget.php:54
-msgid "Cache status powered by AMS Cache plugin"
-msgstr "快取狀態由 AMS Cache 外掛提供"
+#: inc/class-kh-speed-engine.php:671
+#: inc/admin/classes/class-khse-benchmark-widget.php:54
+msgid "Cache status powered by KH Speed Engine plugin"
+msgstr "快取狀態由 KH Speed Engine 外掛提供"
 
 #: inc/admin/views/page-statistics.php:56
 msgid "Cache Type"
@@ -264,9 +264,9 @@ msgstr "顯示"
 msgid "Display the benchmark information in the footer area."
 msgstr "在底部區域顯示基準分析資訊。"
 
-#: inc/admin/classes/class-scm-benchmark-widget.php:29
-msgid "Display the benchmark report before and after caching by AMS Cache."
-msgstr "顯示經由 AMS Cache 快取前後的基準分析報告。"
+#: inc/admin/classes/class-khse-benchmark-widget.php:29
+msgid "Display the benchmark report before and after caching by KH Speed Engine."
+msgstr "顯示經由 KH Speed Engine 快取前後的基準分析報告。"
 
 #: inc/admin/setting.php:104 inc/admin/setting.php:199
 msgid "Driver"
@@ -319,7 +319,7 @@ msgstr "排除"
 msgid "Expert Mode"
 msgstr "專家模式"
 
-#: inc/class-cache-master.php:499
+#: inc/class-kh-speed-engine.php:499
 #, php-format
 msgid "Expires at: %s"
 msgstr "過期於：%s"
@@ -362,20 +362,20 @@ msgstr "主機"
 #: inc/admin/views/option-expert-mode-status.php:25
 #, php-format
 msgid ""
-"However, if you modify %s to let AMS Cache output cache before everything "
+"However, if you modify %s to let KH Speed Engine output cache before everything "
 "initialized, it can save up to a maximum of <strong>95</strong> percent "
 "memory - possibly even more."
 msgstr ""
-"不過呢，如果你修改 %s 讓AMS Cache能在所有東西完成初始化之前輸出快取，可以節省上看 <strong>95</strong> "
+"不過呢，如果你修改 %s 讓KH Speed Engine能在所有東西完成初始化之前輸出快取，可以節省上看 <strong>95</strong> "
 "百分比的記憶體，甚至更多。"
 
 #. URI of the plugin
-msgid "https://ams.com.kh/"
-msgstr "https://ams.com.kh/"
+msgid "https://khspeed.com/"
+msgstr "https://khspeed.com/"
 
 #. Author URI of the plugin
-msgid "https://terryl.in/"
-msgstr "https://terryl.in/"
+msgid "https://khspeed.com/"
+msgstr "https://khspeed.com/"
 
 #: inc/admin/views/option-benchmark-footer-text-display.php:31
 #: inc/admin/views/option-benchmark-widget-display.php:31
@@ -403,8 +403,8 @@ msgid ""
 msgstr "在原始碼中插入一個 HTML 偵錯註解。這個只為偵錯用途，讓我們知道頁面正被快取中。"
 
 #: inc/admin/views/option-uninstall.php:31
-msgid "Keep data generated by AMS Cache."
-msgstr "保持AMS Cache產生的資料。"
+msgid "Keep data generated by KH Speed Engine."
+msgstr "保持KH Speed Engine產生的資料。"
 
 #: inc/admin/setting.php:141
 msgid "Logged-in Users"
@@ -430,13 +430,13 @@ msgstr "Memcache"
 msgid "Memcached"
 msgstr "Memcached"
 
-#: inc/class-cache-master.php:678 inc/class-cache-master.php:679
-#: inc/admin/classes/class-scm-benchmark-widget.php:63
-#: inc/admin/classes/class-scm-benchmark-widget.php:64
+#: inc/class-kh-speed-engine.php:678 inc/class-kh-speed-engine.php:679
+#: inc/admin/classes/class-khse-benchmark-widget.php:63
+#: inc/admin/classes/class-khse-benchmark-widget.php:64
 msgid "Memory usage"
 msgstr "記憶體使用量"
 
-#: inc/class-cache-master.php:482 inc/class-cache-master.php:500
+#: inc/class-kh-speed-engine.php:482 inc/class-kh-speed-engine.php:500
 #, php-format
 msgid "Memory usage: %s MB"
 msgstr "記憶體使用量：%s MB"
@@ -464,7 +464,7 @@ msgstr "否"
 msgid "Note"
 msgstr "注意"
 
-#: inc/class-cache-master.php:481
+#: inc/class-kh-speed-engine.php:481
 #, php-format
 msgid "Now: %s"
 msgstr "現在時間：%s"
@@ -472,12 +472,12 @@ msgstr "現在時間：%s"
 #: inc/admin/views/option-caching-status.php:35
 #, fuzzy
 #| msgid ""
-#| "Once you make this option disable, AMS Cache will stop working and all "
+#| "Once you make this option disable, KH Speed Engine will stop working and all "
 #| "cache  will be cleared."
 msgid ""
-"Once you disable this option, AMS Cache will stop working and all cache "
+"Once you disable this option, KH Speed Engine will stop working and all cache "
 "will be cleared."
-msgstr "每當你使這個選項停用，AMS Cache會停止運作，所有快取將被清除。"
+msgstr "每當你使這個選項停用，KH Speed Engine會停止運作，所有快取將被清除。"
 
 #. %s is a placeholder for a file name.
 #: inc/admin/views/page-expert-mode.php:45
@@ -501,14 +501,14 @@ msgstr "其它"
 msgid "Page"
 msgstr "頁面"
 
-#: inc/class-cache-master.php:484 inc/class-cache-master.php:502
+#: inc/class-kh-speed-engine.php:484 inc/class-kh-speed-engine.php:502
 #, php-format
 msgid "Page generated in %s seconds."
 msgstr "頁面在 %s 秒內產生。"
 
-#: inc/class-cache-master.php:692 inc/class-cache-master.php:693
-#: inc/admin/classes/class-scm-benchmark-widget.php:81
-#: inc/admin/classes/class-scm-benchmark-widget.php:82
+#: inc/class-kh-speed-engine.php:692 inc/class-kh-speed-engine.php:693
+#: inc/admin/classes/class-khse-benchmark-widget.php:81
+#: inc/admin/classes/class-khse-benchmark-widget.php:82
 msgid "Page generation time"
 msgstr "頁面產生時間"
 
@@ -540,8 +540,8 @@ msgstr "PHP 擴充套件 \"%s\" 未被安裝到您的系統上。"
 #: inc/admin/views/option-excluded-list.php:24
 msgid ""
 "Please enter the <strong>begin with</strong> URLs you want them excluded "
-"from AMS Cache."
-msgstr "請輸入您想把它們從 AMS Cache 排除的 <strong>開頭</strong> 網址。"
+"from KH Speed Engine."
+msgstr "請輸入您想把它們從 KH Speed Engine 排除的 <strong>開頭</strong> 網址。"
 
 #: inc/admin/views/option-ttl.php:36
 msgid "Please fill in a number between 300-86400. (in seconds)"
@@ -604,15 +604,15 @@ msgid "Register a widget that can display the benchmark information."
 msgstr "註冊一個可顯示基準分析資訊的小工具。"
 
 #: inc/admin/views/option-uninstall.php:24
-msgid "Remove data generated by AMS Cache."
-msgstr "移除AMS Cache產生的資料。"
+msgid "Remove data generated by KH Speed Engine."
+msgstr "移除KH Speed Engine產生的資料。"
 
 #: inc/admin/views/page-statistics.php:57
 msgid "Rows"
 msgstr "筆數"
 
-#: inc/class-cache-master.php:695
-#: inc/admin/classes/class-scm-benchmark-widget.php:85
+#: inc/class-kh-speed-engine.php:695
+#: inc/admin/classes/class-khse-benchmark-widget.php:85
 msgid "sec"
 msgstr "秒"
 
@@ -635,13 +635,13 @@ msgstr "略過這些設定，除非你要變更預設值。"
 msgid "Source code"
 msgstr "原始碼"
 
-#: inc/class-cache-master.php:685 inc/class-cache-master.php:686
-#: inc/admin/classes/class-scm-benchmark-widget.php:72
-#: inc/admin/classes/class-scm-benchmark-widget.php:73
+#: inc/class-kh-speed-engine.php:685 inc/class-kh-speed-engine.php:686
+#: inc/admin/classes/class-khse-benchmark-widget.php:72
+#: inc/admin/classes/class-khse-benchmark-widget.php:73
 msgid "SQL queries"
 msgstr "資料庫查詢次數"
 
-#: inc/class-cache-master.php:483 inc/class-cache-master.php:501
+#: inc/class-kh-speed-engine.php:483 inc/class-kh-speed-engine.php:501
 #, php-format
 msgid "SQL queries: %s"
 msgstr "資料庫查詢次數：%s"
@@ -680,8 +680,8 @@ msgid "TCP"
 msgstr "TCP"
 
 #. Author of the plugin
-msgid "Terry Lin"
-msgstr "Terry Lin"
+msgid "Chetra Chann"
+msgstr "Chetra Chann"
 
 #: inc/admin/views/option-benchmark-footer-text-display.php:24
 #: inc/admin/views/option-benchmark-widget-display.php:24
@@ -729,15 +729,15 @@ msgstr "這個選項只在你有放客製的 PHP 程式碼在 wp-config.php 裡�
 msgid "This option only works when you uninstall this plugin."
 msgstr "這個選項只在你反安裝這個外掛時運作。"
 
-#: inc/class-cache-master.php:496
-msgid "This page is cached by AMS Cache plugin."
-msgstr "此頁面由AMS Cache外掛進行快取。"
+#: inc/class-kh-speed-engine.php:496
+msgid "This page is cached by KH Speed Engine plugin."
+msgstr "此頁面由KH Speed Engine外掛進行快取。"
 
 #: inc/admin/views/page-expert-mode.php:34
 msgid "This PHP code is generated dynamically depending on your settings."
 msgstr "這個 PHP 程式碼是動態產生，取決於你的設定。"
 
-#: inc/class-cache-master.php:498
+#: inc/class-kh-speed-engine.php:498
 #, php-format
 msgid "Time to cache: %s"
 msgstr "快取的時間：%s"
@@ -795,9 +795,9 @@ msgstr "你想快取何種文章類型？"
 
 #: inc/admin/views/option-woocommerce-status.php:37
 msgid ""
-"When a user's shopping cart is not empty, AMS Cache will stop outputting "
+"When a user's shopping cart is not empty, KH Speed Engine will stop outputting "
 "cache."
-msgstr "當使用者的購物車不是空的時候，AMS Cache 會停止輸出快取。"
+msgstr "當使用者的購物車不是空的時候，KH Speed Engine 會停止輸出快取。"
 
 #: inc/admin/setting.php:379
 msgid "Widget"

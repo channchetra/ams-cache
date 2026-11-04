@@ -1,19 +1,19 @@
 <?php
 /**
- * AMS Cache - Cache_Master debug, timing, and presentation helpers.
+ * KH Speed Engine - KHSE_Cache debug, timing, and presentation helpers.
  *
- * Extracted from Cache_Master to keep the cache lifecycle class focused.
- * Trait methods run in the Cache_Master instance and use its private state.
+ * Extracted from KHSE_Cache to keep the cache lifecycle class focused.
+ * Trait methods run in the KHSE_Cache instance and use its private state.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-trait SCM_Cache_Master_Debug {
+trait KHSE_Cache_Debug {
 	/**
 	 * Add inline CSS.
 	 *
@@ -22,15 +22,15 @@ trait SCM_Cache_Master_Debug {
 	public function get_front_enqueue_styles() {
 		$custom_css = '';
 
-		$is_widget = ( 'yes' === get_option( 'scm_option_benchmark_widget' ) );
-		$is_footer = ( 'yes' === get_option( 'scm_option_benchmark_footer_text' ) );
+		$is_widget = ( 'yes' === get_option( 'khse_option_benchmark_widget' ) );
+		$is_footer = ( 'yes' === get_option( 'khse_option_benchmark_footer_text' ) );
 
-		$display_widget = get_option( 'scm_option_benchmark_widget_display' );
-		$display_footer = get_option( 'scm_option_benchmark_footer_text_display' );
+		$display_widget = get_option( 'khse_option_benchmark_widget_display' );
+		$display_footer = get_option( 'khse_option_benchmark_footer_text_display' );
 
 		if ( $is_widget || $is_footer ) {
 			$custom_css .= '
-				.scm-img {
+				.khse-img {
 					display: inline-flex;
 					align-items: center;
 					justify-content: center;
@@ -44,19 +44,19 @@ trait SCM_Cache_Master_Debug {
 					line-height: 1;
 					overflow: hidden;
 				}
-				.scm-img svg {
+				.khse-img svg {
 					width: 16px;
 					height: 16px;
 				}
-				.scm-img path {
+				.khse-img path {
 					fill: currentColor;
 				}
-				.scm-text {
+				.khse-text {
 					color: #111827;
 					font-weight: 600;
 					vertical-align: middle;
 				}
-				.scm-value {
+				.khse-value {
 					color: #111827;
 					font-weight: 700;
 				}
@@ -65,18 +65,18 @@ trait SCM_Cache_Master_Debug {
 
 		if ( $is_widget ) {
 			$custom_css .= '
-				.ams-cache-plugin-widget {
+				.kh-speed-engine-plugin-widget {
 					overflow: hidden;
 					border-radius: 16px;
 					background: #ffffff;
 					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 				}
-				.ams-cache-plugin-widget .scm-table {
+				.kh-speed-engine-plugin-widget .khse-table {
 					display: grid;
 					gap: 0;
 					width: 100%;
 				}
-				.ams-cache-plugin-widget .scm-tr {
+				.kh-speed-engine-plugin-widget .khse-tr {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr) auto;
 					gap: 12px;
@@ -84,10 +84,10 @@ trait SCM_Cache_Master_Debug {
 					padding: 12px 14px;
 					border-top: 1px solid #e5e7eb;
 				}
-				.ams-cache-plugin-widget .scm-tr:first-child {
+				.kh-speed-engine-plugin-widget .khse-tr:first-child {
 					border-top: 0;
 				}
-				.ams-cache-plugin-widget .scm-td {
+				.kh-speed-engine-plugin-widget .khse-td {
 					display: inline-flex;
 					align-items: center;
 					gap: 8px;
@@ -100,7 +100,7 @@ trait SCM_Cache_Master_Debug {
 
 			if ( 'text' === $display_widget ) {
 				$custom_css .= '
-					.ams-cache-plugin-widget .scm-img  {
+					.kh-speed-engine-plugin-widget .khse-img  {
 						display: none;
 					}
 				';
@@ -108,10 +108,10 @@ trait SCM_Cache_Master_Debug {
 
 			if ( 'icon' === $display_widget ) {
 				$custom_css .= '
-					.ams-cache-plugin-widget .scm-text  {
+					.kh-speed-engine-plugin-widget .khse-text  {
 						display: none;
 					}
-					.ams-cache-plugin-widget .scm-tr {
+					.kh-speed-engine-plugin-widget .khse-tr {
 						grid-template-columns: 40px minmax(0, 1fr);
 					}
 				';
@@ -120,7 +120,7 @@ trait SCM_Cache_Master_Debug {
 
 		if ( $is_footer ) {
 			$custom_css .= '
-				.ams-cache-benchmark-report {
+				.kh-speed-engine-benchmark-report {
 					clear: both;
 					display: flex;
 					flex-wrap: wrap;
@@ -132,7 +132,7 @@ trait SCM_Cache_Master_Debug {
 					font-size: 12px;
 					margin: 12px 0;
 				}
-				.ams-cache-benchmark-report .scm-td {
+				.kh-speed-engine-benchmark-report .khse-td {
 					display: inline-flex;
 					align-items: center;
 					gap: 6px;
@@ -144,13 +144,13 @@ trait SCM_Cache_Master_Debug {
 					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 					font-size: 13px;
 				}
-				.ams-cache-benchmark-report .scm-img {
+				.kh-speed-engine-benchmark-report .khse-img {
 					width: 22px;
 					height: 22px;
 					flex-basis: 22px;
 					border-radius: 8px;
 				}
-				.ams-cache-benchmark-report .scm-td svg {
+				.kh-speed-engine-benchmark-report .khse-td svg {
 					width: 14px;
 					height: 14px;
 				}
@@ -158,7 +158,7 @@ trait SCM_Cache_Master_Debug {
 
 			if ( 'text' === $display_footer ) {
 				$custom_css .= '
-					.ams-cache-benchmark-report .scm-img  {
+					.kh-speed-engine-benchmark-report .khse-img  {
 						display: none;
 					}
 				';
@@ -166,10 +166,10 @@ trait SCM_Cache_Master_Debug {
 
 			if ( 'icon' === $display_footer ) {
 				$custom_css .= '
-					.ams-cache-benchmark-report .scm-text  {
+					.kh-speed-engine-benchmark-report .khse-text  {
 						display: none;
 					}
-					.ams-cache-benchmark-report .scm-value {
+					.kh-speed-engine-benchmark-report .khse-value {
 						padding-left: 2px;
 					}
 				';
@@ -198,38 +198,38 @@ trait SCM_Cache_Master_Debug {
 		$date         = $this->get_date();
 		$stage        = ( $position === 'ob_start' ) ? 'after' : 'before';
 
-		scm_set_view_variable( 'now',  $date, $stage );
-		scm_set_view_variable( 'memory_usage',  $memory_usage, $stage );
-		scm_set_view_variable( 'sql_queries',  $sql_queries, $stage );
-		scm_set_view_variable( 'page_generation_time',  $timer_stop, $stage );
+		khse_set_view_variable( 'now',  $date, $stage );
+		khse_set_view_variable( 'memory_usage',  $memory_usage, $stage );
+		khse_set_view_variable( 'sql_queries',  $sql_queries, $stage );
+		khse_set_view_variable( 'page_generation_time',  $timer_stop, $stage );
 
-		if ( 'no' === get_option( 'scm_option_html_debug_comment' ) ) {
+		if ( 'no' === get_option( 'khse_option_html_debug_comment' ) ) {
 			return '';
 		}
 
 		switch ( $position ) {
 			case 'ob_stop':
-				$ttl          = (int) get_option( 'scm_option_ttl' );
+				$ttl          = (int) get_option( 'khse_option_ttl' );
 				$expires      = time() + $ttl;
 				$date_expires = $this->get_date( $expires );
 
-				$ttl_mechanism = get_option( 'scm_option_ttl_mechanism' );
+				$ttl_mechanism = get_option( 'khse_option_ttl_mechanism' );
 
 				$this->msg();
 				$this->msg( '<!--', 2 );
-				$this->msg( __( 'This page is cached by AMS Cache plugin.', 'ams-cache' ), 2 );
-				$this->msg( '....... ' . __( 'Before', 'ams-cache' ) . ' .......', 2 );
-				$this->msg( sprintf( __( 'Time to cache: %s', 'ams-cache' ), $date ) );
+				$this->msg( __( 'This page is cached by KH Speed Engine plugin.', 'kh-speed-engine' ), 2 );
+				$this->msg( '....... ' . __( 'Before', 'kh-speed-engine' ) . ' .......', 2 );
+				$this->msg( sprintf( __( 'Time to cache: %s', 'kh-speed-engine' ), $date ) );
 
 				if ( $ttl_mechanism === 'disable' ) {
-					$this->msg( __( 'TTL mechanism: disabled', 'ams-cache' ) );
+					$this->msg( __( 'TTL mechanism: disabled', 'kh-speed-engine' ) );
 				} else {
-					$this->msg( sprintf( __( 'Expires at: %s', 'ams-cache' ), $date_expires ) );
+					$this->msg( sprintf( __( 'Expires at: %s', 'kh-speed-engine' ), $date_expires ) );
 				}
 
-				$this->msg( sprintf( __( 'Memory usage: %s MB', 'ams-cache' ), $memory_usage ) );
-				$this->msg( sprintf( __( 'SQL queries: %s', 'ams-cache' ), $sql_queries ) );
-				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'ams-cache' ), $timer_stop ) );
+				$this->msg( sprintf( __( 'Memory usage: %s MB', 'kh-speed-engine' ), $memory_usage ) );
+				$this->msg( sprintf( __( 'SQL queries: %s', 'kh-speed-engine' ), $sql_queries ) );
+				$this->msg( sprintf( __( 'Page generated in %s seconds.', 'kh-speed-engine' ), $timer_stop ) );
 				break;
 		}
 
@@ -264,7 +264,7 @@ trait SCM_Cache_Master_Debug {
 
 	/**
 	 * Create a clean output buffering for Cahce Master.
-	 * This method makes AMS Cache become the first level of output 
+	 * This method makes KH Speed Engine become the first level of output
 	 * buffering.
 	 *
 	 * @return void
@@ -279,7 +279,7 @@ trait SCM_Cache_Master_Debug {
 
 	/**
 	 * Same as WordPress function wp_ob_end_flush_all, but leave the 
-	 * AMS Cache level for the final output buffering.
+	 * KH Speed Engine level for the final output buffering.
 	 *
 	 * @return void
 	 */
@@ -338,7 +338,7 @@ trait SCM_Cache_Master_Debug {
 	 */
 	private function log( $type, $key, $data )
 	{
-		$dir = scm_get_stats_dir( $type );
+		$dir = khse_get_stats_dir( $type );
 
 		if ( ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );
@@ -347,7 +347,7 @@ trait SCM_Cache_Master_Debug {
 		$size = $this->get_string_bytes( $data );
 		$file = $dir . '/' . $key . '.json';
 
-		scm_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->driver );
+		khse_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->driver );
 
 		file_put_contents(
 			$file,
@@ -359,7 +359,7 @@ trait SCM_Cache_Master_Debug {
 			)
 		);
 
-		scm_enforce_cache_entry_limit( $this->driver );
+		khse_enforce_cache_entry_limit( $this->driver );
 	}
 
 	/**
@@ -382,7 +382,7 @@ trait SCM_Cache_Master_Debug {
 	 * @return string
 	 */
 	private function footer_html() {
-		return '<div class="ams-cache-benchmark-report" style="display: none">' . scm_render_benchmark_metrics( 'footer' ) . '</div>';
+		return '<div class="kh-speed-engine-benchmark-report" style="display: none">' . khse_render_benchmark_metrics( 'footer' ) . '</div>';
 	}
 
 	}

@@ -1,35 +1,35 @@
 <?php
 /**
- * AMS Cache — cache-core.php
+ * KH Speed Engine — cache-core.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
-function scm_load_textdomain() {
-	load_plugin_textdomain( SCM_PLUGIN_TEXT_DOMAIN, false, SCM_PLUGIN_LANGUAGE_PACK );
+function khse_load_textdomain() {
+	load_plugin_textdomain( KHSE_PLUGIN_TEXT_DOMAIN, false, KHSE_PLUGIN_LANGUAGE_PACK );
 }
 
 /**
  * Return the site directory hash.
  *
  * Pure: returns the persisted hash or a deterministic fallback without
- * writing. Use scm_ensure_dir_hash() when the value must be persisted.
+ * writing. Use khse_ensure_dir_hash() when the value must be persisted.
  *
  * @return string
  */
-function scm_get_dir_hash() {
-	$hash = get_option( 'scm_dir_hash' );
+function khse_get_dir_hash() {
+	$hash = get_option( 'khse_dir_hash' );
 
 	if ( ! empty( $hash ) ) {
 		return $hash;
 	}
 
-	return scm_generate_dir_hash();
+	return khse_generate_dir_hash();
 }
 
 /**
@@ -37,7 +37,7 @@ function scm_get_dir_hash() {
  *
  * @return string
  */
-function scm_generate_dir_hash() {
+function khse_generate_dir_hash() {
 	$salt = defined( 'AUTH_SALT' ) ? AUTH_SALT : '';
 
 	return substr( wp_hash( get_site_url() . '|' . $salt ), 0, 8 );
@@ -48,12 +48,12 @@ function scm_generate_dir_hash() {
  *
  * @return string
  */
-function scm_ensure_dir_hash() {
-	$hash = get_option( 'scm_dir_hash' );
+function khse_ensure_dir_hash() {
+	$hash = get_option( 'khse_dir_hash' );
 
 	if ( empty( $hash ) ) {
-		$hash = scm_generate_dir_hash();
-		update_option( 'scm_dir_hash', $hash );
+		$hash = khse_generate_dir_hash();
+		update_option( 'khse_dir_hash', $hash );
 	}
 
 	return $hash;
@@ -62,13 +62,13 @@ function scm_ensure_dir_hash() {
 /**
  * Check whether an option is enabled across yes/no and enable/disable vocabularies.
  *
- * @param string $key     Option name, with or without the scm_option_ prefix.
+ * @param string $key     Option name, with or without the khse_option_ prefix.
  * @param string $default Default when the option is missing.
  *
  * @return bool
  */
-function scm_option_is_enabled( $key, $default = 'no' ) {
-	$option = 0 === strpos( $key, 'scm_' ) ? $key : 'scm_option_' . $key;
+function khse_option_is_enabled( $key, $default = 'no' ) {
+	$option = 0 === strpos( $key, 'khse_' ) ? $key : 'khse_option_' . $key;
 	$value  = get_option( $option, $default );
 
 	if ( is_bool( $value ) ) {
@@ -85,14 +85,14 @@ function scm_option_is_enabled( $key, $default = 'no' ) {
 /**
  * Set an option using its stored vocabulary.
  *
- * @param string $key     Option name, with or without the scm_option_ prefix.
+ * @param string $key     Option name, with or without the khse_option_ prefix.
  * @param bool   $enabled Whether the option is enabled.
  * @param string $format  yes_no|enable_disable.
  *
  * @return void
  */
-function scm_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
-	$option = 0 === strpos( $key, 'scm_' ) ? $key : 'scm_option_' . $key;
+function khse_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
+	$option = 0 === strpos( $key, 'khse_' ) ? $key : 'khse_option_' . $key;
 	$value  = 'enable_disable' === $format
 		? ( $enabled ? 'enable' : 'disable' )
 		: ( $enabled ? 'yes' : 'no' );
@@ -108,46 +108,46 @@ function scm_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
  *
  * @return array
  */
-function scm_get_settings_schema() {
+function khse_get_settings_schema() {
 	return array(
 		'cache'       => array(
-			'cachingStatus'       => array( 'option' => 'scm_option_caching_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled', 'config' => 'cache_enabled', 'config_type' => 'enabled' ),
-			'driver'              => array( 'option' => 'scm_option_driver', 'default' => 'file', 'sanitize' => 'enum', 'values' => array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' ), 'fallback' => 'file', 'read' => 'raw', 'config' => 'cache_driver', 'config_type' => 'raw' ),
-			'ttlMechanism'        => array( 'option' => 'scm_option_ttl_mechanism', 'default' => 'enable', 'sanitize' => 'enable_disable', 'fallback' => 'enable', 'read' => 'enabled' ),
-			'ttl'                 => array( 'option' => 'scm_option_ttl', 'default' => 86400, 'sanitize' => 'absint', 'min' => 300, 'max' => 2592000, 'read' => 'int' ),
-			'cacheKeyPrefix'      => array( 'option' => 'scm_option_cache_key_prefix', 'default' => '', 'sanitize' => 'key', 'read' => 'cache_prefix', 'dynamic_default' => true, 'config' => 'cache_key_prefix', 'config_type' => 'raw' ),
-			'maxEntries'          => array( 'option' => 'scm_option_cache_max_entries', 'default' => 0, 'sanitize' => 'absint', 'min' => 0, 'read' => 'cache_max_entries', 'dynamic_default' => true, 'config' => 'cache_max_entries', 'config_type' => 'int' ),
-			'expertModeStatus'    => array( 'option' => 'scm_option_expert_mode_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
-			'nginxDirect'         => array( 'option' => 'scm_option_nginx_direct_cache_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'nginx_direct_cache', 'config_type' => 'enabled' ),
-			'debugComment'        => array( 'option' => 'scm_option_html_debug_comment', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'html_debug_comment', 'config_type' => 'enabled' ),
-			'visibilityLoginUser' => array( 'option' => 'scm_option_visibility_login_user', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
-			'visibilityGuest'     => array( 'option' => 'scm_option_visibility_guest', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
+			'cachingStatus'       => array( 'option' => 'khse_option_caching_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled', 'config' => 'cache_enabled', 'config_type' => 'enabled' ),
+			'driver'              => array( 'option' => 'khse_option_driver', 'default' => 'file', 'sanitize' => 'enum', 'values' => array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' ), 'fallback' => 'file', 'read' => 'raw', 'config' => 'cache_driver', 'config_type' => 'raw' ),
+			'ttlMechanism'        => array( 'option' => 'khse_option_ttl_mechanism', 'default' => 'enable', 'sanitize' => 'enable_disable', 'fallback' => 'enable', 'read' => 'enabled' ),
+			'ttl'                 => array( 'option' => 'khse_option_ttl', 'default' => 86400, 'sanitize' => 'absint', 'min' => 300, 'max' => 2592000, 'read' => 'int' ),
+			'cacheKeyPrefix'      => array( 'option' => 'khse_option_cache_key_prefix', 'default' => '', 'sanitize' => 'key', 'read' => 'cache_prefix', 'dynamic_default' => true, 'config' => 'cache_key_prefix', 'config_type' => 'raw' ),
+			'maxEntries'          => array( 'option' => 'khse_option_cache_max_entries', 'default' => 0, 'sanitize' => 'absint', 'min' => 0, 'read' => 'cache_max_entries', 'dynamic_default' => true, 'config' => 'cache_max_entries', 'config_type' => 'int' ),
+			'expertModeStatus'    => array( 'option' => 'khse_option_expert_mode_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
+			'nginxDirect'         => array( 'option' => 'khse_option_nginx_direct_cache_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'nginx_direct_cache', 'config_type' => 'enabled' ),
+			'debugComment'        => array( 'option' => 'khse_option_html_debug_comment', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'html_debug_comment', 'config_type' => 'enabled' ),
+			'visibilityLoginUser' => array( 'option' => 'khse_option_visibility_login_user', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'visibilityGuest'     => array( 'option' => 'khse_option_visibility_guest', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
 		),
 		'preload'     => array(
-			'enabled'       => array( 'option' => 'scm_option_preload_cache', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'preload.enable', 'config_type' => 'enabled' ),
-			'limit'         => array( 'option' => 'scm_option_preload_limit', 'default' => 50, 'sanitize' => 'absint', 'min' => 1, 'max' => 1000, 'read' => 'int', 'config' => 'preload.limit', 'config_type' => 'int' ),
-			'crawlHomepage' => array( 'option' => 'scm_option_preload_homepage_links', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'preload.crawl_homepage_links', 'config_type' => 'enabled' ),
-			'homepage'      => array( 'option' => 'scm_option_post_homepage', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
+			'enabled'       => array( 'option' => 'khse_option_preload_cache', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'preload.enable', 'config_type' => 'enabled' ),
+			'limit'         => array( 'option' => 'khse_option_preload_limit', 'default' => 50, 'sanitize' => 'absint', 'min' => 1, 'max' => 1000, 'read' => 'int', 'config' => 'preload.limit', 'config_type' => 'int' ),
+			'crawlHomepage' => array( 'option' => 'khse_option_preload_homepage_links', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'preload.crawl_homepage_links', 'config_type' => 'enabled' ),
+			'homepage'      => array( 'option' => 'khse_option_post_homepage', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
 		),
 		'rules'       => array(
-			'enabled'      => array( 'option' => 'scm_option_exclusion_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
-			'excludedList' => array( 'option' => 'scm_option_excluded_list', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
-			'getVars'      => array( 'option' => 'scm_option_excluded_get_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
-			'postVars'     => array( 'option' => 'scm_option_excluded_post_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
-			'cookieVars'   => array( 'option' => 'scm_option_excluded_cookie_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'enabled'      => array( 'option' => 'khse_option_exclusion_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'excludedList' => array( 'option' => 'khse_option_excluded_list', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'getVars'      => array( 'option' => 'khse_option_excluded_get_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'postVars'     => array( 'option' => 'khse_option_excluded_post_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'cookieVars'   => array( 'option' => 'khse_option_excluded_cookie_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
 		),
 		'statistics'  => array(
-			'enabled' => array( 'option' => 'scm_option_statistics_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
+			'enabled' => array( 'option' => 'khse_option_statistics_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
 		),
 		'benchmark'   => array(
-			'widget'        => array( 'option' => 'scm_option_benchmark_widget', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
-			'footer'        => array( 'option' => 'scm_option_benchmark_footer_text', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
-			'widgetDisplay' => array( 'option' => 'scm_option_benchmark_widget_display', 'default' => 'both', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'both', 'read' => 'raw' ),
-			'footerDisplay' => array( 'option' => 'scm_option_benchmark_footer_text_display', 'default' => 'text', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'text', 'read' => 'raw' ),
+			'widget'        => array( 'option' => 'khse_option_benchmark_widget', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'footer'        => array( 'option' => 'khse_option_benchmark_footer_text', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'widgetDisplay' => array( 'option' => 'khse_option_benchmark_widget_display', 'default' => 'both', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'both', 'read' => 'raw' ),
+			'footerDisplay' => array( 'option' => 'khse_option_benchmark_footer_text_display', 'default' => 'text', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'text', 'read' => 'raw' ),
 		),
 		'woocommerce' => array(
-			'enabled'         => array( 'option' => 'scm_option_woocommerce_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'woocommerce.enable', 'config_type' => 'enabled' ),
-			'paymentComplete' => array( 'option' => 'scm_option_woocommerce_event_payment_complete', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'enabled'         => array( 'option' => 'khse_option_woocommerce_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'woocommerce.enable', 'config_type' => 'enabled' ),
+			'paymentComplete' => array( 'option' => 'khse_option_woocommerce_event_payment_complete', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
 		),
 	);
 }
@@ -159,8 +159,8 @@ function scm_get_settings_schema() {
  *
  * @return array
  */
-function scm_get_settings_section_schema( $section ) {
-	$schema = scm_get_settings_schema();
+function khse_get_settings_section_schema( $section ) {
+	$schema = khse_get_settings_schema();
 
 	return isset( $schema[ $section ] ) && is_array( $schema[ $section ] ) ? $schema[ $section ] : array();
 }
@@ -173,8 +173,8 @@ function scm_get_settings_section_schema( $section ) {
  *
  * @return mixed
  */
-function scm_get_setting( $section, $field ) {
-	$schema = scm_get_settings_section_schema( $section );
+function khse_get_setting( $section, $field ) {
+	$schema = khse_get_settings_section_schema( $section );
 
 	if ( ! isset( $schema[ $field ] ) ) {
 		return null;
@@ -186,16 +186,16 @@ function scm_get_setting( $section, $field ) {
 
 	switch ( $read ) {
 		case 'enabled':
-			return scm_option_is_enabled( $rule['option'], isset( $rule['default'] ) ? $rule['default'] : 'no' );
+			return khse_option_is_enabled( $rule['option'], isset( $rule['default'] ) ? $rule['default'] : 'no' );
 
 		case 'int':
 			return (int) $value;
 
 		case 'cache_prefix':
-			return scm_get_cache_key_prefix();
+			return khse_get_cache_key_prefix();
 
 		case 'cache_max_entries':
-			return scm_get_cache_max_entries();
+			return khse_get_cache_max_entries();
 
 		default:
 			return $value;
@@ -207,16 +207,16 @@ function scm_get_setting( $section, $field ) {
  *
  * @return array
  */
-function scm_get_config_from_schema() {
+function khse_get_config_from_schema() {
 	$config = array();
 
-	foreach ( scm_get_settings_schema() as $section => $fields ) {
+	foreach ( khse_get_settings_schema() as $section => $fields ) {
 		foreach ( $fields as $field => $rule ) {
 			if ( empty( $rule['config'] ) ) {
 				continue;
 			}
 
-			$value = scm_get_setting( $section, $field );
+			$value = khse_get_setting( $section, $field );
 
 			if ( isset( $rule['config_type'] ) && 'enabled' === $rule['config_type'] ) {
 				$value = (bool) $value;
@@ -248,9 +248,9 @@ function scm_get_config_from_schema() {
  *
  * @return void
  */
-function scm_ensure_permalink_structure() {
+function khse_ensure_permalink_structure() {
 	if ( '' === get_option( 'permalink_structure' ) ) {
-		update_option( 'scm_option_caching_status', 'disable' );
+		update_option( 'khse_option_caching_status', 'disable' );
 	}
 }
 
@@ -258,14 +258,14 @@ function scm_ensure_permalink_structure() {
  * Return the site upload directory.
  *
  * Pure: does not migrate or create directories. Use
- * scm_ensure_upload_dir() before writing.
+ * khse_ensure_upload_dir() before writing.
  *
  * @return string
  */
-function scm_get_upload_dir() {
-	$base_dir = WP_CONTENT_DIR . '/uploads/ams-cache';
+function khse_get_upload_dir() {
+	$base_dir = WP_CONTENT_DIR . '/uploads/kh-speed-engine';
 
-	return $base_dir . '/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+	return $base_dir . '/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
 }
 
 /**
@@ -273,19 +273,25 @@ function scm_get_upload_dir() {
  *
  * @return string
  */
-function scm_ensure_upload_dir() {
-	$base_dir   = WP_CONTENT_DIR . '/uploads/ams-cache';
-	$legacy_dir = WP_CONTENT_DIR . '/uploads/' . 'cache' . '-master';
+function khse_ensure_upload_dir() {
+	$base_dir    = WP_CONTENT_DIR . '/uploads/kh-speed-engine';
+	$legacy_dirs = array(
+		WP_CONTENT_DIR . '/uploads/ams-cache',
+		WP_CONTENT_DIR . '/uploads/' . 'cache' . '-master',
+	);
 
-	if ( ! is_dir( $base_dir ) && is_dir( $legacy_dir ) ) {
-		@rename( $legacy_dir, $base_dir );
+	foreach ( $legacy_dirs as $legacy_dir ) {
+		if ( ! is_dir( $base_dir ) && is_dir( $legacy_dir ) ) {
+			@rename( $legacy_dir, $base_dir );
+			break;
+		}
 	}
 
 	if ( ! is_dir( $base_dir ) ) {
 		wp_mkdir_p( $base_dir );
 	}
 
-	return scm_get_upload_dir();
+	return khse_get_upload_dir();
 }
 
 /**
@@ -296,7 +302,7 @@ function scm_ensure_upload_dir() {
  *
  * @return string
  */
-function scm_get_private_runtime_dir() {
+function khse_get_private_runtime_dir() {
 	$candidates = array();
 
 	if ( defined( 'WP_TEMP_DIR' ) && WP_TEMP_DIR ) {
@@ -308,7 +314,7 @@ function scm_get_private_runtime_dir() {
 	}
 
 	if ( defined( 'ABSPATH' ) ) {
-		$candidates[] = dirname( ABSPATH ) . '/ams-cache-runtime';
+		$candidates[] = dirname( ABSPATH ) . '/kh-speed-engine-runtime';
 	}
 
 	$public_roots = array_filter(
@@ -347,11 +353,11 @@ function scm_get_private_runtime_dir() {
 		}
 
 		if ( ! $is_public ) {
-			return $candidate . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+			return $candidate . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
 		}
 	}
 
-	return rtrim( sys_get_temp_dir(), '/\\' ) . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+	return rtrim( sys_get_temp_dir(), '/\\' ) . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
 }
 
 /**
@@ -359,8 +365,8 @@ function scm_get_private_runtime_dir() {
  *
  * @return string
  */
-function scm_get_expert_lock_path() {
-	return scm_get_private_runtime_dir() . '/expert.lock';
+function khse_get_expert_lock_path() {
+	return khse_get_private_runtime_dir() . '/expert.lock';
 }
 
 /**
@@ -368,8 +374,8 @@ function scm_get_expert_lock_path() {
  *
  * @return string
  */
-function scm_get_config_path() {
-	return scm_get_private_runtime_dir() . '/config.json';
+function khse_get_config_path() {
+	return khse_get_private_runtime_dir() . '/config.json';
 }
 
 /**
@@ -379,8 +385,8 @@ function scm_get_config_path() {
  *
  * @return array
  */
-function scm_normalize_config( $config ) {
-	$defaults = scm_get_default_config();
+function khse_normalize_config( $config ) {
+	$defaults = khse_get_default_config();
 	$config   = is_array( $config ) ? $config : array();
 	$config   = array_merge( $defaults, $config );
 
@@ -399,25 +405,25 @@ function scm_normalize_config( $config ) {
  *
  * @return array
  */
-function scm_get_config_data() {
-	$file = scm_get_config_path();
+function khse_get_config_data() {
+	$file = khse_get_config_path();
 
 	if ( file_exists( $file ) ) {
 		$content = file_get_contents( $file );
 		$config = json_decode( $content, true );
 
 		if ( is_array( $config ) ) {
-			return scm_normalize_config( $config );
+			return khse_normalize_config( $config );
 		}
 	}
 
-	$option_config = get_option( 'scm_config', array() );
+	$option_config = get_option( 'khse_config', array() );
 
 	if ( is_array( $option_config ) && ! empty( $option_config ) ) {
-		return scm_normalize_config( $option_config );
+		return khse_normalize_config( $option_config );
 	}
 
-	return scm_get_default_config();
+	return khse_get_default_config();
 }
 
 /**
@@ -427,11 +433,11 @@ function scm_get_config_data() {
  *
  * @return bool
  */
-function scm_is_cache_request_excluded( $config ) {
+function khse_is_cache_request_excluded( $config ) {
 	$exclusion = isset( $config['exclusion'] ) && is_array( $config['exclusion'] ) ? $config['exclusion'] : array();
 
 	if ( ! empty( $exclusion['enable'] ) ) {
-		$path = isset( $_SERVER['REQUEST_URI'] ) ? scm_normalize_cache_uri( $_SERVER['REQUEST_URI'] ) : '/';
+		$path = isset( $_SERVER['REQUEST_URI'] ) ? khse_normalize_cache_uri( $_SERVER['REQUEST_URI'] ) : '/';
 
 		foreach ( isset( $exclusion['excluded_list'] ) ? $exclusion['excluded_list'] : array() as $ignored_url ) {
 			if ( '' !== (string) $ignored_url && 0 === strpos( $path, $ignored_url ) ) {
@@ -477,9 +483,9 @@ function scm_is_cache_request_excluded( $config ) {
  *
  * @return string
  */
-function scm_build_served_debug_message( $config, $expert = false, $start_time = null ) {
+function khse_build_served_debug_message( $config, $expert = false, $start_time = null ) {
 	$translate = function ( $text ) {
-		return function_exists( '__' ) ? __( $text, 'ams-cache' ) : $text;
+		return function_exists( '__' ) ? __( $text, 'kh-speed-engine' ) : $text;
 	};
 
 	$date         = date( 'Y-m-d H:i:s' );
@@ -487,10 +493,10 @@ function scm_build_served_debug_message( $config, $expert = false, $start_time =
 	$sql_queries  = function_exists( 'get_num_queries' ) ? get_num_queries() : 0;
 	$page_speed   = function_exists( 'timer_stop' ) ? timer_stop() : ( null !== $start_time ? round( microtime( true ) - $start_time, 3 ) : 0 );
 
-	scm_set_view_variable( 'now', $date, 'after' );
-	scm_set_view_variable( 'memory_usage', $memory_usage, 'after' );
-	scm_set_view_variable( 'sql_queries', $sql_queries, 'after' );
-	scm_set_view_variable( 'page_generation_time', $page_speed, 'after' );
+	khse_set_view_variable( 'now', $date, 'after' );
+	khse_set_view_variable( 'memory_usage', $memory_usage, 'after' );
+	khse_set_view_variable( 'sql_queries', $sql_queries, 'after' );
+	khse_set_view_variable( 'page_generation_time', $page_speed, 'after' );
 
 	if ( empty( $config['html_debug_comment'] ) ) {
 		return '';
@@ -522,7 +528,7 @@ function scm_build_served_debug_message( $config, $expert = false, $start_time =
  *
  * @return string|null Cached HTML, or null when no valid cache entry should be served.
  */
-function scm_serve_cached_response( $config, $driver = null, $storage_base = '', $expert = false, $start_time = null ) {
+function khse_serve_cached_response( $config, $driver = null, $storage_base = '', $expert = false, $start_time = null ) {
 	if ( isset( $config['cache_enabled'] ) && ! $config['cache_enabled'] ) {
 		return null;
 	}
@@ -533,16 +539,16 @@ function scm_serve_cached_response( $config, $driver = null, $storage_base = '',
 
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
 
-	if ( ! scm_is_cacheable_request_uri( $request_uri ) ) {
+	if ( ! khse_is_cacheable_request_uri( $request_uri ) ) {
 		return null;
 	}
 
-	if ( scm_is_cache_request_excluded( $config ) ) {
+	if ( khse_is_cache_request_excluded( $config ) ) {
 		return null;
 	}
 
-	$path = scm_normalize_cache_uri( $request_uri );
-	$key  = scm_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
+	$path = khse_normalize_cache_uri( $request_uri );
+	$key  = khse_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
 
 	if ( ! $driver ) {
 		$driver_type = isset( $config['cache_driver'] ) ? $config['cache_driver'] : 'file';
@@ -556,10 +562,10 @@ function scm_serve_cached_response( $config, $driver = null, $storage_base = '',
 			);
 
 			if ( ! empty( $advanced ) ) {
-				$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced, $connection ) );
+				$setting = array_merge( $setting, khse_normalize_driver_settings( $advanced, $connection ) );
 			}
 		} else {
-			$resolved = scm_get_driver_settings( $driver_type, $advanced, $connection );
+			$resolved = khse_get_driver_settings( $driver_type, $advanced, $connection );
 			$setting  = $resolved['setting'];
 		}
 
@@ -580,8 +586,8 @@ function scm_serve_cached_response( $config, $driver = null, $storage_base = '',
 		return null;
 	}
 
-	$cached_content .= scm_build_served_debug_message( $config, $expert, $start_time );
-	$cached_content  = str_replace( '</body>', "\n" . scm_javascript() . "\n" . '</body>', $cached_content );
+	$cached_content .= khse_build_served_debug_message( $config, $expert, $start_time );
+	$cached_content  = str_replace( '</body>', "\n" . khse_javascript() . "\n" . '</body>', $cached_content );
 
 	return $cached_content;
 }
@@ -589,7 +595,7 @@ function scm_serve_cached_response( $config, $driver = null, $storage_base = '',
 /**
  * Build the runtime exclusion configuration from the stored settings.
  *
- * Persists the normalized path list to scm_option_excluded_list_filtered.
+ * Persists the normalized path list to khse_option_excluded_list_filtered.
  *
  * @return array {
  *     @type bool  $enable               Whether exclusion rules are enabled.
@@ -599,10 +605,10 @@ function scm_serve_cached_response( $config, $driver = null, $storage_base = '',
  *     @type array $excluded_cookie_vars Excluded cookie variables.
  * }
  */
-function scm_get_runtime_exclusion_config() {
+function khse_get_runtime_exclusion_config() {
 	$list = array();
 
-	foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_list', '' ) ) as $item ) {
+	foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_list', '' ) ) as $item ) {
 		$path = parse_url( $item, PHP_URL_PATH );
 		$path = is_string( $path ) ? trim( $path ) : '';
 
@@ -622,17 +628,17 @@ function scm_get_runtime_exclusion_config() {
 	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
 		$variables[ $type ] = array();
 
-		foreach ( scm_get_lines_from_textarea( get_option( 'scm_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
+		foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
 			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
 				$variables[ $type ][] = $item;
 			}
 		}
 	}
 
-	update_option( 'scm_option_excluded_list_filtered', implode( "\n", $list ) );
+	update_option( 'khse_option_excluded_list_filtered', implode( "\n", $list ) );
 
 	return array(
-		'enable'               => 'yes' === get_option( 'scm_option_exclusion_status', 'no' ),
+		'enable'               => 'yes' === get_option( 'khse_option_exclusion_status', 'no' ),
 		'excluded_list'        => $list,
 		'excluded_get_vars'    => $variables['get'],
 		'excluded_post_vars'   => $variables['post'],
@@ -647,26 +653,26 @@ function scm_get_runtime_exclusion_config() {
  *
  * @return void
  */
-function scm_update_config( $setting ) {
-	$config = scm_get_config_data();
+function khse_update_config( $setting ) {
+	$config = khse_get_config_data();
 
 	if ( is_array( $setting ) ) {
 		$config = array_merge( $config, $setting );
 	}
 
-	$config = scm_normalize_config( $config );
+	$config = khse_normalize_config( $config );
 
 	if ( empty( $config['site_url'] ) ) {
 		$config['site_url'] = rtrim( get_site_url(), '/' );
 	}
 
 	if ( empty( $config['cache_key_prefix'] ) ) {
-		$config['cache_key_prefix'] = scm_get_cache_key_prefix();
+		$config['cache_key_prefix'] = khse_get_cache_key_prefix();
 	}
 
-	update_option( 'scm_config', $config );
+	update_option( 'khse_config', $config );
 
-	$file    = scm_get_config_path();
+	$file    = khse_get_config_path();
 	$content = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 	wp_mkdir_p( dirname( $file ) );
 
@@ -677,7 +683,7 @@ function scm_update_config( $setting ) {
 		@chmod( $file, 0600 );
 	}
 
-	$legacy_file = scm_get_upload_dir() . '/config.json';
+	$legacy_file = khse_get_upload_dir() . '/config.json';
 
 	if ( file_exists( $legacy_file ) && $legacy_file !== $file ) {
 		@unlink( $legacy_file );
@@ -689,26 +695,26 @@ function scm_update_config( $setting ) {
  *
  * @return void
  */
-function scm_sync_expert_mode_runtime() {
-	$driver_type      = scm_get_setting( 'cache', 'driver' );
-	$connection_type  = scm_get_driver_connection_type( $driver_type );
-	$advanced_setting = scm_normalize_driver_settings(
-		scm_get_driver_advanced_settings( $driver_type ),
+function khse_sync_expert_mode_runtime() {
+	$driver_type      = khse_get_setting( 'cache', 'driver' );
+	$connection_type  = khse_get_driver_connection_type( $driver_type );
+	$advanced_setting = khse_normalize_driver_settings(
+		khse_get_driver_advanced_settings( $driver_type ),
 		$connection_type
 	);
 
-	$setting = scm_get_config_from_schema();
+	$setting = khse_get_config_from_schema();
 
 	$setting['site_url']                 = rtrim( get_site_url(), '/' );
 	$setting['driver_advanced_settings'] = $advanced_setting;
 	$setting['driver_connection_type']   = $connection_type;
-	$setting['exclusion']                = scm_get_runtime_exclusion_config();
+	$setting['exclusion']                = khse_get_runtime_exclusion_config();
 
-	scm_update_config( $setting );
+	khse_update_config( $setting );
 
-	$checkpoint = scm_get_expert_lock_path();
+	$checkpoint = khse_get_expert_lock_path();
 
-	if ( 'enable' === get_option( 'scm_option_expert_mode_status' ) ) {
+	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {
 		wp_mkdir_p( dirname( $checkpoint ) );
 		file_put_contents( $checkpoint, 'VOTE!' );
 		@chmod( $checkpoint, 0600 );
@@ -725,8 +731,8 @@ function scm_sync_expert_mode_runtime() {
  *
  * @return void
  */
-function scm_set_blog_id() {
-	update_option( 'scm_blog_id', get_current_blog_id() );
+function khse_set_blog_id() {
+	update_option( 'khse_blog_id', get_current_blog_id() );
 }
 
 /**
@@ -734,8 +740,8 @@ function scm_set_blog_id() {
  *
  * @return string
  */
-function scm_get_blog_id() {
-	return get_option( 'scm_blog_id', 1 );
+function khse_get_blog_id() {
+	return get_option( 'khse_blog_id', 1 );
 }
 
 /**
@@ -745,8 +751,8 @@ function scm_get_blog_id() {
  *
  * @return string
  */
-function scm_get_stats_dir( $cache_type = 'post' ) {
-	return scm_get_upload_dir() . '/stats/' . $cache_type;
+function khse_get_stats_dir( $cache_type = 'post' ) {
+	return khse_get_upload_dir() . '/stats/' . $cache_type;
 }
 
 /**
@@ -754,17 +760,17 @@ function scm_get_stats_dir( $cache_type = 'post' ) {
  *
  * @return string
  */
-function scm_get_cache_key_prefix() {
-	$prefix = get_option( 'scm_option_cache_key_prefix', '' );
+function khse_get_cache_key_prefix() {
+	$prefix = get_option( 'khse_option_cache_key_prefix', '' );
 
 	if ( '' === $prefix ) {
-		$prefix = 'scm_' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '_';
+		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
 	}
 
 	$prefix = preg_replace( '/[^A-Za-z0-9_.-]/', '_', $prefix );
 
 	if ( '' === $prefix ) {
-		$prefix = 'scm_' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '_';
+		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
 	}
 
 	return rtrim( $prefix, '._-' ) . '_';
@@ -777,7 +783,7 @@ function scm_get_cache_key_prefix() {
  *
  * @return string
  */
-function scm_normalize_cache_uri( $uri ) {
+function khse_normalize_cache_uri( $uri ) {
 	$path = parse_url( (string) $uri, PHP_URL_PATH );
 
 	if ( empty( $path ) ) {
@@ -803,7 +809,7 @@ function scm_normalize_cache_uri( $uri ) {
  *
  * @return array
  */
-function scm_get_cache_bypass_cookie_prefixes() {
+function khse_get_cache_bypass_cookie_prefixes() {
 	return array(
 		'wordpress_logged_in_',
 		'wordpress_sec_',
@@ -820,9 +826,9 @@ function scm_get_cache_bypass_cookie_prefixes() {
  *
  * @return bool
  */
-function scm_request_has_cache_bypass_cookie() {
+function khse_request_has_cache_bypass_cookie() {
 	foreach ( array_keys( $_COOKIE ) as $name ) {
-		foreach ( scm_get_cache_bypass_cookie_prefixes() as $prefix ) {
+		foreach ( khse_get_cache_bypass_cookie_prefixes() as $prefix ) {
 			if ( 0 === strpos( $name, $prefix ) ) {
 				return true;
 			}
@@ -837,7 +843,7 @@ function scm_request_has_cache_bypass_cookie() {
  *
  * @return array
  */
-function scm_get_cache_bypass_paths() {
+function khse_get_cache_bypass_paths() {
 	return array( 'wp-admin', 'wp-login.php', 'xmlrpc.php', 'wp-json', 'cart', 'checkout', 'my-account' );
 }
 
@@ -846,7 +852,7 @@ function scm_get_cache_bypass_paths() {
  *
  * @return array
  */
-function scm_get_cache_tracking_query_vars() {
+function khse_get_cache_tracking_query_vars() {
 	return array(
 		'fbclid',
 		'mibextid',
@@ -871,10 +877,10 @@ function scm_get_cache_tracking_query_vars() {
  *
  * @return bool
  */
-function scm_is_cache_tracking_query_var( $name ) {
+function khse_is_cache_tracking_query_var( $name ) {
 	$name = strtolower( trim( (string) $name ) );
 
-	return in_array( $name, scm_get_cache_tracking_query_vars(), true );
+	return in_array( $name, khse_get_cache_tracking_query_vars(), true );
 }
 
 /**
@@ -887,7 +893,7 @@ function scm_is_cache_tracking_query_var( $name ) {
  *
  * @return bool
  */
-function scm_is_cacheable_query_string( $query ) {
+function khse_is_cacheable_query_string( $query ) {
 	if ( '' === (string) $query ) {
 		return true;
 	}
@@ -896,7 +902,7 @@ function scm_is_cacheable_query_string( $query ) {
 	parse_str( (string) $query, $query_vars );
 
 	foreach ( array_keys( $query_vars ) as $query_var ) {
-		if ( ! scm_is_cache_tracking_query_var( $query_var ) ) {
+		if ( ! khse_is_cache_tracking_query_var( $query_var ) ) {
 			return false;
 		}
 	}
@@ -911,10 +917,10 @@ function scm_is_cacheable_query_string( $query ) {
  *
  * @return bool
  */
-function scm_is_cacheable_document_path( $path ) {
-	$path = scm_normalize_cache_uri( $path );
+function khse_is_cacheable_document_path( $path ) {
+	$path = khse_normalize_cache_uri( $path );
 
-	foreach ( scm_get_cache_bypass_paths() as $bypass_path ) {
+	foreach ( khse_get_cache_bypass_paths() as $bypass_path ) {
 		if ( preg_match( '#(?:^|/)' . preg_quote( $bypass_path, '#' ) . '(?:/|$)#i', $path ) ) {
 			return false;
 		}
@@ -935,12 +941,12 @@ function scm_is_cacheable_document_path( $path ) {
  *
  * @return bool
  */
-function scm_is_cacheable_request_uri( $request_uri = null ) {
+function khse_is_cacheable_request_uri( $request_uri = null ) {
 	if ( isset( $_SERVER['REQUEST_METHOD'] ) && ! in_array( $_SERVER['REQUEST_METHOD'], array( 'GET', 'HEAD' ), true ) ) {
 		return false;
 	}
 
-	if ( scm_request_has_cache_bypass_cookie() ) {
+	if ( khse_request_has_cache_bypass_cookie() ) {
 		return false;
 	}
 
@@ -964,13 +970,13 @@ function scm_is_cacheable_request_uri( $request_uri = null ) {
 
 	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
 
-	if ( ! scm_is_cacheable_query_string( $query ) ) {
+	if ( ! khse_is_cacheable_query_string( $query ) ) {
 		return false;
 	}
 
-	$path = scm_normalize_cache_uri( $request_uri );
+	$path = khse_normalize_cache_uri( $request_uri );
 
-	return scm_is_cacheable_document_path( $path );
+	return khse_is_cacheable_document_path( $path );
 }
 
 /**
@@ -980,14 +986,14 @@ function scm_is_cacheable_request_uri( $request_uri = null ) {
  *
  * @return bool
  */
-function scm_is_homepage_uri( $uri ) {
+function khse_is_homepage_uri( $uri ) {
 	$home_path = '/';
 
 	if ( function_exists( 'home_url' ) ) {
-		$home_path = scm_normalize_cache_uri( home_url( '/' ) );
+		$home_path = khse_normalize_cache_uri( home_url( '/' ) );
 	}
 
-	return scm_normalize_cache_uri( $uri ) === $home_path;
+	return khse_normalize_cache_uri( $uri ) === $home_path;
 }
 
 /**
@@ -998,8 +1004,8 @@ function scm_is_homepage_uri( $uri ) {
  *
  * @return string
  */
-function scm_build_cache_key( $prefix, $uri ) {
-	return md5( (string) $prefix . '|' . scm_normalize_cache_uri( $uri ) );
+function khse_build_cache_key( $prefix, $uri ) {
+	return md5( (string) $prefix . '|' . khse_normalize_cache_uri( $uri ) );
 }
 
 /**
@@ -1009,8 +1015,8 @@ function scm_build_cache_key( $prefix, $uri ) {
  *
  * @return string
  */
-function scm_get_cache_key( $uri ) {
-	return scm_build_cache_key( scm_get_cache_key_prefix(), $uri );
+function khse_get_cache_key( $uri ) {
+	return khse_build_cache_key( khse_get_cache_key_prefix(), $uri );
 }
 
 /**
@@ -1020,7 +1026,7 @@ function scm_get_cache_key( $uri ) {
  *
  * @return array
  */
-function scm_get_default_config() {
+function khse_get_default_config() {
 
 	return array(
 		'cache_driver'             => 'file',
@@ -1051,7 +1057,7 @@ function scm_get_default_config() {
 	);
 }
 
-function scm_read_stats_file( $path ) {
+function khse_read_stats_file( $path ) {
 	$content = file_exists( $path ) ? file_get_contents( $path ) : '';
 	$data    = json_decode( $content, true );
 

@@ -1,8 +1,8 @@
 <?php
 /**
- * AMS Cache option schema — canonical lifecycle registry.
+ * KH Speed Engine option schema — canonical lifecycle registry.
  *
- * @package AMS Cache
+ * @package KH Speed Engine
  * @license GPLv3 (or later)
  */
 
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @return array
  */
-function scm_get_option_schema() {
+function khse_get_option_schema() {
 	$schema = array(
 		'uninstall'                             => 'yes',
 		'clear_cache'                           => 'no',
@@ -51,13 +51,13 @@ function scm_get_option_schema() {
 		),
 	);
 
-	foreach ( scm_get_settings_schema() as $section ) {
+	foreach ( khse_get_settings_schema() as $section ) {
 		foreach ( $section as $rule ) {
-			if ( empty( $rule['option'] ) || 0 !== strpos( $rule['option'], 'scm_option_' ) ) {
+			if ( empty( $rule['option'] ) || 0 !== strpos( $rule['option'], 'khse_option_' ) ) {
 				continue;
 			}
 
-			$key            = substr( $rule['option'], strlen( 'scm_option_' ) );
+			$key            = substr( $rule['option'], strlen( 'khse_option_' ) );
 			$schema[ $key ] = $rule['default'];
 		}
 	}
@@ -70,6 +70,6 @@ function scm_get_option_schema() {
  *
  * @return array
  */
-function scm_get_option_keys() {
-	return array_keys( scm_get_option_schema() );
+function khse_get_option_keys() {
+	return array_keys( khse_get_option_schema() );
 }

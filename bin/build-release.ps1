@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Build a WordPress-ready AMS Cache release zip with version management.
+Build a WordPress-ready KH Speed Engine release zip with version management.
 
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File .\bin\build-release.ps1
@@ -87,12 +87,12 @@ function Bump-Version {
     return "$major.$minor.$patch"
 }
 
-$pluginSlug = 'ams-cache'
+$pluginSlug = 'kh-speed-engine'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
-$mainFile = Join-Path $root 'cache-master.php'
+$mainFile = Join-Path $root 'kh-speed-engine.php'
 
 if (-not (Test-Path -LiteralPath $mainFile)) {
-    throw "Cannot find cache-master.php at $mainFile"
+    throw "Cannot find kh-speed-engine.php at $mainFile"
 }
 
 $mainFileContent = Get-Content -LiteralPath $mainFile -Raw
@@ -100,7 +100,7 @@ $mainFileContent = Get-Content -LiteralPath $mainFile -Raw
 if ([string]::IsNullOrWhiteSpace($Version)) {
     if ($Bump) {
         if ($mainFileContent -notmatch '(?m)^\s*\*\s*Version:\s*([^\r\n]+)\s*$') {
-            throw 'Cannot read plugin Version from cache-master.php for bump.'
+            throw 'Cannot read plugin Version from kh-speed-engine.php for bump.'
         }
 
         $currentVersion = $Matches[1].Trim()
@@ -109,7 +109,7 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     }
     else {
         if ($mainFileContent -notmatch '(?m)^\s*\*\s*Version:\s*([^\r\n]+)\s*$') {
-            throw 'Cannot read plugin Version from cache-master.php'
+            throw 'Cannot read plugin Version from kh-speed-engine.php'
         }
 
         $Version = $Matches[1].Trim()
@@ -123,7 +123,7 @@ if ($Version -notmatch '^[0-9A-Za-z._-]+$') {
 if ($SetVersion) {
     $updatedContent = $mainFileContent -replace '(?m)^(\s*\*\s*Version:\s*)[^\r\n]+(\s*)$', "`${1}$Version`${2}"
     Write-Utf8NoBom -Path $mainFile -Value $updatedContent
-    Write-Host "Updated cache-master.php header version to $Version"
+    Write-Host "Updated kh-speed-engine.php header version to $Version"
 
     $readmePath = Join-Path $root 'README.txt'
 

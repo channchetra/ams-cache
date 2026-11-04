@@ -1,19 +1,19 @@
 <?php
 /**
- * AMS Cache - Benchmark widget class.
+ * KH Speed Engine - Benchmark widget class.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
 /**
  * Display the WordPress benchmark report in the widget area.
  */
-class SCM_Benchmark_Widget extends WP_Widget {
+class KHSE_Benchmark_Widget extends WP_Widget {
 
 	/**
 	 * Sets up a new widget instance.
@@ -21,12 +21,12 @@ class SCM_Benchmark_Widget extends WP_Widget {
 	public function __construct() {
 
 		$widget_ops = array(
-			'classname'                   => 'widget_scm_benchmark',
-			'description'                 => __( 'Display the benchmark report before and after caching by AMS Cache.', 'ams-cache' ),
+			'classname'                   => 'widget_khse_benchmark',
+			'description'                 => __( 'Display the benchmark report before and after caching by KH Speed Engine.', 'kh-speed-engine' ),
 			'customize_selective_refresh' => true,
 		);
 
-		parent::__construct( 'scm_benchmark', __( 'Benchmark Report', 'ams-cache' ), $widget_ops );
+		parent::__construct( 'khse_benchmark', __( 'Benchmark Report', 'kh-speed-engine' ), $widget_ops );
 	}
 
 	/**
@@ -36,16 +36,16 @@ class SCM_Benchmark_Widget extends WP_Widget {
 
 		echo $args['before_widget'];
 
-		echo '<div class="ams-cache-plugin-widget-wrapper" style="display: none">';
+		echo '<div class="kh-speed-engine-plugin-widget-wrapper" style="display: none">';
 
 		if ( ! empty( $instance['title'] ) ) {
 			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
 		}
 
 		?>
-			<div class="ams-cache-plugin-widget">
-				<div class="scm-table">
-					<?php echo scm_render_benchmark_metrics( 'widget' ); ?>
+			<div class="kh-speed-engine-plugin-widget">
+				<div class="khse-table">
+					<?php echo khse_render_benchmark_metrics( 'widget' ); ?>
 				</div>
 			</div>
 		<?php
@@ -63,14 +63,14 @@ class SCM_Benchmark_Widget extends WP_Widget {
 	 * @param array $instance Previously saved values from database.
 	 */
 	public function form( $instance ) {
-		$title = __( 'AMS Cache Report', 'ams-cache' );
+		$title = __( 'KH Speed Engine Report', 'kh-speed-engine' );
 
 		if ( isset( $instance['title'] ) ) {
 			$title = $instance['title'];
 		}
 		?>
 			<p>
-				<label for="<?php echo $this->get_field_name( 'title' ); ?>"><?php _e( 'Title:', 'ams-cache' ); ?></label>
+				<label for="<?php echo $this->get_field_name( 'title' ); ?>"><?php _e( 'Title:', 'kh-speed-engine' ); ?></label>
 				<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
 			</p>
 		<?php

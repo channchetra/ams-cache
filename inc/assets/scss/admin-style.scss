@@ -1,6 +1,6 @@
 
 
-.ams-cache-info-bar {
+.kh-speed-engine-info-bar {
 	clear: both;
 	margin-top: 20px;
 	display: flex;
@@ -13,7 +13,7 @@
 		background-color: rgba(255, 255, 255, 0);
 	}
 
-	.ams-cache-logo {
+	.kh-speed-engine-logo {
 		height: 60px;
 	}
 
@@ -23,7 +23,7 @@
 	}
 }
 
-.scm-wrap {
+.khse-wrap {
 
 	h2 {
 		border-bottom: 1px #dddddd solid;
@@ -47,7 +47,7 @@
 	}
 }
 
-.scm-code-block {
+.khse-code-block {
 	background-color: #ffffff;
 	font-size: 0;
 	padding: 10px;
@@ -73,7 +73,7 @@
 	}
 }
 
-#scm-expert-mode-page {
+#khse-expert-mode-page {
 	img {
 		border: 1px #dddddd solid;
 		padding: 5px;
@@ -85,25 +85,25 @@
 	}
 }
 
-.scm-no {
+.khse-no {
 	color: #990000;
 	font-weight: bold;
 }
 
-.scm-yes {
+.khse-yes {
 	color: #009900;
 	font-weight: bold;
 }
 
-.scm-warning {
+.khse-warning {
 	color: #990000;
 }
 
-.scm-info {
+.khse-info {
 	color: #009900;
 }
 
-.scm-expert-mode-intro {
+.khse-expert-mode-intro {
 	width: 100%;
 	max-width: 600px;
 
@@ -202,7 +202,7 @@
 	
 }
 
-.scm-option-item {
+.khse-option-item {
 	padding: 2px 0;
 
 	input[type="radio"] {
@@ -294,7 +294,7 @@
 	}
 }
 
-.scm-option-example {
+.khse-option-example {
 	margin: 10px;
 	border: 1px #dddddd solid;
 	padding: 5px;
@@ -309,12 +309,12 @@
 	}
 }
 
-.scm-total-size {
+.khse-total-size {
 	font-weight: 600;
 	background-color: #fffce7;
 }
 
-.scm-badge {
+.khse-badge {
 	background-color: #eee;
 	color: #009900;
 	border: 1px #dddddd solid;
@@ -323,13 +323,13 @@
 	border-radius: 3px;
 }
 
-.scm-label-wrapper {
+.khse-label-wrapper {
 	width: 100%;
 	max-width: 120px; 
 	display: inline-block
 }
 
-.scm-texatrea {
+.khse-texatrea {
 	border: 1px #cccccc solid;
 	border-right: 2px #ffffff solid;
 	border-bottom: 2px #ffffff solid;
@@ -346,30 +346,30 @@
 	}
 }
 
-.scm-msg {
+.khse-msg {
 	
 	padding: 5px;
 	margin: 10px 0;
 	display: inline-block;
 	border-radius: 3px;
 
-	&.scm-msg-error {
+	&.khse-msg-error {
 		border: 1px #990000 solid;
 		color: #990000;
 	}
 
-	&.scm-msg-info {
+	&.khse-msg-info {
 		border: 1px #009900 solid;
 		color: #009900;
 	}
 
-	&.scm-msg-notice {
+	&.khse-msg-notice {
 		border: 1px #99984e solid;
 		color: #99984e;
 	}
 }
 
-.scm-table-ttl-example {
+.khse-table-ttl-example {
 	margin: 10px;
 	border: 1px #dddddd solid;
 	padding: 5px;

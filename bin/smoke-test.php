@@ -1,18 +1,18 @@
 <?php
 /**
- * Dependency-free AMS Cache runtime smoke tests.
+ * Dependency-free KH Speed Engine runtime smoke tests.
  *
  * Run with: php bin/smoke-test.php
  */
 
 define( 'ABSPATH', dirname( __DIR__ ) . DIRECTORY_SEPARATOR );
 define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
-define( 'SCM_INC', true );
-define( 'SCM_PLUGIN_VERSION', 'smoke' );
+define( 'KHSE_INC', true );
+define( 'KHSE_PLUGIN_VERSION', 'smoke' );
 
 $smoke_options = array(
-	'scm_blog_id'  => 1,
-	'scm_dir_hash' => 'smoke123',
+	'khse_blog_id'  => 1,
+	'khse_dir_hash' => 'smoke123',
 );
 $smoke_transients = array();
 $smoke_scheduled  = array();
@@ -180,32 +180,32 @@ function smoke_assert( $condition, $message ) {
 	}
 }
 
-smoke_assert( '/about/' === scm_normalize_cache_uri( '/about' ), 'cache URI normalization' );
-smoke_assert( scm_is_cacheable_request_uri( '/about/' ), 'HTML request classification' );
-smoke_assert( scm_is_cacheable_request_uri( '/about/?fbclid=tracking-id' ), 'Facebook tracking query remains cacheable' );
-smoke_assert( scm_is_cacheable_request_uri( '/about/?mibextid=share-id&utm_source=facebook' ), 'Meta share tracking queries remain cacheable' );
-smoke_assert( scm_get_cache_key( '/about/' ) === scm_get_cache_key( '/about/?fbclid=tracking-id' ), 'tracking query shares canonical cache key' );
-smoke_assert( ! scm_is_cacheable_request_uri( '/about/?s=cache' ), 'functional query remains uncached' );
-smoke_assert( ! scm_is_cacheable_request_uri( '/assets/app.css' ), 'asset request classification' );
-smoke_assert( false !== strpos( scm_get_nginx_direct_cache_snippet(), 'fbclid' ), 'Nginx snippet allows Facebook tracking query' );
-smoke_assert( false !== strpos( scm_get_nginx_direct_cache_snippet(), 'mibextid' ), 'Nginx snippet allows Meta share query' );
-smoke_assert( false === strpos( scm_get_nginx_direct_cache_snippet(), '&&' ), 'Nginx snippet uses valid condition syntax' );
-smoke_assert( '' !== scm_local_asset_url_to_path( '/inc/cache-core.php' ), 'same-site asset resolution' );
-smoke_assert( '' === scm_local_asset_url_to_path( '/../cache-core.php' ), 'path traversal rejected' );
+smoke_assert( '/about/' === khse_normalize_cache_uri( '/about' ), 'cache URI normalization' );
+smoke_assert( khse_is_cacheable_request_uri( '/about/' ), 'HTML request classification' );
+smoke_assert( khse_is_cacheable_request_uri( '/about/?fbclid=tracking-id' ), 'Facebook tracking query remains cacheable' );
+smoke_assert( khse_is_cacheable_request_uri( '/about/?mibextid=share-id&utm_source=facebook' ), 'Meta share tracking queries remain cacheable' );
+smoke_assert( khse_get_cache_key( '/about/' ) === khse_get_cache_key( '/about/?fbclid=tracking-id' ), 'tracking query shares canonical cache key' );
+smoke_assert( ! khse_is_cacheable_request_uri( '/about/?s=cache' ), 'functional query remains uncached' );
+smoke_assert( ! khse_is_cacheable_request_uri( '/assets/app.css' ), 'asset request classification' );
+smoke_assert( false !== strpos( khse_get_nginx_direct_cache_snippet(), 'fbclid' ), 'Nginx snippet allows Facebook tracking query' );
+smoke_assert( false !== strpos( khse_get_nginx_direct_cache_snippet(), 'mibextid' ), 'Nginx snippet allows Meta share query' );
+smoke_assert( false === strpos( khse_get_nginx_direct_cache_snippet(), '&&' ), 'Nginx snippet uses valid condition syntax' );
+smoke_assert( '' !== khse_local_asset_url_to_path( '/inc/cache-core.php' ), 'same-site asset resolution' );
+smoke_assert( '' === khse_local_asset_url_to_path( '/../cache-core.php' ), 'path traversal rejected' );
 
-$analysis = scm_analyze_javascript_source( 'document.write("unsafe");' );
+$analysis = khse_analyze_javascript_source( 'document.write("unsafe");' );
 smoke_assert( empty( $analysis['safeToDefer'] ), 'unsafe JavaScript remains blocking' );
-smoke_assert( ! empty( scm_analyze_javascript_source( 'window.addEventListener("load", boot);' )['safeToDefer'] ), 'safe JavaScript can defer' );
+smoke_assert( ! empty( khse_analyze_javascript_source( 'window.addEventListener("load", boot);' )['safeToDefer'] ), 'safe JavaScript can defer' );
 
 $html = '<html><body class="site"><div class="menu open"></div></body></html>';
 $css  = 'body{color:red}.unused{display:none}.menu:hover{color:blue}@font-face{font-family:test;src:url(test.woff2)}';
-$purged = scm_purge_css_conservative( $css, $html, array( 'open' ) );
+$purged = khse_purge_css_conservative( $css, $html, array( 'open' ) );
 smoke_assert( false === strpos( $purged, '.unused' ), 'unused simple selector removed' );
 smoke_assert( false !== strpos( $purged, 'body{' ), 'used element selector preserved' );
 smoke_assert( false !== strpos( $purged, '.menu:hover' ), 'dynamic selector preserved' );
 smoke_assert( false !== strpos( $purged, '@font-face' ), 'font-face preserved' );
 
-$optimized_inline = scm_apply_local_ucss(
+$optimized_inline = khse_apply_local_ucss(
 	'<style>' . $css . '</style>' . $html,
 	array(
 		'ucss_safelist'          => 'open',
@@ -214,7 +214,7 @@ $optimized_inline = scm_apply_local_ucss(
 );
 smoke_assert( false === strpos( $optimized_inline, '.unused' ), 'inline UCSS uses PHP engine' );
 
-$stats_dir = scm_get_stats_dir( 'post' );
+$stats_dir = khse_get_stats_dir( 'post' );
 wp_mkdir_p( $stats_dir );
 $old_key  = md5( 'old_prefix|/deleted/' );
 $old_file = $stats_dir . '/' . $old_key . '.json';
@@ -227,16 +227,16 @@ $driver = new class() {
 		return true;
 	}
 };
-$purge = scm_purge_cache_uri( '/deleted/', $driver );
+$purge = khse_purge_cache_uri( '/deleted/', $driver );
 smoke_assert( ! file_exists( $old_file ), 'purge removes stale cache stats under old prefixes' );
 smoke_assert( in_array( $old_key, $driver->deleted, true ), 'purge removes stale driver key under old prefixes' );
-smoke_assert( null === scm_preload_url( 'https://attacker.test/' ), 'preload rejects external hosts' );
-$preload_response = scm_preload_url( home_url( '/deleted/' ) );
+smoke_assert( null === khse_preload_url( 'https://attacker.test/' ), 'preload rejects external hosts' );
+$preload_response = khse_preload_url( home_url( '/deleted/' ) );
 smoke_assert( is_array( $preload_response ), 'preload keeps same-site URLs working' );
 smoke_assert( true === $preload_response['args']['blocking'], 'preload waits for cache write' );
 smoke_assert( 8 === $preload_response['args']['timeout'], 'preload allows page generation time' );
-smoke_assert( false === scm_preload_sslverify( 'https://127.0.0.1/' ), 'local HTTPS preload permits loopback certificate' );
-smoke_assert( true === scm_preload_sslverify( 'https://example.test/' ), 'external HTTPS preload keeps certificate verification' );
+smoke_assert( false === khse_preload_sslverify( 'https://127.0.0.1/' ), 'local HTTPS preload permits loopback certificate' );
+smoke_assert( true === khse_preload_sslverify( 'https://example.test/' ), 'external HTTPS preload keeps certificate verification' );
 
 $smoke_post = (object) array(
 	'ID'          => 321,
@@ -245,55 +245,55 @@ $smoke_post = (object) array(
 	'post_author' => 42,
 	'post_date'   => '2026-07-20 12:00:00',
 );
-$smoke_options['scm_option_post_archives'] = array(
+$smoke_options['khse_option_post_archives'] = array(
 	'category' => 'yes',
 	'tag'      => 'yes',
 	'author'   => 'yes',
 	'date'     => 'yes',
 );
-$critical_urls = scm_get_critical_preload_urls( 25, 321 );
+$critical_urls = khse_get_critical_preload_urls( 25, 321 );
 smoke_assert( in_array( home_url( '/' ), $critical_urls, true ), 'critical preload includes homepage' );
 smoke_assert( in_array( home_url( '/category/news/' ), $critical_urls, true ), 'critical preload keeps category after trash' );
 smoke_assert( in_array( home_url( '/tag/cache/' ), $critical_urls, true ), 'critical preload keeps tag after trash' );
 smoke_assert( in_array( home_url( '/author/editor/' ), $critical_urls, true ), 'critical preload keeps author after trash' );
 smoke_assert( in_array( home_url( '/2026/' ), $critical_urls, true ), 'critical preload keeps date archive after trash' );
 
-$smoke_options['scm_option_preload_cache']       = 'yes';
-$smoke_options['scm_option_caching_status']      = 'enable';
-$smoke_options['scm_preload_queue_processed']    = 0;
-$smoke_options['scm_preload_queue_failed']       = 0;
-$smoke_options['scm_preload_queue_remaining']    = 1;
-$smoke_transients['scm_preload_queue']           = array( home_url( '/about/' ) );
-scm_maybe_schedule_preload_cache();
-smoke_assert( in_array( 'scm_preload_cache_event', $smoke_scheduled, true ), 'enabled preload schedules after deployment' );
-scm_maybe_schedule_preload_cache();
-smoke_assert( 1 === count( array_keys( $smoke_scheduled, 'scm_preload_cache_event', true ) ), 'deployment preload bootstrap schedules once' );
-scm_process_preload_queue();
-smoke_assert( 1 === (int) $smoke_options['scm_preload_queue_processed'], 'preload queue counts completed page' );
-smoke_assert( 0 === (int) $smoke_options['scm_preload_queue_failed'], 'preload queue keeps successful page out of failures' );
+$smoke_options['khse_option_preload_cache']       = 'yes';
+$smoke_options['khse_option_caching_status']      = 'enable';
+$smoke_options['khse_preload_queue_processed']    = 0;
+$smoke_options['khse_preload_queue_failed']       = 0;
+$smoke_options['khse_preload_queue_remaining']    = 1;
+$smoke_transients['khse_preload_queue']           = array( home_url( '/about/' ) );
+khse_maybe_schedule_preload_cache();
+smoke_assert( in_array( 'khse_preload_cache_event', $smoke_scheduled, true ), 'enabled preload schedules after deployment' );
+khse_maybe_schedule_preload_cache();
+smoke_assert( 1 === count( array_keys( $smoke_scheduled, 'khse_preload_cache_event', true ) ), 'deployment preload bootstrap schedules once' );
+khse_process_preload_queue();
+smoke_assert( 1 === (int) $smoke_options['khse_preload_queue_processed'], 'preload queue counts completed page' );
+smoke_assert( 0 === (int) $smoke_options['khse_preload_queue_failed'], 'preload queue keeps successful page out of failures' );
 @rmdir( $stats_dir );
 @rmdir( dirname( $stats_dir ) );
-@rmdir( scm_get_upload_dir() );
+@rmdir( khse_get_upload_dir() );
 
-$runtime = wp_normalize_path( scm_get_private_runtime_dir() );
+$runtime = wp_normalize_path( khse_get_private_runtime_dir() );
 smoke_assert( 0 !== strncasecmp( $runtime . '/', wp_normalize_path( ABSPATH ) . '/', strlen( wp_normalize_path( ABSPATH ) ) + 1 ), 'runtime directory is outside public root' );
 
-$requirements = scm_get_page_optimization_requirements();
+$requirements = khse_get_page_optimization_requirements();
 smoke_assert( ! empty( $requirements['php_css']['passed'] ) && ! empty( $requirements['php_js']['passed'] ), 'dashboard reports PHP engines ready' );
 smoke_assert( ! isset( $requirements['purgecss'] ) && ! isset( $requirements['bun'] ), 'dashboard does not require runtime CLI tools' );
 
-$plugin_source = file_get_contents( dirname( __DIR__ ) . '/cache-master.php' );
-smoke_assert( false !== strpos( $plugin_source, "require_once SCM_PLUGIN_DIR . 'inc/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
+$plugin_source = file_get_contents( dirname( __DIR__ ) . '/kh-speed-engine.php' );
+smoke_assert( false !== strpos( $plugin_source, "require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
 $post_hooks_source = file_get_contents( dirname( __DIR__ ) . '/inc/update-post.php' );
-smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post', 'scm_purge_post_before_trash', 10, 2 );" ), 'trash purge hook runs before status change' );
-smoke_assert( false !== strpos( $post_hooks_source, 'scm_queue_critical_preload_urls( $post->ID, $driver );' ), 'status changes warm related post archives' );
-smoke_assert( false !== strpos( $post_hooks_source, 'scm_queue_critical_preload_urls( $post_ID, $driver );' ), 'new and updated posts warm their own page' );
-$cache_master_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-cache-master.php' );
-smoke_assert( false === strpos( $cache_master_source, 'if ( ! scm_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );
+smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post', 'khse_purge_post_before_trash', 10, 2 );" ), 'trash purge hook runs before status change' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post->ID, $driver );' ), 'status changes warm related post archives' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post_ID, $driver );' ), 'new and updated posts warm their own page' );
+$cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-khse-cache.php' );
+smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );
 
 $preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache-preload.php' );
-smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'scm_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
+smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
 $admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/functions.php' );
-smoke_assert( false !== strpos( $admin_source, "scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_private_runtime_dir() ) )" ), 'Expert Mode readiness checks private runtime path' );
+smoke_assert( false !== strpos( $admin_source, "khse_search_expert_mode_code_snippet( wp_normalize_path( khse_get_private_runtime_dir() ) )" ), 'Expert Mode readiness checks private runtime path' );
 
-echo "AMS Cache smoke tests passed\n";
+echo "KH Speed Engine smoke tests passed\n";

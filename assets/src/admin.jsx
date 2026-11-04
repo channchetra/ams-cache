@@ -71,7 +71,7 @@ function AmsButton({children, icon: Icon, tone = 'default', size = 'md', busy = 
 		<button
 			{...props}
 			type="button"
-			className={`ams-button ams-button--${tone} ams-button--${size} ${iconOnly ? 'ams-button--icon' : ''} ${className}`.trim()}
+			className={`khse-button khse-button--${tone} khse-button--${size} ${iconOnly ? 'khse-button--icon' : ''} ${className}`.trim()}
 			disabled={disabled || busy}
 			onClick={onPress}
 			title={title || label}
@@ -104,20 +104,20 @@ function request(action, payload = {}) {
 }
 
 function Pill({tone = 'info', children}) {
-	return <span className={`ams-pill ams-pill--${tone}`}>{humanStatus(children)}</span>;
+	return <span className={`khse-pill khse-pill--${tone}`}>{humanStatus(children)}</span>;
 }
 
 function StatCard({icon: Icon, title, value, detail, progress = 0}) {
 	return (
-		<Card className="ams-card ams-stat-card">
+		<Card className="khse-card khse-stat-card">
 			<Card.Content>
-				<div className="ams-card-title">
-					<span className="ams-icon-badge"><Icon size={18} /></span>
+				<div className="khse-card-title">
+					<span className="khse-icon-badge"><Icon size={18} /></span>
 					<span>{title}</span>
 				</div>
 				<strong>{value}</strong>
 				<small>{detail}</small>
-				<div className="ams-progress"><span style={{width: percent(progress)}} /></div>
+				<div className="khse-progress"><span style={{width: percent(progress)}} /></div>
 			</Card.Content>
 		</Card>
 	);
@@ -125,19 +125,19 @@ function StatCard({icon: Icon, title, value, detail, progress = 0}) {
 
 function Panel({title, action, children, className = ''}) {
 	return (
-		<Card className={`ams-card ams-panel ${className}`.trim()}>
-			<Card.Header className="ams-panel-header">
-				<Card.Title className="ams-panel-title">{title}</Card.Title>
-				{action ? <div className="ams-panel-action">{action}</div> : null}
+		<Card className={`khse-card khse-panel ${className}`.trim()}>
+			<Card.Header className="khse-panel-header">
+				<Card.Title className="khse-panel-title">{title}</Card.Title>
+				{action ? <div className="khse-panel-action">{action}</div> : null}
 			</Card.Header>
-			<Card.Content className="ams-panel-content">{children}</Card.Content>
+			<Card.Content className="khse-panel-content">{children}</Card.Content>
 		</Card>
 	);
 }
 
 function FactList({items}) {
 	return (
-		<ul className="ams-fact-list">
+		<ul className="khse-fact-list">
 			{items.map((item) => (
 				<li key={item.label}>
 					<span>{item.label}</span>
@@ -150,20 +150,20 @@ function FactList({items}) {
 
 function SwitchRow({label, description, checked, onChange}) {
 	return (
-		<div className="ams-setting-row">
+		<div className="khse-setting-row">
 			<div>
 				<strong>{label}</strong>
 				{description ? <p>{description}</p> : null}
 			</div>
 			<button
 				type="button"
-				className={`ams-switch ${checked ? 'is-on' : ''}`}
+				className={`khse-switch ${checked ? 'is-on' : ''}`}
 				role="switch"
 				aria-checked={!!checked}
 				onClick={() => onChange(!checked)}
 			>
-				<span className="ams-switch-track"><span className="ams-switch-thumb" /></span>
-				<span className="ams-switch-text">{checked ? 'Enable' : 'Disable'}</span>
+				<span className="khse-switch-track"><span className="khse-switch-thumb" /></span>
+				<span className="khse-switch-text">{checked ? 'Enable' : 'Disable'}</span>
 			</button>
 		</div>
 	);
@@ -171,7 +171,7 @@ function SwitchRow({label, description, checked, onChange}) {
 
 function TextFieldRow({label, value, onChange, type = 'text', min, max}) {
 	return (
-		<div className="ams-setting-row">
+		<div className="khse-setting-row">
 			<Label>{label}</Label>
 			<Input
 				type={type}
@@ -180,7 +180,7 @@ function TextFieldRow({label, value, onChange, type = 'text', min, max}) {
 				max={max}
 				onChange={(event) => onChange(event.target.value)}
 				variant="secondary"
-				className="ams-input"
+				className="khse-input"
 			/>
 		</div>
 	);
@@ -188,14 +188,14 @@ function TextFieldRow({label, value, onChange, type = 'text', min, max}) {
 
 function TextAreaRow({label, value, onChange, rows = 5}) {
 	return (
-		<div className="ams-setting-stack">
+		<div className="khse-setting-stack">
 			<Label>{label}</Label>
 			<TextArea
 				value={String(value ?? '')}
 				onChange={(event) => onChange(event.target.value)}
 				rows={rows}
 				variant="secondary"
-				className="ams-textarea"
+				className="khse-textarea"
 			/>
 		</div>
 	);
@@ -205,9 +205,9 @@ function DriverSelect({settings, update}) {
 	const drivers = settings.cache?.drivers || [];
 
 	return (
-		<div className="ams-setting-row">
+		<div className="khse-setting-row">
 			<Label>Cache Driver</Label>
-			<Select selectedKey={settings.cache?.driver || 'file'} onSelectionChange={(value) => update('cache', 'driver', String(value))} className="ams-select" placeholder="Select driver">
+			<Select selectedKey={settings.cache?.driver || 'file'} onSelectionChange={(value) => update('cache', 'driver', String(value))} className="khse-select" placeholder="Select driver">
 				<Select.Trigger>
 					<Select.Value />
 					<Select.Indicator />
@@ -228,9 +228,9 @@ function DriverSelect({settings, update}) {
 
 function MiniSelectRow({label, value, options, onChange}) {
 	return (
-		<div className="ams-setting-row">
+		<div className="khse-setting-row">
 			<Label>{label}</Label>
-			<select className="ams-native-select" value={String(value ?? '')} onChange={(event) => onChange(event.target.value)}>
+			<select className="khse-native-select" value={String(value ?? '')} onChange={(event) => onChange(event.target.value)}>
 				{options.map((option) => (
 					<option key={option.value} value={option.value}>{option.label}</option>
 				))}
@@ -241,15 +241,15 @@ function MiniSelectRow({label, value, options, onChange}) {
 
 function DriverGrid({drivers = [], selected, onSelect}) {
 	return (
-		<div className="ams-driver-grid">
+		<div className="khse-driver-grid">
 			{drivers.map((driver) => {
 				const available = driver.available !== false;
 				const active = selected === driver.value;
 
 				return (
-					<button key={driver.value} type="button" className={`ams-driver-card ${active ? 'is-active' : ''}`} onClick={() => onSelect(driver.value)}>
+					<button key={driver.value} type="button" className={`khse-driver-card ${active ? 'is-active' : ''}`} onClick={() => onSelect(driver.value)}>
 						<span>{driver.label}</span>
-						<span className={`ams-driver-status ${available ? 'is-ready' : 'is-missing'}`} title={available ? 'Available' : 'Extension missing'} />
+						<span className={`khse-driver-status ${available ? 'is-ready' : 'is-missing'}`} title={available ? 'Available' : 'Extension missing'} />
 					</button>
 				);
 			})}
@@ -259,7 +259,7 @@ function DriverGrid({drivers = [], selected, onSelect}) {
 
 function ToggleList({title, items = [], onToggle}) {
 	return (
-		<div className="ams-toggle-list">
+		<div className="khse-toggle-list">
 			<h3>{title}</h3>
 			{items.map((item) => (
 				<SwitchRow
@@ -284,7 +284,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 	const driverReady = selectedDriver?.available !== false;
 	const dbOptions = Array.from({length: 16}, (_, index) => ({value: String(index), label: `DB${index}`}));
 	const health = (
-		<div className="ams-driver-health">
+		<div className="khse-driver-health">
 			<Pill tone={driverReady ? 'good' : 'warning'}>{driverReady ? 'Extension ready' : 'Extension missing'}</Pill>
 			<AmsButton size="sm" icon={CheckCircle2} busy={isBusy} onPress={() => testDriver(driver)}>Test Connection</AmsButton>
 		</div>
@@ -292,7 +292,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 
 	if (driver === 'file') {
 		return (
-			<div className="ams-driver-advanced">
+			<div className="khse-driver-advanced">
 				{health}
 				<SwitchRow label="File Compression" description="Saves disk space for large HTML files. Raw files can be faster on fast SSD storage." checked={current.compress === 'yes'} onChange={(checked) => updateAdvanced('file', 'compress', checked ? 'yes' : 'no')} />
 				<TextFieldRow label="Compression Threshold" type="number" min="0" value={current.compress_threshold ?? 4096} onChange={(value) => updateAdvanced('file', 'compress_threshold', value)} />
@@ -304,7 +304,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 
 	if (driver === 'redis') {
 		return (
-			<div className="ams-driver-advanced">
+			<div className="khse-driver-advanced">
 				{health}
 				<MiniSelectRow label="Connection" value={connectType} options={[{value: 'tcp', label: 'TCP'}, {value: 'socket', label: 'Unix Socket'}]} onChange={(value) => updateConnection('redis', value)} />
 				{connectType === 'socket' ? <TextFieldRow label="Unix Socket" value={current.unix_socket || ''} onChange={(value) => updateAdvanced('redis', 'unix_socket', value)} /> : (
@@ -327,7 +327,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 		const defaults = driver === 'mongo' ? {host: '127.0.0.1', port: 27017} : {host: '127.0.0.1', port: 11211};
 
 		return (
-			<div className="ams-driver-advanced">
+			<div className="khse-driver-advanced">
 				{health}
 				<MiniSelectRow label="Connection" value={connectType} options={[{value: 'tcp', label: 'TCP'}, {value: 'socket', label: 'Unix Socket'}]} onChange={(value) => updateConnection(driver, value)} />
 				{connectType === 'socket' ? <TextFieldRow label="Unix Socket" value={current.unix_socket || ''} onChange={(value) => updateAdvanced(driver, 'unix_socket', value)} /> : (
@@ -348,12 +348,12 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 		);
 	}
 
-	return <div className="ams-driver-advanced">{health}<p className="ams-muted">No extra settings for this driver. Use Cache Key Prefix to isolate sites sharing the same store.</p></div>;
+	return <div className="khse-driver-advanced">{health}<p className="khse-muted">No extra settings for this driver. Use Cache Key Prefix to isolate sites sharing the same store.</p></div>;
 }
 
 function SaveBar({isBusy, onSave, global = false}) {
 	return (
-		<div className={`ams-savebar ${global ? 'ams-savebar--global' : ''}`.trim()}>
+		<div className={`khse-savebar ${global ? 'khse-savebar--global' : ''}`.trim()}>
 			<AmsButton tone="primary" icon={Save} busy={isBusy} onPress={onSave}>Save Changes</AmsButton>
 		</div>
 	);
@@ -399,7 +399,7 @@ function Overview({data, go, actions}) {
 					<StatusList items={optimization.requirements || []} />
 				</Panel>
 				<Panel title="Cache Footprint" action={<AmsButton size="sm" icon={BarChart3} onPress={() => go('statistics')}>Statistics</AmsButton>}>
-					<div className="ams-footprint">
+					<div className="khse-footprint">
 						<strong>{stats.totalRows || 0}<span>rows</span></strong>
 						<strong>{stats.totalSizeLabel || '0 B'}<span>stored</span></strong>
 					</div>
@@ -412,10 +412,10 @@ function Overview({data, go, actions}) {
 
 function StatusList({items}) {
 	return (
-		<ul className="ams-status-list">
+		<ul className="khse-status-list">
 			{items.map((item) => (
 				<li key={item.key}>
-					<span className={`ams-dot ${item.passed ? 'is-good' : 'is-bad'}`} />
+					<span className={`khse-dot ${item.passed ? 'is-good' : 'is-bad'}`} />
 					<strong>{item.label}</strong>
 					<code>{item.detail}</code>
 				</li>
@@ -426,7 +426,7 @@ function StatusList({items}) {
 
 function CacheRows({rows, clearType}) {
 	return (
-		<ul className="ams-cache-rows">
+		<ul className="kh-speed-engine-rows">
 			{rows.map((row) => (
 				<li key={row.type}>
 					<span>{row.label}</span>
@@ -487,11 +487,11 @@ function CacheSettings({settings, update, save, isBusy, testDriver}) {
 
 	return (
 		<div className="grid w-full grid-cols-1 items-stretch gap-4">
-			<Panel title="Driver" className="ams-wide-panel">
+			<Panel title="Driver" className="khse-wide-panel">
 				<SwitchRow label="Caching Status" description="Guest-only page cache. Logged-in users never receive cached HTML." checked={Boolean(cache.cachingStatus)} onChange={(checked) => update('cache', 'cachingStatus', checked)} />
 				<DriverSelect settings={settings} update={update} />
 				<DriverGrid drivers={cache.drivers || []} selected={selectedDriver} onSelect={(value) => update('cache', 'driver', value)} />
-				<div className="ams-driver-form-grid">
+				<div className="khse-driver-form-grid">
 					<TextFieldRow label="Time to Live" type="number" min="300" max="2592000" value={cache.ttl} onChange={(value) => update('cache', 'ttl', value)} />
 					<SwitchRow label="TTL Auto Clear" checked={Boolean(cache.ttlMechanism)} onChange={(checked) => update('cache', 'ttlMechanism', checked)} />
 					<TextFieldRow label="Cache Key Prefix" value={cache.cacheKeyPrefix} onChange={(value) => update('cache', 'cacheKeyPrefix', value)} />
@@ -500,7 +500,7 @@ function CacheSettings({settings, update, save, isBusy, testDriver}) {
 					<SwitchRow label="Debug Comment" checked={Boolean(cache.debugComment)} onChange={(checked) => update('cache', 'debugComment', checked)} />
 				</div>
 			</Panel>
-			<Panel title={`${selectedLabel} Advanced Settings`} action={<Pill tone="info">{selectedDriver}</Pill>} className="ams-wide-panel">
+			<Panel title={`${selectedLabel} Advanced Settings`} action={<Pill tone="info">{selectedDriver}</Pill>} className="khse-wide-panel">
 				<DriverAdvanced cache={cache} updateAdvanced={setAdvanced} updateConnection={setConnection} testDriver={testDriver} isBusy={isBusy} />
 			</Panel>
 		</div>
@@ -526,7 +526,7 @@ function PreloadSettings({data, settings, update, save, isBusy, runPreload, purg
 					{label: 'Homepage Priority', value: data.preload?.priorityCount || 0},
 					{label: 'Critical URLs', value: data.preload?.criticalCount || 0}
 				]} />
-				<div className="ams-action-row">
+				<div className="khse-action-row">
 					<AmsButton icon={Play} tone="primary" busy={isBusy} onPress={runPreload}>Run Preload</AmsButton>
 					<AmsButton icon={Home} busy={isBusy} onPress={purgeHomepage}>Purge Homepage</AmsButton>
 				</div>
@@ -536,16 +536,16 @@ function PreloadSettings({data, settings, update, save, isBusy, runPreload, purg
 				<TextFieldRow label="Limit" type="number" min="1" max="1000" value={preload.limit} onChange={(value) => update('preload', 'limit', value)} />
 				<SwitchRow label="Homepage Crawl" description="Homepage links become priority cache-first URLs." checked={Boolean(preload.crawlHomepage)} onChange={(checked) => update('preload', 'crawlHomepage', checked)} />
 			</Panel>
-			<Panel title="Preload Options" className="ams-full-width">
-				<div className="ams-option-columns">
+			<Panel title="Preload Options" className="khse-full-width">
+				<div className="khse-option-columns">
 					<ToggleList title="Post Types" items={preload.postTypes || []} onToggle={(value, checked) => toggleList('postTypes', value, checked)} />
-					<div className="ams-toggle-list">
+					<div className="khse-toggle-list">
 						<h3>Homepage</h3>
 						<SwitchRow label="Homepage" checked={Boolean(preload.homepage)} onChange={(checked) => update('preload', 'homepage', checked)} />
 					</div>
 					<ToggleList title="Archive Pages" items={preload.archives || []} onToggle={(value, checked) => toggleList('archives', value, checked)} />
 				</div>
-				<p className="ams-muted">Preloader crawls homepage first, pushes visible internal links to front of queue, then uses selected post types and archives.</p>
+				<p className="khse-muted">Preloader crawls homepage first, pushes visible internal links to front of queue, then uses selected post types and archives.</p>
 			</Panel>
 		</div>
 	);
@@ -559,9 +559,9 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, l
 
 	return (
 		<>
-			<div className="ams-tabs">
+			<div className="khse-tabs">
 				{tabs.map((item) => (
-					<button key={item} type="button" className={`ams-tab ${tab === item ? 'is-active' : ''}`} onClick={() => setTab(item)}>
+					<button key={item} type="button" className={`khse-tab ${tab === item ? 'is-active' : ''}`} onClick={() => setTab(item)}>
 						{item[0].toUpperCase() + item.slice(1)}
 					</button>
 				))}
@@ -630,17 +630,17 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, l
 
 function LatestReport({report}) {
 	if (!report) {
-		return <Panel title="Latest Page Report"><p className="ams-muted">No page optimization report yet.</p></Panel>;
+		return <Panel title="Latest Page Report"><p className="khse-muted">No page optimization report yet.</p></Panel>;
 	}
 
 	return (
 		<Panel title="Latest Page Report">
-			<div className="ams-report-head">
+			<div className="khse-report-head">
 				<strong>{report.displayUri || report.uri}</strong>
 				<span>{report.beforeLabel} -&gt; {report.afterLabel}</span>
 				<Pill tone={report.expandedBytes > 0 ? 'warning' : 'good'}>{report.expandedBytes > 0 ? `${report.expandedLabel} bigger` : `${report.savedLabel} saved`}</Pill>
 			</div>
-			<ul className="ams-feature-list">
+			<ul className="khse-feature-list">
 				{(report.features || []).slice(0, 8).map((feature) => (
 					<li key={feature.key}>
 						<Pill tone={feature.status === 'applied' ? 'good' : feature.status === 'disabled' ? 'muted' : 'warning'}>{feature.status}</Pill>
@@ -657,8 +657,8 @@ function Reports({reports, loadReports}) {
 	const rows = reports.reports || [];
 
 	return (
-		<Panel title="Recent Page Optimization Reports" action={<span className="ams-muted">{reports.loadedCount || rows.length} / {reports.totalReports || rows.length}</span>}>
-			<ul className="ams-report-list">
+		<Panel title="Recent Page Optimization Reports" action={<span className="khse-muted">{reports.loadedCount || rows.length} / {reports.totalReports || rows.length}</span>}>
+			<ul className="khse-report-list">
 				{rows.map((report) => (
 					<li key={`${report.uri}-${report.generatedAt}`}>
 						<code>{report.displayUri || report.uri}</code>
@@ -669,7 +669,7 @@ function Reports({reports, loadReports}) {
 					</li>
 				))}
 			</ul>
-			{reports.hasMore ? <div className="ams-loadmore"><AmsButton icon={FastForward} onPress={loadReports}>Load 5 more</AmsButton></div> : null}
+			{reports.hasMore ? <div className="khse-loadmore"><AmsButton icon={FastForward} onPress={loadReports}>Load 5 more</AmsButton></div> : null}
 		</Panel>
 	);
 }
@@ -743,10 +743,10 @@ function ExpertSettings({settings, update, save, isBusy}) {
 			<Panel title="Expert Mode">
 				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={Boolean(settings.cache?.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
 			</Panel>
-			<Panel title="wp-config.php Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={() => copyText(code, 'code')}>{copied === 'code' ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
-				<p className="ams-muted">Paste this block into wp-config.php above &ldquo;That&rsquo;s all, stop editing&rdquo;. It loads config before WordPress boots.</p>
+			<Panel title="wp-config.php Block" action={<div className="khse-action-row khse-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={() => copyText(code, 'code')}>{copied === 'code' ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
+				<p className="khse-muted">Paste this block into wp-config.php above &ldquo;That&rsquo;s all, stop editing&rdquo;. It loads config before WordPress boots.</p>
 				<pre
-					className="ams-code-block ams-code-block--copyable"
+					className="khse-code-block khse-code-block--copyable"
 					role="button"
 					tabIndex={0}
 					title="Click to copy"
@@ -759,10 +759,10 @@ function ExpertSettings({settings, update, save, isBusy}) {
 					}}
 				><code>{code}</code></pre>
 			</Panel>
-			<Panel title="Docker / Custom Value" className="ams-wide-panel" action={<AmsButton size="sm" icon={Copy} onPress={() => copyText(customValue, 'custom')}>{copied === 'custom' ? 'Copied' : 'Copy Value'}</AmsButton>}>
-				<p className="ams-muted">For Docker or hosts that only expose a custom wp-config value, paste this single line into <code>WORDPRESS_CONFIG_EXTRA</code>. It must run before WordPress boots.</p>
+			<Panel title="Docker / Custom Value" className="khse-wide-panel" action={<AmsButton size="sm" icon={Copy} onPress={() => copyText(customValue, 'custom')}>{copied === 'custom' ? 'Copied' : 'Copy Value'}</AmsButton>}>
+				<p className="khse-muted">For Docker or hosts that only expose a custom wp-config value, paste this single line into <code>WORDPRESS_CONFIG_EXTRA</code>. It must run before WordPress boots.</p>
 				<pre
-					className="ams-code-block ams-code-block--copyable"
+					className="khse-code-block khse-code-block--copyable"
 					role="button"
 					tabIndex={0}
 					title="Click to copy"
@@ -788,7 +788,7 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 			<MiniSelectRow label="Widget Display" value={settings.benchmark?.widgetDisplay || 'both'} options={displays} onChange={(value) => update('benchmark', 'widgetDisplay', value)} />
 			<SwitchRow label="Footer Text" checked={Boolean(settings.benchmark?.footer)} onChange={(checked) => update('benchmark', 'footer', checked)} />
 			<MiniSelectRow label="Footer Display" value={settings.benchmark?.footerDisplay || 'text'} options={displays} onChange={(value) => update('benchmark', 'footerDisplay', value)} />
-			<div className="ams-benchmark-preview">
+			<div className="khse-benchmark-preview">
 				<span>Your cached pages served to visitors will show this footer.</span>
 				<strong>Page load: 0.42 sec | Queries: 12 | Memory: 32 MB</strong>
 			</div>
@@ -798,27 +798,27 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 
 function AboutPage({data}) {
 	return (
-		<div className="ams-about-page">
-			<section className="ams-about-hero">
+		<div className="khse-about-page">
+			<section className="khse-about-hero">
 				<div>
-					<Pill tone="info">AMS Cache 3.1.5</Pill>
+					<Pill tone="info">KH Speed Engine 3.1.5</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
-					<p>AMS Cache combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
-					<p className="ams-muted">AMS Technical Team Â· Simple Cache Core</p>
+					<p>KH Speed Engine combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
+					<p className="khse-muted">KHSE Technical Team Â· Simple Cache Core</p>
 				</div>
-				<div className="ams-about-window" aria-hidden="true">
-					<div className="ams-window-dots"><span /><span /><span /></div>
-					<div className="ams-mini-metric"><strong>{data.optimization?.reqPassed || 0} / {data.optimization?.reqTotal || 0}</strong><span>requirements</span></div>
-					<div className="ams-mini-metric"><strong>Guest</strong><span>safe cache</span></div>
-					<div className="ams-mini-metric"><strong>UCSS</strong><span>local engine</span></div>
-					<div className="ams-progress"><span style={{width: '82%'}} /></div>
-					<div className="ams-progress"><span style={{width: '58%'}} /></div>
+				<div className="khse-about-window" aria-hidden="true">
+					<div className="khse-window-dots"><span /><span /><span /></div>
+					<div className="khse-mini-metric"><strong>{data.optimization?.reqPassed || 0} / {data.optimization?.reqTotal || 0}</strong><span>requirements</span></div>
+					<div className="khse-mini-metric"><strong>Guest</strong><span>safe cache</span></div>
+					<div className="khse-mini-metric"><strong>UCSS</strong><span>local engine</span></div>
+					<div className="khse-progress"><span style={{width: '82%'}} /></div>
+					<div className="khse-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
-			<Panel title="Welcome to AMS Cache 3.1.5" className="ams-full-width">
-				<p className="ams-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
+			<Panel title="Welcome to KH Speed Engine 3.1.5" className="khse-full-width">
+				<p className="khse-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
-			<div className="ams-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
+			<div className="khse-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
 				<Panel title="Cache-first Pages"><p>Preload starts from homepage links, selected post types, and archives so guests get warm cache before first visit.</p></Panel>
 				<Panel title="External UCSS"><p>Eligible same-site CSS files use conservative PHP matching and are published as hashed assets only when the result is smaller.</p></Panel>
 			</div>
@@ -871,12 +871,12 @@ function App() {
 
 	const updatePerformance = (key, value) => update('performance', key, value);
 
-	const save = () => run('scm_action_dashboard_save_settings', {settings: JSON.stringify(settings)});
-	const refresh = () => run('scm_action_dashboard_status');
+	const save = () => run('khse_action_dashboard_save_settings', {settings: JSON.stringify(settings)});
+	const refresh = () => run('khse_action_dashboard_status');
 
 	const loadReports = () => {
 		const reports = data.optimization?.reports || {};
-		return run('scm_action_dashboard_reports', {offset: String(reports.loadedCount || 0)}).then((result) => {
+		return run('khse_action_dashboard_reports', {offset: String(reports.loadedCount || 0)}).then((result) => {
 			if (!result) {
 				return;
 			}
@@ -898,31 +898,31 @@ function App() {
 
 	const actions = {
 		refresh,
-		clearAll: () => run('scm_action_dashboard_clear_cache'),
-		clearType: (cacheType) => run('scm_action_dashboard_clear_cache_type', {cacheType}),
-		runPreload: () => run('scm_action_dashboard_preload'),
-		purgeHomepage: () => run('scm_action_dashboard_purge_homepage'),
-		testDriver: (driver) => run('scm_action_dashboard_test_driver', {driver})
+		clearAll: () => run('khse_action_dashboard_clear_cache'),
+		clearType: (cacheType) => run('khse_action_dashboard_clear_cache_type', {cacheType}),
+		runPreload: () => run('khse_action_dashboard_preload'),
+		purgeHomepage: () => run('khse_action_dashboard_purge_homepage'),
+		testDriver: (driver) => run('khse_action_dashboard_test_driver', {driver})
 	};
 
 	return (
-		<div className="ams-admin">
-			<aside className="ams-sidebar" aria-label="AMS Cache 3.1.5">
-				<div className="ams-logo">AMS</div>
+		<div className="khse-admin">
+			<aside className="khse-sidebar" aria-label="KH Speed Engine 3.1.5">
+				<div className="khse-logo">KHSE</div>
 				{NAV.map(({key, label, icon: Icon}) => (
 					<button key={key} type="button" className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label} aria-current={view === key ? 'page' : undefined}>
 						<Icon size={19} aria-hidden="true" />
-						<span className="ams-nav-label">{label}</span>
+						<span className="khse-nav-label">{label}</span>
 					</button>
 				))}
 			</aside>
-			<main className="ams-main">
-				<header className="ams-topbar">
+			<main className="khse-main">
+				<header className="khse-topbar">
 					<div>
 						<h1>{viewLabel}</h1>
 						<p>Live cache controls and page optimization state. <strong>Updated:</strong> {data.generatedAt}</p>
 					</div>
-					<div className="ams-toolbar-actions">
+					<div className="khse-toolbar-actions">
 						<AmsButton icon={RefreshCcw} busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
 						<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
 						<AmsButton icon={Home} onPress={actions.purgeHomepage}>Purge Homepage</AmsButton>
@@ -930,14 +930,14 @@ function App() {
 					</div>
 				</header>
 				{notice ? (
-					<div className={`ams-notice ams-notice--${notice.type}`} role="status" aria-live="polite">
+					<div className={`khse-notice khse-notice--${notice.type}`} role="status" aria-live="polite">
 						<span>{notice.text}</span>
-						<button type="button" className="ams-notice__close" onClick={() => setNotice(null)} aria-label="Clear notification">
+						<button type="button" className="khse-notice__close" onClick={() => setNotice(null)} aria-label="Clear notification">
 							<X size={16} aria-hidden="true" />
 						</button>
 					</div>
 				) : null}
-				<section className="ams-view">
+				<section className="khse-view">
 					{view === 'overview' ? <Overview data={data} go={setView} actions={actions} /> : null}
 					{view === 'cache' ? <CacheSettings settings={settings} update={update} save={save} isBusy={busy} testDriver={actions.testDriver} /> : null}
 					{view === 'preload' ? <PreloadSettings data={data} settings={settings} update={update} save={save} isBusy={busy} runPreload={actions.runPreload} purgeHomepage={actions.purgeHomepage} /> : null}
@@ -955,14 +955,14 @@ function App() {
 					) : null}
 					{view === 'about' ? <AboutPage data={data} /> : null}
 				</section>
-				{SAVE_VIEWS.has(view) ? <div className="ams-page-spacer" aria-hidden="true" /> : null}
+				{SAVE_VIEWS.has(view) ? <div className="khse-page-spacer" aria-hidden="true" /> : null}
 				{SAVE_VIEWS.has(view) ? <SaveBar isBusy={busy} onSave={save} global /> : null}
 			</main>
 		</div>
 	);
 }
 
-const root = document.getElementById('ams-cache-admin-root');
+const root = document.getElementById('khse-admin-root');
 
 if (root) {
 	createRoot(root).render(<App />);

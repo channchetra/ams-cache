@@ -1,20 +1,20 @@
 <?php
 /**
- * AMS Cache - Cache lifecycle controller.
+ * KH Speed Engine - Cache lifecycle controller.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-require_once __DIR__ . '/class-cache-master-debug.php';
+require_once __DIR__ . '/class-khse-cache-debug.php';
 
-class Cache_Master {
+class KHSE_Cache {
 
-	use SCM_Cache_Master_Debug;
+	use KHSE_Cache_Debug;
 
 	/**
 	 * Cache insance.
@@ -55,24 +55,24 @@ class Cache_Master {
 	 * Constructer.
 	 */
 	public function __construct() {
-		$this->driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+		$this->driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
 
 		if ( is_wp_error( $this->driver ) ) {
 			$this->driver = null;
 		}
 
-		$this->config = scm_get_config_data();
+		$this->config = khse_get_config_data();
 	}
 
 	/**
-	 * Initialize everything the SCM plugin needs.
+	 * Initialize everything KH Speed Engine needs.
 	 * 
 	 * @return void
 	 */
 	public function init() {
 
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
-		$uri         = scm_normalize_cache_uri( $request_uri );
+		$uri         = khse_normalize_cache_uri( $request_uri );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'front_enqueue_styles' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'front_enqueue_styles' ) );
@@ -83,7 +83,7 @@ class Cache_Master {
 		}
 
 		// The cacheability policy needs the full request URI, including the query string.
-		if ( ! scm_is_cacheable_request_uri( $request_uri ) ) {
+		if ( ! khse_is_cacheable_request_uri( $request_uri ) ) {
 			return;
 		}
 
@@ -93,7 +93,7 @@ class Cache_Master {
 
 		$uri = $this->get_request_uri();
 
-		$this->cache_key = scm_get_cache_key( $uri );
+		$this->cache_key = khse_get_cache_key( $uri );
 
 		add_action( 'plugins_loaded', array( $this, 'ob_start' ), 5 );
 		add_action( 'shutdown', array( $this, 'ob_stop' ), 0 );
@@ -106,9 +106,9 @@ class Cache_Master {
 	 * @return void
 	 */
 	public function front_enqueue_styles() {
-		wp_register_style( 'ams-cache-style', false );
-		wp_enqueue_style( 'ams-cache-style' );
-		wp_add_inline_style( 'ams-cache-style', $this->get_front_enqueue_styles() );
+		wp_register_style( 'kh-speed-engine-style', false );
+		wp_enqueue_style( 'kh-speed-engine-style' );
+		wp_add_inline_style( 'kh-speed-engine-style', $this->get_front_enqueue_styles() );
 	}
 
 	/**
@@ -124,10 +124,10 @@ class Cache_Master {
 			return;
 		}
 
-		$post_homepage = get_option( 'scm_option_post_homepage' );
-		$post_types    = get_option( 'scm_option_post_types' );
-		$post_archives = get_option( 'scm_option_post_archives' );
-		$status        = get_option( 'scm_option_caching_status' );
+		$post_homepage = get_option( 'khse_option_post_homepage' );
+		$post_types    = get_option( 'khse_option_post_types' );
+		$post_archives = get_option( 'khse_option_post_archives' );
+		$status        = get_option( 'khse_option_caching_status' );
 
 		if ( 'enable' !== $status ) {
 			$this->is_cache = false;
@@ -217,9 +217,9 @@ class Cache_Master {
 		}
 
 		// Support to WooCommerce plugin.
-		$woocommerce_support       = get_option( 'scm_option_woocommerce_status' );
-		$woocommerce_post_types    = get_option( 'scm_option_woocommerce_post_types' );
-		$woocommerce_post_archives = get_option( 'scm_option_woocommerce_post_archives' );
+		$woocommerce_support       = get_option( 'khse_option_woocommerce_status' );
+		$woocommerce_post_types    = get_option( 'khse_option_woocommerce_post_types' );
+		$woocommerce_post_archives = get_option( 'khse_option_woocommerce_post_archives' );
 
 		if ( 'yes' === $woocommerce_support ) {
 
@@ -261,11 +261,11 @@ class Cache_Master {
 		if ( $this->driver ) {
 			$config = $this->config;
 
-			$config['cache_enabled']      = 'enable' === get_option( 'scm_option_caching_status', 'disable' );
-			$config['cache_key_prefix']   = scm_get_cache_key_prefix();
-			$config['html_debug_comment'] = scm_option_is_enabled( 'scm_option_html_debug_comment', 'yes' );
+			$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
+			$config['cache_key_prefix']   = khse_get_cache_key_prefix();
+			$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
 
-			$cached_content = scm_serve_cached_response( $config, $this->driver );
+			$cached_content = khse_serve_cached_response( $config, $this->driver );
 
 			if ( null !== $cached_content ) {
 				echo $cached_content;
@@ -292,7 +292,7 @@ class Cache_Master {
 			return;
 		}
 
-		if ( 'yes' === get_option( 'scm_option_benchmark_footer_text') ) {
+		if ( 'yes' === get_option( 'khse_option_benchmark_footer_text') ) {
 			$content = str_replace(
 				'</body>',
 				"\n" . $this->footer_html() . "\n" . '</body>',
@@ -302,16 +302,16 @@ class Cache_Master {
 
 		if ( $this->is_cache ) {
 			$before_optimization = $content;
-			$content             = scm_optimize_html( $content );
-			$optimization_report = scm_build_page_optimization_report(
+			$content             = khse_optimize_html( $content );
+			$optimization_report = khse_build_page_optimization_report(
 				$before_optimization,
 				$content,
-				scm_get_page_optimization_settings(),
+				khse_get_page_optimization_settings(),
 				$this->get_request_uri(),
 				$this->data_type
 			);
 
-			scm_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
+			khse_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
 
 			// Guard: optimization must never produce empty/invalid HTML.
 			if ( empty( $content ) || strpos( $content, '</body>' ) === false || strlen( $content ) < 1024 ) {
@@ -323,25 +323,25 @@ class Cache_Master {
 		$debug_message = $this->debug_message( 'ob_stop' );
 
 		if ( $this->is_cache && $this->driver ) {
-			$ttl = (int) get_option( 'scm_option_ttl' );
+			$ttl = (int) get_option( 'khse_option_ttl' );
 
 			$cache_content .= $debug_message;
 
 			// Only store the cache entry when the final payload is a valid HTML document.
 			if ( ! empty( $cache_content ) && strpos( $cache_content, '</body>' ) !== false && strlen( $cache_content ) >= 1024 ) {
-				if ( 'disable' === get_option( 'scm_option_ttl_mechanism' ) ) {
+				if ( 'disable' === get_option( 'khse_option_ttl_mechanism' ) ) {
 					$ttl = null;
 				}
 
 				$this->driver->set( $this->cache_key, $cache_content, $ttl );
-				scm_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
+				khse_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
 				$this->log( $this->data_type, $this->cache_key, $cache_content );
 			}
 		}
 
 		$content = str_replace(
 			'</body>',
-			"\n" . scm_javascript() . "\n" . '</body>',
+			"\n" . khse_javascript() . "\n" . '</body>',
 			$content
 		);
 
@@ -359,7 +359,7 @@ class Cache_Master {
 	private function get_request_uri()
 	{
 		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-			$path = scm_normalize_cache_uri( $_SERVER['REQUEST_URI'] );
+			$path = khse_normalize_cache_uri( $_SERVER['REQUEST_URI'] );
 		} else {
 			$path = '/';
 		}
@@ -373,6 +373,6 @@ class Cache_Master {
 	 * @return bool
 	 */
 	private function is_ignore() {
-		return scm_is_cache_request_excluded( $this->config );
+		return khse_is_cache_request_excluded( $this->config );
 	}
 }

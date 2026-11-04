@@ -1,17 +1,17 @@
 <?php
 /**
- * AMS Cache — cache-nginx.php
+ * KH Speed Engine — cache-nginx.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
-function scm_is_nginx_direct_cache_enabled() {
-	return 'yes' === get_option( 'scm_option_nginx_direct_cache_status', 'no' );
+function khse_is_nginx_direct_cache_enabled() {
+	return 'yes' === get_option( 'khse_option_nginx_direct_cache_status', 'no' );
 }
 
 /**
@@ -22,11 +22,11 @@ function scm_is_nginx_direct_cache_enabled() {
  *
  * @return string
  */
-function scm_get_nginx_static_cache_relative_dir() {
+function khse_get_nginx_static_cache_relative_dir() {
 	$base_path = wp_parse_url( content_url( '/uploads' ), PHP_URL_PATH );
 	$base_path = is_string( $base_path ) && '' !== $base_path ? $base_path : '/wp-content/uploads';
 
-	return trim( $base_path, '/' ) . '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+	return trim( $base_path, '/' ) . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '/nginx';
 }
 
 /**
@@ -34,8 +34,8 @@ function scm_get_nginx_static_cache_relative_dir() {
  *
  * @return string
  */
-function scm_get_nginx_static_cache_dir() {
-	return scm_get_upload_dir() . '/nginx';
+function khse_get_nginx_static_cache_dir() {
+	return khse_get_upload_dir() . '/nginx';
 }
 
 /**
@@ -45,7 +45,7 @@ function scm_get_nginx_static_cache_dir() {
  *
  * @return string
  */
-function scm_get_nginx_static_cache_path( $uri ) {
+function khse_get_nginx_static_cache_path( $uri ) {
 	$path = parse_url( $uri, PHP_URL_PATH );
 
 	if ( empty( $path ) ) {
@@ -61,7 +61,7 @@ function scm_get_nginx_static_cache_path( $uri ) {
 	$path = '/' . trim( $path, '/' );
 
 	if ( '/' === $path ) {
-		return trailingslashit( scm_get_nginx_static_cache_dir() ) . 'index.html';
+		return trailingslashit( khse_get_nginx_static_cache_dir() ) . 'index.html';
 	}
 
 	$segments = array_filter( explode( '/', trim( $path, '/' ) ) );
@@ -85,7 +85,7 @@ function scm_get_nginx_static_cache_path( $uri ) {
 		return '';
 	}
 
-	return trailingslashit( scm_get_nginx_static_cache_dir() ) . implode( '/', $safe ) . '/index.html';
+	return trailingslashit( khse_get_nginx_static_cache_dir() ) . implode( '/', $safe ) . '/index.html';
 }
 
 /**
@@ -96,10 +96,10 @@ function scm_get_nginx_static_cache_path( $uri ) {
  *
  * @return bool
  */
-function scm_write_nginx_static_cache( $uri, $content ) {
+function khse_write_nginx_static_cache( $uri, $content ) {
 	if (
-		! scm_is_nginx_direct_cache_enabled() ||
-		'file' !== get_option( 'scm_option_driver', 'file' ) ||
+		! khse_is_nginx_direct_cache_enabled() ||
+		'file' !== get_option( 'khse_option_driver', 'file' ) ||
 		empty( $content ) ||
 		false === strpos( $content, '</body>' )
 	) {
@@ -110,11 +110,11 @@ function scm_write_nginx_static_cache( $uri, $content ) {
 		return false;
 	}
 
-	if ( isset( $_SERVER['REQUEST_URI'] ) && ! scm_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
+	if ( isset( $_SERVER['REQUEST_URI'] ) && ! khse_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
 		return false;
 	}
 
-	$file = scm_get_nginx_static_cache_path( $uri );
+	$file = khse_get_nginx_static_cache_path( $uri );
 
 	if ( empty( $file ) ) {
 		return false;
@@ -148,8 +148,8 @@ function scm_write_nginx_static_cache( $uri, $content ) {
  *
  * @return bool
  */
-function scm_delete_nginx_static_cache( $uri ) {
-	$file = scm_get_nginx_static_cache_path( $uri );
+function khse_delete_nginx_static_cache( $uri ) {
+	$file = khse_get_nginx_static_cache_path( $uri );
 
 	if ( empty( $file ) || ! file_exists( $file ) ) {
 		return false;
@@ -163,8 +163,8 @@ function scm_delete_nginx_static_cache( $uri ) {
  *
  * @return int
  */
-function scm_clear_nginx_static_cache() {
-	$dir = scm_get_nginx_static_cache_dir();
+function khse_clear_nginx_static_cache() {
+	$dir = khse_get_nginx_static_cache_dir();
 
 	if ( ! is_dir( $dir ) ) {
 		return 0;

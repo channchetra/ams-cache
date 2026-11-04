@@ -2,7 +2,7 @@
 /**
  * Class PurgeAuthorizationTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class PurgeAuthorizationTest extends WP_UnitTestCase {
@@ -16,7 +16,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $user_id );
 
-		$this->assertFalse( scm_can_purge_url( get_permalink( $post_id ) ) );
+		$this->assertFalse( khse_can_purge_url( get_permalink( $post_id ) ) );
 	}
 
 	public function test_author_can_purge_own_post() {
@@ -27,7 +27,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $author_id );
 
-		$this->assertTrue( scm_can_purge_url( get_permalink( $post_id ) ) );
+		$this->assertTrue( khse_can_purge_url( get_permalink( $post_id ) ) );
 	}
 
 	public function test_editor_can_purge_another_users_post() {
@@ -39,7 +39,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $editor_id );
 
-		$this->assertTrue( scm_can_purge_url( get_permalink( $post_id ) ) );
+		$this->assertTrue( khse_can_purge_url( get_permalink( $post_id ) ) );
 	}
 
 	public function test_contributor_cannot_purge_homepage() {
@@ -47,7 +47,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $user_id );
 
-		$this->assertFalse( scm_can_purge_url( home_url( '/' ) ) );
+		$this->assertFalse( khse_can_purge_url( home_url( '/' ) ) );
 	}
 
 	public function test_admin_can_purge_homepage() {
@@ -55,7 +55,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $admin_id );
 
-		$this->assertTrue( scm_can_purge_url( home_url( '/' ) ) );
+		$this->assertTrue( khse_can_purge_url( home_url( '/' ) ) );
 	}
 
 	public function test_author_cannot_purge_published_post_with_plain_permalink() {
@@ -68,7 +68,7 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 		wp_set_current_user( $author_id );
 
 		$this->assertStringContainsString( '?p=', $url );
-		$this->assertFalse( scm_can_purge_url( $url ) );
+		$this->assertFalse( khse_can_purge_url( $url ) );
 	}
 
 	public function test_contributor_cannot_purge_own_draft_query_url() {
@@ -81,13 +81,13 @@ class PurgeAuthorizationTest extends WP_UnitTestCase {
 		wp_set_current_user( $contributor_id );
 
 		$this->assertStringContainsString( '?p=', $url );
-		$this->assertFalse( scm_can_purge_url( $url ) );
+		$this->assertFalse( khse_can_purge_url( $url ) );
 	}
 
 	public function test_query_string_cache_identity() {
-		$this->assertTrue( scm_is_cacheable_query_string( '' ) );
-		$this->assertTrue( scm_is_cacheable_query_string( 'utm_source=news&fbclid=abc' ) );
-		$this->assertFalse( scm_is_cacheable_query_string( 'p=1' ) );
-		$this->assertFalse( scm_is_cacheable_query_string( 'utm_source=news&p=1' ) );
+		$this->assertTrue( khse_is_cacheable_query_string( '' ) );
+		$this->assertTrue( khse_is_cacheable_query_string( 'utm_source=news&fbclid=abc' ) );
+		$this->assertFalse( khse_is_cacheable_query_string( 'p=1' ) );
+		$this->assertFalse( khse_is_cacheable_query_string( 'utm_source=news&p=1' ) );
 	}
 }

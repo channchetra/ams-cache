@@ -1,4 +1,4 @@
-=== AMS Cache ===
+=== KH Speed Engine ===
 
 Contributors: terrylin
 Tags: cache, redis, mongodb, memcached, apc, apcu
@@ -11,7 +11,7 @@ License URI: https://www.gnu.org/licenses/gpl.html
 
 == Description ==
 
-AMS Cache is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly. The core of AMS Cache is driven by Shieldon Simple Cache, a PSR-16 simple cache library.
+KH Speed Engine is an extremely lightweight, high-performance cache plugin that speeds up your WordPress sites on the fly. The core of KH Speed Engine is driven by Shieldon Simple Cache, a PSR-16 simple cache library.
 
 Core library:
 
@@ -35,19 +35,19 @@ First release date: October, 1, 2020
 
 == Nginx Direct Static Cache ==
 
-When using the File driver, AMS Cache can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx server block, run nginx -t, then reload Nginx.
+When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx server block, run nginx -t, then reload Nginx.
 
 == Page Optimization ==
 
-AMS Cache can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
+KH Speed Engine can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
 
 External UCSS reads only same-site .css files under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative url() assets before publishing a hashed CSS file, and keeps the original link if the PHP engine produces no smaller output.
 
-Large sites can preload up to 1000 URLs. AMS Cache queues preload work in small batches so dashboard actions do not have to wait for every URL in one request.
+Large sites can preload up to 1000 URLs. KH Speed Engine queues preload work in small batches so dashboard actions do not have to wait for every URL in one request.
 
 == Vite and Tailwind Admin Console ==
 
-The AMS Cache admin console uses native WordPress admin screens, Vite-built assets that bundle React and HeroUI, and Tailwind CSS 4.3 design tokens. The console covers cache, preload, performance, rules, statistics, expert, benchmark, WooCommerce, and about views, with AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
+The KH Speed Engine admin console uses native WordPress admin screens, Vite-built assets that bundle React and HeroUI, and Tailwind CSS 4.3 design tokens. The console covers cache, preload, performance, rules, statistics, expert, benchmark, WooCommerce, and about views, with AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
 
 Build assets with:
 
@@ -64,7 +64,7 @@ One-command version bump and release:
 `bun run release:minor`
 `powershell -ExecutionPolicy Bypass -File .\bin\release.ps1 -Version 3.1.0 -Note "Release dashboard polish."`
 
-`bin/release.ps1` defaults to a patch bump. It syncs `cache-master.php`, `SCM_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs Bun install/build and verifies the Vite manifest before packaging.
+`bin/release.ps1` defaults to a patch bump. It syncs `kh-speed-engine.php`, `KHSE_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, React about-page labels, and `CHANGELOG.md`, then calls `bin/build-release.ps1`. The release script runs Bun install/build and verifies the Vite manifest before packaging.
 
 The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, image optimizer status, and feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine.
 
@@ -74,22 +74,22 @@ Built assets are required for the React console. The release script verifies the
 
 == Local UCSS, External UCSS, and JS Analysis ==
 
-AMS Cache uses built-in PHP engines for Local UCSS, External UCSS, and JS Analysis. Production does not require Bun, Node, PurgeCSS, Composer, or shell_exec. The legacy executable fields remain only for saved-setting compatibility. Bun and frontend packages are build-machine dependencies; run `bun install --frozen-lockfile` and `bun run build` before packaging. Optimization workspaces and runtime config use a private temp directory outside public uploads when available.
+KH Speed Engine uses built-in PHP engines for Local UCSS, External UCSS, and JS Analysis. Production does not require Bun, Node, PurgeCSS, Composer, or shell_exec. The legacy executable fields remain only for saved-setting compatibility. Bun and frontend packages are build-machine dependencies; run `bun install --frozen-lockfile` and `bun run build` before packaging. Optimization workspaces and runtime config use a private temp directory outside public uploads when available.
 
-Use the UCSS safelist for dynamic classes JavaScript adds after load. Local UCSS targets inline page CSS. External UCSS targets eligible same-site stylesheet files and inlines optimized output into cached guest HTML. If one CSS block or stylesheet is malformed, AMS Cache keeps that block or stylesheet raw and still optimizes valid items.
+Use the UCSS safelist for dynamic classes JavaScript adds after load. Local UCSS targets inline page CSS. External UCSS targets eligible same-site stylesheet files and inlines optimized output into cached guest HTML. If one CSS block or stylesheet is malformed, KH Speed Engine keeps that block or stylesheet raw and still optimizes valid items.
 
 == Image Optimization ==
 
-AMS Cache can generate WebP variants for WordPress image attachments. Enable Image Optimization in the Performance settings, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when Optimize images on upload is enabled.
+KH Speed Engine can generate WebP variants for WordPress image attachments. Enable Image Optimization in the Performance settings, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when Optimize images on upload is enabled.
 
-AMS Cache now uses WebP as the only output and primary upload format. The generated .webp file can become the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to WebP after successful conversion.
+KH Speed Engine now uses WebP as the only output and primary upload format. The generated .webp file can become the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to WebP after successful conversion.
 
-The image engine uses Bun Image for local WebP generation and tiny loading placeholders. If Bun cannot create WebP, AMS Cache falls back to the native WordPress image editor. Use an absolute Bun binary path in the Performance settings if PHP cannot see bun in its PATH. Verify the image optimizer with:
+The image engine uses Bun Image for local WebP generation and tiny loading placeholders. If Bun cannot create WebP, KH Speed Engine falls back to the native WordPress image editor. Use an absolute Bun binary path in the Performance settings if PHP cannot see bun in its PATH. Verify the image optimizer with:
 
 `bun --version`
 `bun run image:check`
 
-Image placeholders store a short, safe data:image/...;base64 preview in attachment optimization metadata. When Image placeholders is enabled, AMS Cache adds that preview as an inline background while the real WebP image loads.
+Image placeholders store a short, safe data:image/...;base64 preview in attachment optimization metadata. When Image placeholders is enabled, KH Speed Engine adds that preview as an inline background while the real WebP image loads.
 
 Safety rules:
 
@@ -111,21 +111,21 @@ Notice:
 Before you install and use this plugin, please read the following notices carefully:
 
 - Logged-in users will not trigger the caching process.
-- A debug message will be appended to the end of the page's source code: `<!-- This page is cached by the AMS Cache plugin. //-->`. This is intended for debugging purposes only, confirming that the page is being cached. This message can be disabled in the Settings page.
+- A debug message will be appended to the end of the page's source code: `<!-- This page is cached by the KH Speed Engine plugin. //-->`. This is intended for debugging purposes only, confirming that the page is being cached. This message can be disabled in the Settings page.
 
-If you encounter issues with your website when using AMS Cache, list all plugins installed on your website when reporting the problem.
+If you encounter issues with your website when using KH Speed Engine, list all plugins installed on your website when reporting the problem.
 
 == Installation ==
 
-- Upload the plugin files to the /wp-content/plugins/ams-cache directory, or install the plugin directly through the WordPress plugins screen.
+- Upload the plugin files to the /wp-content/plugins/kh-speed-engine directory, or install the plugin directly through the WordPress plugins screen.
 - Activate the plugin via the 'Plugins' screen in WordPress.
-- Navigate to the AMS Cache menu in the Plugins section and configure your options.
+- Navigate to the KH Speed Engine menu in the Plugins section and configure your options.
 
 == Frequently Asked Questions ==
 
 = Should I disable other cache plugins? =
 
-AMS Cache caches entire webpages into static HTML files. Therefore, it is recommended to disable other similar cache plugins that perform the same function. However, it can function alongside object cache plugins without issue.
+KH Speed Engine caches entire webpages into static HTML files. Therefore, it is recommended to disable other similar cache plugins that perform the same function. However, it can function alongside object cache plugins without issue.
 
 = How can I determine whether the caching is working or not? =
 
@@ -134,7 +134,7 @@ Be aware that logged-in users will not trigger the caching process. To verify ca
 - View the source code of the webpage and check the debug message as shown in screenshot (L).
 - Enable the benchmark information in the footer section as shown in screenshot (K), where you can see the cache status.
 
-If there is no debug message in the source code, or if the cache status consistently displays 'No', there might be a plugin conflict with AMS Cache that prevents it from working correctly.
+If there is no debug message in the source code, or if the cache status consistently displays 'No', there might be a plugin conflict with KH Speed Engine that prevents it from working correctly.
 
 == Screenshots ==
 
@@ -226,7 +226,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 = 2.6.0 (5/15/2026) =
 
-* Rebuild AMS Cache admin as one Vue console with side navigation across cache, preload, performance, advanced, rules, statistics, expert, benchmark, WooCommerce, and about views.
+* Rebuild KH Speed Engine admin as one Vue console with side navigation across cache, preload, performance, advanced, rules, statistics, expert, benchmark, WooCommerce, and about views.
 * Add recent page optimization reports with bytes before/after and feature-level Applied, No change, Disabled, or Pending engine states.
 * Restyle the admin with compact design tokens, modern surfaces, status pills, and report tables inspired by current Vue dashboard patterns.
 * Keep native WordPress Settings API forms underneath the Vue shell so existing settings continue to save normally.
@@ -251,7 +251,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 = 2.4.2 (5/14/2026) =
 
-* Load AMS Cache admin bar controls on frontend for logged-in users.
+* Load KH Speed Engine admin bar controls on frontend for logged-in users.
 * Make homepage-discovered preload URLs run first with blocking requests before the rest of the preload queue.
 * Warm homepage-discovered URLs immediately after cache clear and preload setting changes.
 
@@ -288,7 +288,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 * Improve debug message.
 * New setting option for Expert Mode.
-* Add warning message if a user use a plugin having conflicts with AMS Cache.
+* Add warning message if a user use a plugin having conflicts with KH Speed Engine.
 
 = 1.2.2 (10/07/2020) =
 

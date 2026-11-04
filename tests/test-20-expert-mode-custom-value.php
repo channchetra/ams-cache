@@ -2,7 +2,7 @@
 /**
  * Class ExpertModeCustomValueTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class ExpertModeCustomValueTest extends WP_UnitTestCase {
@@ -16,12 +16,12 @@ class ExpertModeCustomValueTest extends WP_UnitTestCase {
 	}
 
 	public function test_custom_value_is_single_line_and_contains_loader() {
-		$value = scm_expert_mode_custom_value();
+		$value = khse_expert_mode_custom_value();
 
 		$this->assertStringContainsString( 'expert-mode.php', $value );
-		$this->assertStringContainsString( 'scm_run_expert_mode', $value );
-		$this->assertStringContainsString( wp_normalize_path( scm_get_upload_dir() ), $value );
-		$this->assertStringContainsString( wp_normalize_path( scm_get_private_runtime_dir() ), $value );
+		$this->assertStringContainsString( 'khse_run_expert_mode', $value );
+		$this->assertStringContainsString( wp_normalize_path( khse_get_upload_dir() ), $value );
+		$this->assertStringContainsString( wp_normalize_path( khse_get_private_runtime_dir() ), $value );
 		$this->assertStringNotContainsString( "\n", $value );
 	}
 
@@ -29,7 +29,7 @@ class ExpertModeCustomValueTest extends WP_UnitTestCase {
 		$parsed = true;
 
 		try {
-			eval( 'if ( false ) { ' . scm_expert_mode_custom_value() . ' }' );
+			eval( 'if ( false ) { ' . khse_expert_mode_custom_value() . ' }' );
 		} catch ( ParseError $error ) {
 			$parsed = false;
 		}
@@ -38,14 +38,14 @@ class ExpertModeCustomValueTest extends WP_UnitTestCase {
 	}
 
 	public function test_ready_detects_wordpress_config_extra() {
-		putenv( 'WORDPRESS_CONFIG_EXTRA=' . scm_expert_mode_custom_value() );
+		putenv( 'WORDPRESS_CONFIG_EXTRA=' . khse_expert_mode_custom_value() );
 
-		$this->assertTrue( scm_is_expert_mode_code_ready() );
+		$this->assertTrue( khse_is_expert_mode_code_ready() );
 	}
 
 	public function test_ready_rejects_unrelated_config_extra() {
 		putenv( 'WORDPRESS_CONFIG_EXTRA=define( "UNRELATED", true );' );
 
-		$this->assertFalse( scm_is_expert_mode_code_ready() );
+		$this->assertFalse( khse_is_expert_mode_code_ready() );
 	}
 }

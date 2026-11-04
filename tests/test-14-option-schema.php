@@ -2,13 +2,13 @@
 /**
  * Class OptionSchemaTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class OptionSchemaTest extends WP_UnitTestCase {
 
 	public function test_runtime_keys_are_seeded() {
-		$keys = scm_get_option_keys();
+		$keys = khse_get_option_keys();
 
 		foreach ( array( 'excluded_get_vars', 'excluded_post_vars', 'excluded_cookie_vars', 'exclusion_status', 'ttl_mechanism', 'woocommerce_post_archives' ) as $key ) {
 			$this->assertContains( $key, $keys );
@@ -21,6 +21,6 @@ class OptionSchemaTest extends WP_UnitTestCase {
 	}
 
 	public function test_key_list_matches_schema() {
-		$this->assertSame( array_keys( scm_get_option_schema() ), scm_get_option_keys() );
+		$this->assertSame( array_keys( khse_get_option_schema() ), khse_get_option_keys() );
 	}
 }

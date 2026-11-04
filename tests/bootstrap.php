@@ -5,7 +5,7 @@
  * @package Sample_Plugin
  */
 
-define( 'SCM_PLUGIN_UNIT_TEST', true );
+define( 'KHSE_PLUGIN_UNIT_TEST', true );
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 
@@ -26,7 +26,7 @@ require_once $_tests_dir . '/../wordpress/wp-includes/pluggable.php';
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	require dirname( dirname( __FILE__ ) ) . '/cache-master.php';
+	require dirname( dirname( __FILE__ ) ) . '/kh-speed-engine.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
@@ -34,7 +34,7 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 require $_tests_dir . '/includes/bootstrap.php';
 
 // Remove previous tests.
-$dir = WP_CONTENT_DIR . '/uploads/ams-cache';
+$dir = WP_CONTENT_DIR . '/uploads/kh-speed-engine';
 
 if ( is_dir( $dir ) ) {
 	$it    = new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS );

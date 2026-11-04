@@ -1,12 +1,12 @@
 <?php
 /**
- * AMS Cache - Admin helper functions.
+ * KH Speed Engine - Admin helper functions.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
@@ -16,9 +16,9 @@ if ( ! defined( 'SCM_INC' ) ) {
  * @param string $template_path The specific template's path.
  * @return string
  */
-function scm_load_view( $template_path ) {
+function khse_load_view( $template_path ) {
 	$template_path  = str_replace( '_', '-', $template_path );
-	$view_file_path = SCM_PLUGIN_DIR . 'inc/admin/views/' . $template_path . '.php';
+	$view_file_path = KHSE_PLUGIN_DIR . 'inc/admin/views/' . $template_path . '.php';
 
 	if ( file_exists( $view_file_path ) ) {
 		ob_start();
@@ -35,14 +35,14 @@ function scm_load_view( $template_path ) {
  *
  * @return array
  */
-function scm_get_cache_type_list( $get_key = false ) {
-	$archive_note     = ' <small class="scm-badge">' . __( 'Archive', 'ams-cache' ) . '</small>';
-	$woocommerce_note = ' <small class="scm-badge">' . __( 'WooCommerce', 'ams-cache' ) . '</small>';
+function khse_get_cache_type_list( $get_key = false ) {
+	$archive_note     = ' <small class="khse-badge">' . __( 'Archive', 'kh-speed-engine' ) . '</small>';
+	$woocommerce_note = ' <small class="khse-badge">' . __( 'WooCommerce', 'kh-speed-engine' ) . '</small>';
 
 	$list = array(
-		'homepage' => __( 'Homepage', 'ams-cache' ),
-		'post'     => __( 'Post', 'ams-cache' ),
-		'page'     => __( 'Page', 'ams-cache' ),
+		'homepage' => __( 'Homepage', 'kh-speed-engine' ),
+		'post'     => __( 'Post', 'kh-speed-engine' ),
+		'page'     => __( 'Page', 'kh-speed-engine' ),
 	);
 
 	$custom_post_types = get_post_types(
@@ -58,10 +58,10 @@ function scm_get_cache_type_list( $get_key = false ) {
 		$list[ $post_type->name ] = $post_type->labels->singular_name;
 	}
 
-	$list['category'] = __( 'Category', 'ams-cache' ) . $archive_note;
-	$list['tag']      = __( 'Tag', 'ams-cache' ) . $archive_note;
-	$list['date']     = __( 'Date', 'ams-cache' ) . $archive_note;
-	$list['author']   = __( 'Author', 'ams-cache' ) . $archive_note;
+	$list['category'] = __( 'Category', 'kh-speed-engine' ) . $archive_note;
+	$list['tag']      = __( 'Tag', 'kh-speed-engine' ) . $archive_note;
+	$list['date']     = __( 'Date', 'kh-speed-engine' ) . $archive_note;
+	$list['author']   = __( 'Author', 'kh-speed-engine' ) . $archive_note;
 
 	$custom_post_type_archives = get_post_types(
 		array(
@@ -76,15 +76,15 @@ function scm_get_cache_type_list( $get_key = false ) {
 	foreach ( $custom_post_type_archives as $post_type ) {
 		$list[ 'archive_' . $post_type->name ] = sprintf(
 			/* translators: %s is the post type singular label. */
-			__( 'Archive for %s', 'ams-cache' ),
+			__( 'Archive for %s', 'kh-speed-engine' ),
 			$post_type->labels->singular_name
 		) . $archive_note;
 	}
 
-	$list['product']       = __( 'Product', 'ams-cache' ) . $woocommerce_note;
-	$list['product_tag']   = __( 'Product tag', 'ams-cache' ) . $woocommerce_note . $archive_note;
-	$list['product_cat']   = __( 'Product category', 'ams-cache' ) . $woocommerce_note . $archive_note;
-	$list['uncategorised'] = __( 'Uncategorised', 'ams-cache' );
+	$list['product']       = __( 'Product', 'kh-speed-engine' ) . $woocommerce_note;
+	$list['product_tag']   = __( 'Product tag', 'kh-speed-engine' ) . $woocommerce_note . $archive_note;
+	$list['product_cat']   = __( 'Product category', 'kh-speed-engine' ) . $woocommerce_note . $archive_note;
+	$list['uncategorised'] = __( 'Uncategorised', 'kh-speed-engine' );
 
 	if ( $get_key ) {
 		return array_keys( $list );
@@ -100,16 +100,16 @@ function scm_get_cache_type_list( $get_key = false ) {
  *
  * @return string
  */
-function scm_dashboard_format_time( $timestamp ) {
+function khse_dashboard_format_time( $timestamp ) {
 	$timestamp = (int) $timestamp;
 
 	if ( $timestamp <= 0 ) {
-		return __( 'Never', 'ams-cache' );
+		return __( 'Never', 'kh-speed-engine' );
 	}
 
 	return sprintf(
 		/* translators: %s is a human time difference. */
-		__( '%s ago', 'ams-cache' ),
+		__( '%s ago', 'kh-speed-engine' ),
 		human_time_diff( $timestamp, time() )
 	);
 }
@@ -121,8 +121,8 @@ function scm_dashboard_format_time( $timestamp ) {
  *
  * @return array
  */
-function scm_dashboard_get_stats_for_type( $type ) {
-	$dir  = scm_get_stats_dir( $type );
+function khse_dashboard_get_stats_for_type( $type ) {
+	$dir  = khse_get_stats_dir( $type );
 	$rows = 0;
 	$size = 0;
 	$seen = array();
@@ -133,13 +133,13 @@ function scm_dashboard_get_stats_for_type( $type ) {
 				continue;
 			}
 
-			$stats = scm_read_stats_file( $file->getPathname() );
+			$stats = khse_read_stats_file( $file->getPathname() );
 
-			if ( 'homepage' === $type && ! empty( $stats['uri'] ) && ! scm_is_homepage_uri( $stats['uri'] ) ) {
+			if ( 'homepage' === $type && ! empty( $stats['uri'] ) && ! khse_is_homepage_uri( $stats['uri'] ) ) {
 				continue;
 			}
 
-			$identity = empty( $stats['uri'] ) ? $file->getFilename() : scm_normalize_cache_uri( $stats['uri'] );
+			$identity = empty( $stats['uri'] ) ? $file->getFilename() : khse_normalize_cache_uri( $stats['uri'] );
 
 			if ( isset( $seen[ $identity ] ) ) {
 				continue;
@@ -163,13 +163,13 @@ function scm_dashboard_get_stats_for_type( $type ) {
  *
  * @return array
  */
-function scm_dashboard_get_stats_summary() {
+function khse_dashboard_get_stats_summary() {
 	$rows       = array();
 	$total_rows = 0;
 	$total_size = 0;
 
-	foreach ( scm_get_cache_type_list() as $type => $label ) {
-		$stats = scm_dashboard_get_stats_for_type( $type );
+	foreach ( khse_get_cache_type_list() as $type => $label ) {
+		$stats = khse_dashboard_get_stats_for_type( $type );
 
 		$total_rows += $stats['rows'];
 		$total_size += $stats['size'];
@@ -198,7 +198,7 @@ function scm_dashboard_get_stats_summary() {
  *
  * @return array
  */
-function scm_dashboard_normalize_optimization_reports( $reports ) {
+function khse_dashboard_normalize_optimization_reports( $reports ) {
 	$latest = array();
 
 	foreach ( $reports as $report ) {
@@ -210,7 +210,7 @@ function scm_dashboard_normalize_optimization_reports( $reports ) {
 					'key'     => $key,
 					'enabled' => ! empty( $feature['enabled'] ),
 					'status'  => isset( $feature['status'] ) ? $feature['status'] : 'unknown',
-					'detail'  => isset( $feature['detail'] ) ? scm_dashboard_humanize_report_detail( $feature['detail'] ) : '',
+					'detail'  => isset( $feature['detail'] ) ? khse_dashboard_humanize_report_detail( $feature['detail'] ) : '',
 					'metrics' => ! empty( $feature['metrics'] ) && is_array( $feature['metrics'] ) ? $feature['metrics'] : array(),
 				);
 			}
@@ -254,7 +254,7 @@ function scm_dashboard_normalize_optimization_reports( $reports ) {
  *
  * @return string
  */
-function scm_dashboard_humanize_report_detail( $detail ) {
+function khse_dashboard_humanize_report_detail( $detail ) {
 	return preg_replace_callback(
 		'/([0-9][0-9,.\s]*)\s+B\b/',
 		function ( $matches ) {
@@ -271,10 +271,10 @@ function scm_dashboard_humanize_report_detail( $detail ) {
  *
  * @return array
  */
-function scm_dashboard_get_optimization_report_summary() {
-	$summary_reports = scm_get_page_optimization_reports( 20 );
+function khse_dashboard_get_optimization_report_summary() {
+	$summary_reports = khse_get_page_optimization_reports( 20 );
 	$initial_reports = array_slice( $summary_reports, 0, 5 );
-	$total_reports   = scm_count_page_optimization_reports();
+	$total_reports   = khse_count_page_optimization_reports();
 	$applied_pages  = 0;
 	$saved_bytes    = 0;
 	$ucss_saved     = 0;
@@ -314,7 +314,7 @@ function scm_dashboard_get_optimization_report_summary() {
 	}
 
 	return array(
-		'reports'       => scm_dashboard_normalize_optimization_reports( $initial_reports ),
+		'reports'       => khse_dashboard_normalize_optimization_reports( $initial_reports ),
 		'reportCount'   => count( $summary_reports ),
 		'totalReports'  => $total_reports,
 		'loadedCount'   => count( $initial_reports ),
@@ -341,7 +341,7 @@ function scm_dashboard_get_optimization_report_summary() {
  *
  * @return bool
  */
-function scm_dashboard_is_driver_available( $driver ) {
+function khse_dashboard_is_driver_available( $driver ) {
 	switch ( $driver ) {
 		case 'file':
 			return true;
@@ -373,9 +373,9 @@ function scm_dashboard_is_driver_available( $driver ) {
  *
  * @return array
  */
-function scm_dashboard_get_driver_advanced_settings_data() {
+function khse_dashboard_get_driver_advanced_settings_data() {
 	$file = wp_parse_args(
-		(array) get_option( 'scm_option_advanced_driver_file', array() ),
+		(array) get_option( 'khse_option_advanced_driver_file', array() ),
 		array(
 			'compress'           => 'no',
 			'compress_threshold' => 4096,
@@ -384,7 +384,7 @@ function scm_dashboard_get_driver_advanced_settings_data() {
 	);
 
 	$redis = wp_parse_args(
-		(array) get_option( 'scm_option_advanced_driver_redis', array() ),
+		(array) get_option( 'khse_option_advanced_driver_redis', array() ),
 		array(
 			'host'               => '127.0.0.1',
 			'port'               => 6379,
@@ -399,7 +399,7 @@ function scm_dashboard_get_driver_advanced_settings_data() {
 	);
 
 	$memcached = wp_parse_args(
-		(array) get_option( 'scm_option_advanced_driver_memcached', array() ),
+		(array) get_option( 'khse_option_advanced_driver_memcached', array() ),
 		array(
 			'host'        => '127.0.0.1',
 			'port'        => 11211,
@@ -408,7 +408,7 @@ function scm_dashboard_get_driver_advanced_settings_data() {
 	);
 
 	$mongodb = wp_parse_args(
-		(array) get_option( 'scm_option_advanced_driver_mongodb', array() ),
+		(array) get_option( 'khse_option_advanced_driver_mongodb', array() ),
 		array(
 			'host'        => '127.0.0.1',
 			'port'        => 27017,
@@ -428,11 +428,11 @@ function scm_dashboard_get_driver_advanced_settings_data() {
 		'mongodb'    => $mongodb,
 		'mongo'      => $mongodb,
 		'connection' => array(
-			'redis'     => get_option( 'scm_option_advanced_driver_redis_connection_type', 'tcp' ),
-			'memcache'  => get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' ),
-			'memcached' => get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' ),
-			'mongo'     => get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' ),
-			'mongodb'   => get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' ),
+			'redis'     => get_option( 'khse_option_advanced_driver_redis_connection_type', 'tcp' ),
+			'memcache'  => get_option( 'khse_option_advanced_driver_memcached_connection_type', 'tcp' ),
+			'memcached' => get_option( 'khse_option_advanced_driver_memcached_connection_type', 'tcp' ),
+			'mongo'     => get_option( 'khse_option_advanced_driver_mongodb_connection_type', 'tcp' ),
+			'mongodb'   => get_option( 'khse_option_advanced_driver_mongodb_connection_type', 'tcp' ),
 		),
 	);
 }
@@ -445,7 +445,7 @@ function scm_dashboard_get_driver_advanced_settings_data() {
  *
  * @return array
  */
-function scm_dashboard_build_toggle_items( $items, $enabled ) {
+function khse_dashboard_build_toggle_items( $items, $enabled ) {
 	$enabled = is_array( $enabled ) ? $enabled : array();
 	$result  = array();
 
@@ -465,10 +465,10 @@ function scm_dashboard_build_toggle_items( $items, $enabled ) {
  *
  * @return array
  */
-function scm_dashboard_get_preload_options_data() {
+function khse_dashboard_get_preload_options_data() {
 	$post_types = array(
-		'post' => __( 'Post', 'ams-cache' ),
-		'page' => __( 'Page', 'ams-cache' ),
+		'post' => __( 'Post', 'kh-speed-engine' ),
+		'page' => __( 'Page', 'kh-speed-engine' ),
 	);
 
 	$custom_post_types = get_post_types(
@@ -484,16 +484,16 @@ function scm_dashboard_get_preload_options_data() {
 	}
 
 	$archives = array(
-		'category' => __( 'Category', 'ams-cache' ),
-		'tag'      => __( 'Tag', 'ams-cache' ),
-		'date'     => __( 'Date', 'ams-cache' ),
-		'author'   => __( 'Author', 'ams-cache' ),
+		'category' => __( 'Category', 'kh-speed-engine' ),
+		'tag'      => __( 'Tag', 'kh-speed-engine' ),
+		'date'     => __( 'Date', 'kh-speed-engine' ),
+		'author'   => __( 'Author', 'kh-speed-engine' ),
 	);
 
 	return array(
-		'postTypes' => scm_dashboard_build_toggle_items( $post_types, get_option( 'scm_option_post_types', array() ) ),
-		'homepage'  => get_option( 'scm_option_post_homepage', 'yes' ),
-		'archives'  => scm_dashboard_build_toggle_items( $archives, get_option( 'scm_option_post_archives', array() ) ),
+		'postTypes' => khse_dashboard_build_toggle_items( $post_types, get_option( 'khse_option_post_types', array() ) ),
+		'homepage'  => get_option( 'khse_option_post_homepage', 'yes' ),
+		'archives'  => khse_dashboard_build_toggle_items( $archives, get_option( 'khse_option_post_archives', array() ) ),
 	);
 }
 
@@ -502,81 +502,81 @@ function scm_dashboard_get_preload_options_data() {
  *
  * @return array
  */
-function scm_dashboard_get_settings_data() {
-	$optimization = scm_get_page_optimization_settings();
+function khse_dashboard_get_settings_data() {
+	$optimization = khse_get_page_optimization_settings();
 
 	foreach ( array( 'status', 'minify_html', 'remove_comments', 'minify_inline_css', 'lazy_media', 'critical_images', 'preconnect_fonts', 'defer_js', 'external_ucss', 'local_ucss', 'js_analysis' ) as $toggle_key ) {
 		$optimization[ $toggle_key ] = 'yes' === $optimization[ $toggle_key ] || true === $optimization[ $toggle_key ] || 'enable' === $optimization[ $toggle_key ];
 	}
 
 	$drivers = array(
-		array( 'value' => 'file', 'label' => __( 'File', 'ams-cache' ) ),
-		array( 'value' => 'redis', 'label' => __( 'Redis', 'ams-cache' ) ),
-		array( 'value' => 'memcache', 'label' => __( 'Memcache', 'ams-cache' ) ),
-		array( 'value' => 'memcached', 'label' => __( 'Memcached', 'ams-cache' ) ),
-		array( 'value' => 'apc', 'label' => __( 'APC', 'ams-cache' ) ),
-		array( 'value' => 'apcu', 'label' => __( 'APCu', 'ams-cache' ) ),
-		array( 'value' => 'wincache', 'label' => __( 'WinCache', 'ams-cache' ) ),
-		array( 'value' => 'mongo', 'label' => __( 'MongoDB', 'ams-cache' ) ),
-		array( 'value' => 'mysql', 'label' => __( 'MySQL', 'ams-cache' ) ),
-		array( 'value' => 'sqlite', 'label' => __( 'SQLite', 'ams-cache' ) ),
+		array( 'value' => 'file', 'label' => __( 'File', 'kh-speed-engine' ) ),
+		array( 'value' => 'redis', 'label' => __( 'Redis', 'kh-speed-engine' ) ),
+		array( 'value' => 'memcache', 'label' => __( 'Memcache', 'kh-speed-engine' ) ),
+		array( 'value' => 'memcached', 'label' => __( 'Memcached', 'kh-speed-engine' ) ),
+		array( 'value' => 'apc', 'label' => __( 'APC', 'kh-speed-engine' ) ),
+		array( 'value' => 'apcu', 'label' => __( 'APCu', 'kh-speed-engine' ) ),
+		array( 'value' => 'wincache', 'label' => __( 'WinCache', 'kh-speed-engine' ) ),
+		array( 'value' => 'mongo', 'label' => __( 'MongoDB', 'kh-speed-engine' ) ),
+		array( 'value' => 'mysql', 'label' => __( 'MySQL', 'kh-speed-engine' ) ),
+		array( 'value' => 'sqlite', 'label' => __( 'SQLite', 'kh-speed-engine' ) ),
 	);
 	$drivers      = array_map(
 		function ( $driver ) {
-			$driver['available'] = scm_dashboard_is_driver_available( $driver['value'] );
+			$driver['available'] = khse_dashboard_is_driver_available( $driver['value'] );
 			return $driver;
 		},
 		$drivers
 	);
-	$preload_options = scm_dashboard_get_preload_options_data();
+	$preload_options = khse_dashboard_get_preload_options_data();
 
 	return array(
 		'cache'       => array(
-			'cachingStatus'    => scm_get_setting( 'cache', 'cachingStatus' ),
-			'driver'           => scm_get_setting( 'cache', 'driver' ),
-			'ttl'              => scm_get_setting( 'cache', 'ttl' ),
-			'ttlMechanism'     => scm_get_setting( 'cache', 'ttlMechanism' ),
-			'cacheKeyPrefix'   => scm_get_setting( 'cache', 'cacheKeyPrefix' ),
-			'maxEntries'       => scm_get_setting( 'cache', 'maxEntries' ),
-			'expertModeStatus' => scm_get_setting( 'cache', 'expertModeStatus' ),
-			'nginxDirect'      => scm_get_setting( 'cache', 'nginxDirect' ),
-			'debugComment'     => scm_get_setting( 'cache', 'debugComment' ),
-			'visibilityLoginUser' => scm_get_setting( 'cache', 'visibilityLoginUser' ),
-			'visibilityGuest'     => scm_get_setting( 'cache', 'visibilityGuest' ),
+			'cachingStatus'    => khse_get_setting( 'cache', 'cachingStatus' ),
+			'driver'           => khse_get_setting( 'cache', 'driver' ),
+			'ttl'              => khse_get_setting( 'cache', 'ttl' ),
+			'ttlMechanism'     => khse_get_setting( 'cache', 'ttlMechanism' ),
+			'cacheKeyPrefix'   => khse_get_setting( 'cache', 'cacheKeyPrefix' ),
+			'maxEntries'       => khse_get_setting( 'cache', 'maxEntries' ),
+			'expertModeStatus' => khse_get_setting( 'cache', 'expertModeStatus' ),
+			'nginxDirect'      => khse_get_setting( 'cache', 'nginxDirect' ),
+			'debugComment'     => khse_get_setting( 'cache', 'debugComment' ),
+			'visibilityLoginUser' => khse_get_setting( 'cache', 'visibilityLoginUser' ),
+			'visibilityGuest'     => khse_get_setting( 'cache', 'visibilityGuest' ),
 			'drivers'          => $drivers,
-			'driverAdvanced'   => scm_dashboard_get_driver_advanced_settings_data(),
-			'expertModeCode'   => scm_expert_mode_code_template(),
-			'expertModeCustomValue' => scm_expert_mode_custom_value(),
-			'expertModeReady'  => scm_is_expert_mode_code_ready(),
+			'driverAdvanced'   => khse_dashboard_get_driver_advanced_settings_data(),
+			'expertModeCode'   => khse_expert_mode_code_template(),
+			'expertModeCustomValue' => khse_expert_mode_custom_value(),
+			'expertModeReady'  => khse_is_expert_mode_code_ready(),
 		),
 		'preload'     => array(
-			'enabled'       => scm_get_setting( 'preload', 'enabled' ),
-			'limit'         => scm_get_setting( 'preload', 'limit' ),
-			'crawlHomepage' => scm_get_setting( 'preload', 'crawlHomepage' ),
+			'enabled'       => khse_get_setting( 'preload', 'enabled' ),
+			'limit'         => khse_get_setting( 'preload', 'limit' ),
+			'crawlHomepage' => khse_get_setting( 'preload', 'crawlHomepage' ),
 			'postTypes'     => $preload_options['postTypes'],
-			'homepage'      => scm_get_setting( 'preload', 'homepage' ),
+			'homepage'      => khse_get_setting( 'preload', 'homepage' ),
 			'archives'      => $preload_options['archives'],
 		),
 		'performance' => $optimization,
 		'rules'       => array(
-			'enabled'      => scm_get_setting( 'rules', 'enabled' ),
-			'excludedList' => get_option( 'scm_option_excluded_list_filtered', get_option( 'scm_option_excluded_list', '' ) ),
-			'getVars'      => scm_get_setting( 'rules', 'getVars' ),
-			'postVars'     => scm_get_setting( 'rules', 'postVars' ),
-			'cookieVars'   => scm_get_setting( 'rules', 'cookieVars' ),
+			'enabled'      => khse_get_setting( 'rules', 'enabled' ),
+			'excludedList' => get_option( 'khse_option_excluded_list_filtered', get_option( 'khse_option_excluded_list', '' ) ),
+			'getVars'      => khse_get_setting( 'rules', 'getVars' ),
+			'postVars'     => khse_get_setting( 'rules', 'postVars' ),
+			'cookieVars'   => khse_get_setting( 'rules', 'cookieVars' ),
 		),
 		'statistics'  => array(
-			'enabled' => scm_get_setting( 'statistics', 'enabled' ),
+			'enabled' => khse_get_setting( 'statistics', 'enabled' ),
 		),
 		'benchmark'   => array(
-			'widget'        => scm_get_setting( 'benchmark', 'widget' ),
-			'footer'        => scm_get_setting( 'benchmark', 'footer' ),
-			'widgetDisplay' => scm_get_setting( 'benchmark', 'widgetDisplay' ),
-			'footerDisplay' => scm_get_setting( 'benchmark', 'footerDisplay' ),
+			'widget'        => khse_get_setting( 'benchmark', 'widget' ),
+			'footer'        => khse_get_setting( 'benchmark', 'footer' ),
+			'widgetDisplay' => khse_get_setting( 'benchmark', 'widgetDisplay' ),
+			'footerDisplay' => khse_get_setting( 'benchmark', 'footerDisplay' ),
 		),
 		'woocommerce' => array(
-			'enabled'         => scm_get_setting( 'woocommerce', 'enabled' ),
-			'paymentComplete' => scm_get_setting( 'woocommerce', 'paymentComplete' ),
+			'enabled'         => khse_get_setting( 'woocommerce', 'enabled' ),
+			'paymentComplete' => khse_get_setting( 'woocommerce', 'paymentComplete' ),
 			'active'          => function_exists( 'is_plugin_active' ) && is_plugin_active( 'woocommerce/woocommerce.php' ),
 		),
 	);
@@ -587,22 +587,22 @@ function scm_dashboard_get_settings_data() {
  *
  * @return array
  */
-function scm_dashboard_get_status_data() {
-	$driver_type       = get_option( 'scm_option_driver', 'file' );
-	$optimization      = scm_get_page_optimization_settings();
-	$optimization_reqs = scm_get_page_optimization_requirements();
-	$preload_limit     = scm_get_preload_limit();
-	$preload_count     = (int) get_option( 'scm_last_preload_count', 0 );
-	$priority_count    = (int) get_option( 'scm_last_preload_priority_count', 0 );
-	$critical_count    = (int) get_option( 'scm_last_critical_preload_count', 0 );
-	$queue_total       = (int) get_option( 'scm_preload_queue_total', 0 );
-	$queue_processed   = (int) get_option( 'scm_preload_queue_processed', 0 );
-	$queue_failed      = (int) get_option( 'scm_preload_queue_failed', 0 );
-	$queue_remaining   = (int) get_option( 'scm_preload_queue_remaining', 0 );
+function khse_dashboard_get_status_data() {
+	$driver_type       = get_option( 'khse_option_driver', 'file' );
+	$optimization      = khse_get_page_optimization_settings();
+	$optimization_reqs = khse_get_page_optimization_requirements();
+	$preload_limit     = khse_get_preload_limit();
+	$preload_count     = (int) get_option( 'khse_last_preload_count', 0 );
+	$priority_count    = (int) get_option( 'khse_last_preload_priority_count', 0 );
+	$critical_count    = (int) get_option( 'khse_last_critical_preload_count', 0 );
+	$queue_total       = (int) get_option( 'khse_preload_queue_total', 0 );
+	$queue_processed   = (int) get_option( 'khse_preload_queue_processed', 0 );
+	$queue_failed      = (int) get_option( 'khse_preload_queue_failed', 0 );
+	$queue_remaining   = (int) get_option( 'khse_preload_queue_remaining', 0 );
 	$planned_priority  = 0;
 
-	if ( scm_is_preload_enabled() ) {
-		$planned_priority = count( scm_get_homepage_priority_preload_urls( $preload_limit ) );
+	if ( khse_is_preload_enabled() ) {
+		$planned_priority = count( khse_get_homepage_priority_preload_urls( $preload_limit ) );
 	}
 
 	$feature_keys = array(
@@ -643,9 +643,9 @@ function scm_dashboard_get_status_data() {
 	}
 
 	$cache_checks = array(
-		'enabled'   => 'enable' === get_option( 'scm_option_caching_status', 'disable' ),
+		'enabled'   => 'enable' === get_option( 'khse_option_caching_status', 'disable' ),
 		'permalink' => '' !== get_option( 'permalink_structure', '' ),
-		'guestOnly' => 'no' === get_option( 'scm_option_visibility_login_user', 'no' ),
+		'guestOnly' => 'no' === get_option( 'khse_option_visibility_login_user', 'no' ),
 	);
 
 	$cache_ready = count( array_filter( $cache_checks ) );
@@ -655,13 +655,13 @@ function scm_dashboard_get_status_data() {
 		'cache'       => array(
 			'enabled'       => $cache_checks['enabled'],
 			'driver'        => $driver_type,
-			'ttl'           => (int) get_option( 'scm_option_ttl', 0 ),
-			'ttlMechanism'  => get_option( 'scm_option_ttl_mechanism', 'enable' ),
-			'keyPrefix'     => scm_get_cache_key_prefix(),
-			'maxEntries'    => scm_get_cache_max_entries(),
-			'expertMode'    => 'enable' === get_option( 'scm_option_expert_mode_status', 'disable' ),
-			'expertReady'   => scm_is_expert_mode_code_ready(),
-			'nginxDirect'   => scm_is_nginx_direct_cache_enabled(),
+			'ttl'           => (int) get_option( 'khse_option_ttl', 0 ),
+			'ttlMechanism'  => get_option( 'khse_option_ttl_mechanism', 'enable' ),
+			'keyPrefix'     => khse_get_cache_key_prefix(),
+			'maxEntries'    => khse_get_cache_max_entries(),
+			'expertMode'    => 'enable' === get_option( 'khse_option_expert_mode_status', 'disable' ),
+			'expertReady'   => khse_is_expert_mode_code_ready(),
+			'nginxDirect'   => khse_is_nginx_direct_cache_enabled(),
 			'progress'      => round( ( $cache_ready / count( $cache_checks ) ) * 100 ),
 		),
 		'optimization' => array(
@@ -673,12 +673,12 @@ function scm_dashboard_get_status_data() {
 			'reqTotal'      => count( $requirements ),
 			'reqProgress'   => count( $requirements ) > 0 ? round( ( $passed_reqs / count( $requirements ) ) * 100 ) : 0,
 			'requirements'  => $requirements,
-			'reports'       => scm_dashboard_get_optimization_report_summary(),
+			'reports'       => khse_dashboard_get_optimization_report_summary(),
 		),
 		'preload'     => array(
-			'enabled'        => scm_is_preload_enabled(),
+			'enabled'        => khse_is_preload_enabled(),
 			'limit'          => $preload_limit,
-			'crawlHomepage'  => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
+			'crawlHomepage'  => 'yes' === get_option( 'khse_option_preload_homepage_links', 'yes' ),
 			'lastCount'      => $preload_count,
 			'priorityCount'  => $planned_priority,
 			'lastPriorityCount' => $priority_count,
@@ -687,12 +687,12 @@ function scm_dashboard_get_status_data() {
 			'queueProcessed' => $queue_processed,
 			'queueFailed'    => $queue_failed,
 			'queueRemaining' => $queue_remaining,
-			'lastRun'        => scm_dashboard_format_time( (int) get_option( 'scm_last_preload_time', 0 ) ),
-			'lastPriority'   => scm_dashboard_format_time( (int) get_option( 'scm_last_homepage_priority_preload_time', 0 ) ),
+			'lastRun'        => khse_dashboard_format_time( (int) get_option( 'khse_last_preload_time', 0 ) ),
+			'lastPriority'   => khse_dashboard_format_time( (int) get_option( 'khse_last_homepage_priority_preload_time', 0 ) ),
 			'progress'       => $queue_total > 0 ? min( 100, round( ( $queue_processed / $queue_total ) * 100 ) ) : min( 100, round( ( max( $preload_count, $priority_count ) / $preload_limit ) * 100 ) ),
 		),
-		'stats'       => scm_dashboard_get_stats_summary(),
-		'settings'    => scm_dashboard_get_settings_data(),
+		'stats'       => khse_dashboard_get_stats_summary(),
+		'settings'    => khse_dashboard_get_settings_data(),
 	);
 }
 
@@ -703,12 +703,12 @@ function scm_dashboard_get_status_data() {
  *
  * @return void
  */
-function scm_ensure_driver_storage( $type ) {
+function khse_ensure_driver_storage( $type ) {
 	if ( ! in_array( $type, array( 'file', 'sqlite' ), true ) ) {
 		return;
 	}
 
-	$resolved = scm_get_driver_settings( $type );
+	$resolved = khse_get_driver_settings( $type );
 	$storage  = isset( $resolved['setting']['storage'] ) ? $resolved['setting']['storage'] : '';
 
 	if ( '' !== $storage && ! is_dir( $storage ) ) {
@@ -723,13 +723,13 @@ function scm_ensure_driver_storage( $type ) {
  *
  * @return bool
  */
-function scm_test_driver( $type = '' ) {
+function khse_test_driver( $type = '' ) {
 
 	if ( '' === (string) $type ) {
 		return false;
 	}
 
-	$resolved = scm_get_driver_settings( $type );
+	$resolved = khse_get_driver_settings( $type );
 	$setting  = $resolved['setting'];
 
 	try {
@@ -745,7 +745,7 @@ function scm_test_driver( $type = '' ) {
 	} catch ( \Throwable $e ) {
 		error_log(
 			sprintf(
-				'[AMS Cache] Driver %s connection test failed: %s',
+				'[KH Speed Engine] Driver %s connection test failed: %s',
 				'' !== $type ? $type : 'unknown',
 				$e->getMessage()
 			)
@@ -762,49 +762,49 @@ function scm_test_driver( $type = '' ) {
  *
  * @return array
  */
-function scm_dashboard_test_driver_connection( $type ) {
+function khse_dashboard_test_driver_connection( $type ) {
 	$type = sanitize_key( (string) $type );
 
 	if ( '' === $type ) {
-		$type = get_option( 'scm_option_driver', 'file' );
+		$type = get_option( 'khse_option_driver', 'file' );
 	}
 
 	$labels = array(
-		'file'      => __( 'File', 'ams-cache' ),
-		'redis'     => __( 'Redis', 'ams-cache' ),
-		'memcache'  => __( 'Memcache', 'ams-cache' ),
-		'memcached' => __( 'Memcached', 'ams-cache' ),
-		'apc'       => __( 'APC', 'ams-cache' ),
-		'apcu'      => __( 'APCu', 'ams-cache' ),
-		'wincache'  => __( 'WinCache', 'ams-cache' ),
-		'mongo'     => __( 'MongoDB', 'ams-cache' ),
-		'mysql'     => __( 'MySQL', 'ams-cache' ),
-		'sqlite'    => __( 'SQLite', 'ams-cache' ),
+		'file'      => __( 'File', 'kh-speed-engine' ),
+		'redis'     => __( 'Redis', 'kh-speed-engine' ),
+		'memcache'  => __( 'Memcache', 'kh-speed-engine' ),
+		'memcached' => __( 'Memcached', 'kh-speed-engine' ),
+		'apc'       => __( 'APC', 'kh-speed-engine' ),
+		'apcu'      => __( 'APCu', 'kh-speed-engine' ),
+		'wincache'  => __( 'WinCache', 'kh-speed-engine' ),
+		'mongo'     => __( 'MongoDB', 'kh-speed-engine' ),
+		'mysql'     => __( 'MySQL', 'kh-speed-engine' ),
+		'sqlite'    => __( 'SQLite', 'kh-speed-engine' ),
 	);
 
 	if ( ! isset( $labels[ $type ] ) ) {
 		return array(
 			'passed'  => false,
 			'driver'  => $type,
-			'message' => __( 'Unknown cache driver.', 'ams-cache' ),
+			'message' => __( 'Unknown cache driver.', 'kh-speed-engine' ),
 		);
 	}
 
-	if ( ! scm_dashboard_is_driver_available( $type ) ) {
+	if ( ! khse_dashboard_is_driver_available( $type ) ) {
 		return array(
 			'passed'  => false,
 			'driver'  => $type,
 			'message' => sprintf(
 				/* translators: %s: cache driver label. */
-				__( '%s PHP extension is not available.', 'ams-cache' ),
+				__( '%s PHP extension is not available.', 'kh-speed-engine' ),
 				$labels[ $type ]
 			),
 		);
 	}
 
-	scm_ensure_driver_storage( $type );
+	khse_ensure_driver_storage( $type );
 
-	$passed = scm_test_driver( $type );
+	$passed = khse_test_driver( $type );
 
 	return array(
 		'passed'  => $passed,
@@ -812,12 +812,12 @@ function scm_dashboard_test_driver_connection( $type ) {
 		'message' => $passed
 			? sprintf(
 				/* translators: %s: cache driver label. */
-				__( '%s connection test passed.', 'ams-cache' ),
+				__( '%s connection test passed.', 'kh-speed-engine' ),
 				$labels[ $type ]
 			)
 			: sprintf(
 				/* translators: %s: cache driver label. */
-				__( '%s connection test failed. Save settings, then verify host, port, database, and credentials.', 'ams-cache' ),
+				__( '%s connection test failed. Save settings, then verify host, port, database, and credentials.', 'kh-speed-engine' ),
 				$labels[ $type ]
 			),
 	);
@@ -828,19 +828,19 @@ function scm_dashboard_test_driver_connection( $type ) {
  *
  * @return string
  */
-function scm_expert_mode_code_template() {
-	$plugin_dir        = wp_normalize_path( rtrim( SCM_PLUGIN_DIR, '/\\' ) );
-	$plugin_upload_dir = wp_normalize_path( rtrim( scm_get_upload_dir(), '/\\' ) );
-	$runtime_dir       = wp_normalize_path( rtrim( scm_get_private_runtime_dir(), '/\\' ) );
+function khse_expert_mode_code_template() {
+	$plugin_dir        = wp_normalize_path( rtrim( KHSE_PLUGIN_DIR, '/\\' ) );
+	$plugin_upload_dir = wp_normalize_path( rtrim( khse_get_upload_dir(), '/\\' ) );
+	$runtime_dir       = wp_normalize_path( rtrim( khse_get_private_runtime_dir(), '/\\' ) );
 	$expert_mode_file  = $plugin_dir . '/inc/expert-mode.php';
 	$config_file       = $runtime_dir . '/config.json';
 
 	ob_start();
 
 	?>
-// BEGIN - AMS Cache
+// BEGIN - KH Speed Engine
 // Settings are read from the private runtime file <?php echo $config_file; ?>.
-// Update Redis DB, key prefix, driver, and preload options in AMS Cache admin.
+// Update Redis DB, key prefix, driver, and preload options in KH Speed Engine admin.
 //
 // Raise memory early — Expert Mode runs before WP_MEMORY_LIMIT is applied
 // and large cache pages can exhaust FPM's default 128M.
@@ -854,7 +854,7 @@ if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
 
 	/* BEGIN - Blog ID: <?php echo get_current_blog_id(); ?> */
 
-	scm_run_expert_mode( array(
+	khse_run_expert_mode( array(
 		'plugin_dir'        => <?php echo var_export( $plugin_dir, true ); ?>,
 		'plugin_upload_dir' => <?php echo var_export( $plugin_upload_dir, true ); ?>,
 		'runtime_dir'       => <?php echo var_export( $runtime_dir, true ); ?>,
@@ -863,7 +863,7 @@ if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
 	/* END - Blog ID: <?php echo get_current_blog_id(); ?> */
 }
 
-// END - AMS Cache
+// END - KH Speed Engine
 	<?php
 	return ob_get_clean();
 }
@@ -873,13 +873,13 @@ if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
  *
  * @return string
  */
-function scm_expert_mode_custom_value() {
-	$plugin_dir        = wp_normalize_path( rtrim( SCM_PLUGIN_DIR, '/\\' ) );
-	$plugin_upload_dir = wp_normalize_path( rtrim( scm_get_upload_dir(), '/\\' ) );
-	$runtime_dir       = wp_normalize_path( rtrim( scm_get_private_runtime_dir(), '/\\' ) );
+function khse_expert_mode_custom_value() {
+	$plugin_dir        = wp_normalize_path( rtrim( KHSE_PLUGIN_DIR, '/\\' ) );
+	$plugin_upload_dir = wp_normalize_path( rtrim( khse_get_upload_dir(), '/\\' ) );
+	$runtime_dir       = wp_normalize_path( rtrim( khse_get_private_runtime_dir(), '/\\' ) );
 	$expert_mode_file  = $plugin_dir . '/inc/expert-mode.php';
 
-	return 'if ( file_exists( ' . var_export( $expert_mode_file, true ) . ' ) ) { require_once ' . var_export( $expert_mode_file, true ) . '; scm_run_expert_mode( array( '
+	return 'if ( file_exists( ' . var_export( $expert_mode_file, true ) . ' ) ) { require_once ' . var_export( $expert_mode_file, true ) . '; khse_run_expert_mode( array( '
 		. "'plugin_dir' => " . var_export( $plugin_dir, true ) . ', '
 		. "'plugin_upload_dir' => " . var_export( $plugin_upload_dir, true ) . ', '
 		. "'runtime_dir' => " . var_export( $runtime_dir, true )
@@ -891,7 +891,7 @@ function scm_expert_mode_custom_value() {
  *
  * @return string
  */
-function scm_get_wp_config_contents() {
+function khse_get_wp_config_contents() {
 	$wp_config_file = ABSPATH . 'wp-config.php';
 
 	if ( ! file_exists( $wp_config_file ) && file_exists( ABSPATH . '../wp-config.php' ) ) {
@@ -910,7 +910,7 @@ function scm_get_wp_config_contents() {
  *
  * @return bool
  */
-function scm_expert_mode_snippet_matches( $source, $upload_dir, $runtime_dir ) {
+function khse_expert_mode_snippet_matches( $source, $upload_dir, $runtime_dir ) {
 	$source = (string) $source;
 
 	return false !== strpos( $source, 'expert-mode.php' )
@@ -923,11 +923,11 @@ function scm_expert_mode_snippet_matches( $source, $upload_dir, $runtime_dir ) {
  *
  * @return bool
  */
-function scm_is_expert_mode_code_ready() {
-	$upload_dir  = wp_normalize_path( scm_get_upload_dir() );
-	$runtime_dir = wp_normalize_path( scm_get_private_runtime_dir() );
+function khse_is_expert_mode_code_ready() {
+	$upload_dir  = wp_normalize_path( khse_get_upload_dir() );
+	$runtime_dir = wp_normalize_path( khse_get_private_runtime_dir() );
 
-	if ( scm_expert_mode_snippet_matches( scm_get_wp_config_contents(), $upload_dir, $runtime_dir ) ) {
+	if ( khse_expert_mode_snippet_matches( khse_get_wp_config_contents(), $upload_dir, $runtime_dir ) ) {
 		return true;
 	}
 
@@ -942,7 +942,7 @@ function scm_is_expert_mode_code_ready() {
 			$value = $_SERVER[ $env_key ];
 		}
 
-		if ( is_string( $value ) && scm_expert_mode_snippet_matches( $value, $upload_dir, $runtime_dir ) ) {
+		if ( is_string( $value ) && khse_expert_mode_snippet_matches( $value, $upload_dir, $runtime_dir ) ) {
 			return true;
 		}
 	}
@@ -955,17 +955,17 @@ function scm_is_expert_mode_code_ready() {
  *
  * @return int
  */
-function scm_clear_all_cache() {
-	scm_sync_expert_mode_runtime();
+function khse_clear_all_cache() {
+	khse_sync_expert_mode_runtime();
 
-	$driver_type = get_option( 'scm_option_driver' );
-	$driver      = scm_driver_factory( $driver_type );
+	$driver_type = get_option( 'khse_option_driver' );
+	$driver      = khse_driver_factory( $driver_type );
 
 	if ( ! $driver || is_wp_error( $driver ) ) {
 		return 0;
 	}
 
-	$list = scm_get_cache_type_list( true );
+	$list = khse_get_cache_type_list( true );
 
 	if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
 		$driver->clear();
@@ -974,7 +974,7 @@ function scm_clear_all_cache() {
 	$i = 0;
 
 	foreach ( $list as $cache_type ) {
-		$dir = scm_get_stats_dir( $cache_type );
+		$dir = khse_get_stats_dir( $cache_type );
 
 		if ( is_dir( $dir ) ) {
 			foreach ( new DirectoryIterator( $dir ) as $file ) {
@@ -990,8 +990,8 @@ function scm_clear_all_cache() {
 		}
 	}
 
-	scm_clear_nginx_static_cache();
-	scm_schedule_preload_cache();
+	khse_clear_nginx_static_cache();
+	khse_schedule_preload_cache();
 
 	return $i;
 }
@@ -1003,16 +1003,16 @@ function scm_clear_all_cache() {
  *
  * @return int
  */
-function scm_clear_cache_type( $cache_type ) {
-	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
-	$list   = scm_get_cache_type_list( true );
+function khse_clear_cache_type( $cache_type ) {
+	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
+	$list   = khse_get_cache_type_list( true );
 
 	if ( ! $driver || is_wp_error( $driver ) || ! in_array( $cache_type, $list, true ) ) {
 		return 0;
 	}
 
 	$rows = 0;
-	$dir  = scm_get_stats_dir( $cache_type );
+	$dir  = khse_get_stats_dir( $cache_type );
 
 	if ( is_dir( $dir ) ) {
 		foreach ( new DirectoryIterator( $dir ) as $file ) {
@@ -1027,8 +1027,8 @@ function scm_clear_cache_type( $cache_type ) {
 		}
 	}
 
-	scm_clear_nginx_static_cache();
-	scm_schedule_preload_cache();
+	khse_clear_nginx_static_cache();
+	khse_schedule_preload_cache();
 
 	return $rows;
 }

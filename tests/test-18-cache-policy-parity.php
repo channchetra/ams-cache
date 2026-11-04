@@ -2,7 +2,7 @@
 /**
  * Class CachePolicyParityTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class CachePolicyParityTest extends WP_UnitTestCase {
@@ -51,35 +51,35 @@ class CachePolicyParityTest extends WP_UnitTestCase {
 	}
 
 	public function test_cookie_prefixes_bypass_the_cache() {
-		foreach ( scm_get_cache_bypass_cookie_prefixes() as $prefix ) {
+		foreach ( khse_get_cache_bypass_cookie_prefixes() as $prefix ) {
 			$_COOKIE = array( $prefix . 'probe' => '1' );
 
-			$this->assertTrue( scm_request_has_cache_bypass_cookie(), $prefix );
-			$this->assertFalse( scm_is_cacheable_request_uri( '/' ), $prefix );
+			$this->assertTrue( khse_request_has_cache_bypass_cookie(), $prefix );
+			$this->assertFalse( khse_is_cacheable_request_uri( '/' ), $prefix );
 		}
 
 		$_COOKIE = array( 'unrelated_cookie' => '1' );
-		$this->assertFalse( scm_request_has_cache_bypass_cookie() );
+		$this->assertFalse( khse_request_has_cache_bypass_cookie() );
 	}
 
 	public function test_bypass_paths_are_rejected() {
-		foreach ( scm_get_cache_bypass_paths() as $path ) {
-			$this->assertFalse( scm_is_cacheable_document_path( '/' . $path ), $path );
-			$this->assertFalse( scm_is_cacheable_document_path( '/' . $path . '/' ), $path );
+		foreach ( khse_get_cache_bypass_paths() as $path ) {
+			$this->assertFalse( khse_is_cacheable_document_path( '/' . $path ), $path );
+			$this->assertFalse( khse_is_cacheable_document_path( '/' . $path . '/' ), $path );
 		}
 
-		$this->assertTrue( scm_is_cacheable_document_path( '/sample-page/' ) );
-		$this->assertTrue( scm_is_cacheable_document_path( '/' ) );
+		$this->assertTrue( khse_is_cacheable_document_path( '/sample-page/' ) );
+		$this->assertTrue( khse_is_cacheable_document_path( '/' ) );
 	}
 
 	public function test_nginx_snippet_contains_the_shared_policy() {
-		$snippet = scm_get_nginx_direct_cache_snippet();
+		$snippet = khse_get_nginx_direct_cache_snippet();
 
-		foreach ( scm_get_cache_bypass_cookie_prefixes() as $prefix ) {
+		foreach ( khse_get_cache_bypass_cookie_prefixes() as $prefix ) {
 			$this->assertStringContainsString( preg_quote( $prefix, '/' ), $snippet, $prefix );
 		}
 
-		foreach ( scm_get_cache_bypass_paths() as $path ) {
+		foreach ( khse_get_cache_bypass_paths() as $path ) {
 			$this->assertStringContainsString( preg_quote( $path, '/' ), $snippet, $path );
 		}
 	}

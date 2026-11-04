@@ -1,90 +1,90 @@
 <?php
 /**
- * AMS Cache - Settings update hooks.
+ * KH Speed Engine - Settings update hooks.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
 // Make changes on those setting options will trigger its action function.
 $register_general_action = array(
-	'scm_option_driver',
-	'scm_option_expert_mode_status',
-	'scm_option_clear_cache',
-	'scm_option_html_debug_comment',
-	'scm_option_cache_key_prefix',
-	'scm_option_cache_max_entries',
-	'scm_option_nginx_direct_cache_status',
-	'scm_option_preload_cache',
-	'scm_option_preload_homepage_links',
+	'khse_option_driver',
+	'khse_option_expert_mode_status',
+	'khse_option_clear_cache',
+	'khse_option_html_debug_comment',
+	'khse_option_cache_key_prefix',
+	'khse_option_cache_max_entries',
+	'khse_option_nginx_direct_cache_status',
+	'khse_option_preload_cache',
+	'khse_option_preload_homepage_links',
 );
 
 
 
 foreach ( $register_general_action as $option ) {
-	add_action( 'update_option_' . $option, 'scm_update_' . $option );
+	add_action( 'update_option_' . $option, 'khse_update_' . $option );
 }
 
 // Make changes on those setting options will clear all cache.
 $register_clear_cache_action = array(
-	'scm_option_caching_status',
-	'scm_option_post_homepage',
-	'scm_option_post_types',
-	'scm_option_post_archives',
-	'scm_option_benchmark_widget',
-	'scm_option_benchmark_widget_display',
-	'scm_option_benchmark_footer_text',
-	'scm_option_benchmark_footer_text_display',
-	'scm_option_page_optimization',
+	'khse_option_caching_status',
+	'khse_option_post_homepage',
+	'khse_option_post_types',
+	'khse_option_post_archives',
+	'khse_option_benchmark_widget',
+	'khse_option_benchmark_widget_display',
+	'khse_option_benchmark_footer_text',
+	'khse_option_benchmark_footer_text_display',
+	'khse_option_page_optimization',
 );
 
 foreach ( $register_clear_cache_action as $option ) {
-	// `scm_clear_all_cache` is defined in functions.php
-	add_action( 'update_option_' . $option, 'scm_clear_all_cache' );
+	// `khse_clear_all_cache` is defined in functions.php
+	add_action( 'update_option_' . $option, 'khse_clear_all_cache' );
 }
 
 // Update WooCommerce settings.
 $register_woocommerce_action = array(
-	'scm_option_woocommerce_status',
-	'scm_option_woocommerce_post_archives',
-	'scm_option_woocommerce_post_types',
+	'khse_option_woocommerce_status',
+	'khse_option_woocommerce_post_archives',
+	'khse_option_woocommerce_post_types',
 );
 
 foreach ( $register_woocommerce_action as $option ) {
-	add_action( 'update_option_' . $option, 'scm_update_woocommerce' );
+	add_action( 'update_option_' . $option, 'khse_update_woocommerce' );
 }
 
 // Update exclusion settings.
 $register_exclusion_action = array(
-	'scm_option_exclusion_status',
-	'scm_option_excluded_list',
-	'scm_option_excluded_get_vars',
-	'scm_option_excluded_post_vars',
-	'scm_option_excluded_cookie_vars',
+	'khse_option_exclusion_status',
+	'khse_option_excluded_list',
+	'khse_option_excluded_get_vars',
+	'khse_option_excluded_post_vars',
+	'khse_option_excluded_cookie_vars',
 );
 
 foreach ( $register_exclusion_action as $option ) {
-	add_action( 'update_option_' . $option, 'scm_update_exclusion' );
+	add_action( 'update_option_' . $option, 'khse_update_exclusion' );
 }
 
 // Sync runtime config for Expert Mode.
 $register_runtime_config_action = array(
-	'scm_option_advanced_driver_file',
-	'scm_option_advanced_driver_memcached',
-	'scm_option_advanced_driver_redis',
-	'scm_option_advanced_driver_mongodb',
-	'scm_option_advanced_driver_memcached_connection_type',
-	'scm_option_advanced_driver_redis_connection_type',
-	'scm_option_advanced_driver_mongodb_connection_type',
-	'scm_option_preload_limit',
+	'khse_option_advanced_driver_file',
+	'khse_option_advanced_driver_memcached',
+	'khse_option_advanced_driver_redis',
+	'khse_option_advanced_driver_mongodb',
+	'khse_option_advanced_driver_memcached_connection_type',
+	'khse_option_advanced_driver_redis_connection_type',
+	'khse_option_advanced_driver_mongodb_connection_type',
+	'khse_option_preload_limit',
 );
 
 foreach ( $register_runtime_config_action as $option ) {
-	add_action( 'update_option_' . $option, 'scm_update_runtime_config' );
+	add_action( 'update_option_' . $option, 'khse_update_runtime_config' );
 }
 
 /**
@@ -92,13 +92,13 @@ foreach ( $register_runtime_config_action as $option ) {
  *
  * @return void
  */
-function scm_update_scm_option_driver() {
-	$driver_type = get_option( 'scm_option_driver' );
+function khse_update_khse_option_driver() {
+	$driver_type = get_option( 'khse_option_driver' );
 
-	scm_ensure_driver_storage( $driver_type );
+	khse_ensure_driver_storage( $driver_type );
 
-	if ( ! scm_test_driver( $driver_type ) ) {
-		update_option( 'scm_option_driver', 'file' );
+	if ( ! khse_test_driver( $driver_type ) ) {
+		update_option( 'khse_option_driver', 'file' );
 
 		// Road back to File driver if the option is not available.
 		$driver_type = 'file';
@@ -110,14 +110,14 @@ function scm_update_scm_option_driver() {
 	);
 
 	foreach ( $rebuld_list as $db ) {
-		$db_driver = scm_driver_factory( $db );
+		$db_driver = khse_driver_factory( $db );
 
 		if ( $db_driver && ! is_wp_error( $db_driver ) ) {
 			$db_driver->rebuild();
 		}
 	}
 
-	scm_update_runtime_config();
+	khse_update_runtime_config();
 }
 
 /**
@@ -125,8 +125,8 @@ function scm_update_scm_option_driver() {
  *
  * @return void
  */
-function scm_update_runtime_config() {
-	scm_sync_expert_mode_runtime();
+function khse_update_runtime_config() {
+	khse_sync_expert_mode_runtime();
 }
 
 /**
@@ -134,8 +134,8 @@ function scm_update_runtime_config() {
  *
  * @return void
  */
-function scm_update_scm_option_expert_mode_status() {
-	scm_sync_expert_mode_runtime();
+function khse_update_khse_option_expert_mode_status() {
+	khse_sync_expert_mode_runtime();
 }
 
 /**
@@ -143,13 +143,13 @@ function scm_update_scm_option_expert_mode_status() {
  *
  * @return void
  */
-function scm_update_scm_option_html_debug_comment() {
+function khse_update_khse_option_html_debug_comment() {
 	$setting = array(
-		'html_debug_comment' => scm_option_is_enabled( 'scm_option_html_debug_comment', 'yes' ),
+		'html_debug_comment' => khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' ),
 	);
 
-	scm_update_config( $setting );
-	scm_clear_all_cache();
+	khse_update_config( $setting );
+	khse_clear_all_cache();
 }
 
 /**
@@ -157,9 +157,9 @@ function scm_update_scm_option_html_debug_comment() {
  *
  * @return void
  */
-function scm_update_scm_option_cache_key_prefix() {
-	scm_update_runtime_config();
-	scm_clear_all_cache();
+function khse_update_khse_option_cache_key_prefix() {
+	khse_update_runtime_config();
+	khse_clear_all_cache();
 }
 
 /**
@@ -167,9 +167,9 @@ function scm_update_scm_option_cache_key_prefix() {
  *
  * @return void
  */
-function scm_update_scm_option_cache_max_entries() {
-	scm_update_runtime_config();
-	scm_enforce_cache_entry_limit();
+function khse_update_khse_option_cache_max_entries() {
+	khse_update_runtime_config();
+	khse_enforce_cache_entry_limit();
 }
 
 /**
@@ -177,10 +177,10 @@ function scm_update_scm_option_cache_max_entries() {
  *
  * @return void
  */
-function scm_update_scm_option_nginx_direct_cache_status() {
-	scm_update_runtime_config();
-	scm_clear_nginx_static_cache();
-	scm_schedule_preload_cache( true );
+function khse_update_khse_option_nginx_direct_cache_status() {
+	khse_update_runtime_config();
+	khse_clear_nginx_static_cache();
+	khse_schedule_preload_cache( true );
 }
 
 /**
@@ -188,9 +188,9 @@ function scm_update_scm_option_nginx_direct_cache_status() {
  *
  * @return void
  */
-function scm_update_scm_option_preload_cache() {
-	scm_update_runtime_config();
-	scm_schedule_preload_cache( true );
+function khse_update_khse_option_preload_cache() {
+	khse_update_runtime_config();
+	khse_schedule_preload_cache( true );
 
 	if ( function_exists( 'spawn_cron' ) ) {
 		spawn_cron();
@@ -202,9 +202,9 @@ function scm_update_scm_option_preload_cache() {
  *
  * @return void
  */
-function scm_update_scm_option_preload_homepage_links() {
-	scm_update_runtime_config();
-	scm_schedule_preload_cache( true );
+function khse_update_khse_option_preload_homepage_links() {
+	khse_update_runtime_config();
+	khse_schedule_preload_cache( true );
 }
 
 /**
@@ -212,45 +212,45 @@ function scm_update_scm_option_preload_homepage_links() {
  *
  * @return void
  */
-function scm_update_scm_option_clear_cache() {
-	$cache_type = get_option( 'scm_option_clear_cache' );
+function khse_update_khse_option_clear_cache() {
+	$cache_type = get_option( 'khse_option_clear_cache' );
 
-	update_option( 'scm_option_clear_cache', '' );
+	update_option( 'khse_option_clear_cache', '' );
 
 	if ( 'all' === $cache_type ) {
-		scm_clear_all_cache();
+		khse_clear_all_cache();
 		return;
 	}
 
-	scm_clear_cache_type( $cache_type );
+	khse_clear_cache_type( $cache_type );
 }
 
 /**
  * The update for:
- * - scm_option_exclusion_status
- * - scm_option_excluded_list
+ * - khse_option_exclusion_status
+ * - khse_option_excluded_list
  *
  * @return void
  */
-function scm_update_exclusion() {
-	$setting['exclusion'] = scm_get_runtime_exclusion_config();
+function khse_update_exclusion() {
+	$setting['exclusion'] = khse_get_runtime_exclusion_config();
 
-	scm_update_config( $setting );
+	khse_update_config( $setting );
 }
 
 /**
  * The update for:
- * - scm_option_woocommerce_status
- * - scm_option_woocommerce_post_archives
- * - scm_option_woocommerce_post_types
+ * - khse_option_woocommerce_status
+ * - khse_option_woocommerce_post_archives
+ * - khse_option_woocommerce_post_types
  *
  * @return void
  */
-function scm_update_woocommerce() {
-	$setting['woocommerce']['enable'] = 'yes' === get_option( 'scm_option_woocommerce_status', 'no' );
+function khse_update_woocommerce() {
+	$setting['woocommerce']['enable'] = 'yes' === get_option( 'khse_option_woocommerce_status', 'no' );
 
-	scm_update_config( $setting );
-	scm_clear_all_cache();
+	khse_update_config( $setting );
+	khse_clear_all_cache();
 }
 
-add_action( 'admin_init', 'scm_ensure_permalink_structure' );
+add_action( 'admin_init', 'khse_ensure_permalink_structure' );

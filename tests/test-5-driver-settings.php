@@ -2,7 +2,7 @@
 /**
  * Class DriverSettingsTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
@@ -17,8 +17,8 @@ class DriverSettingsTest extends WP_UnitTestCase {
 	 */
 	public function test_file_setting_matches_upload_dir() {
 		$this->assertSame(
-			array( 'storage' => scm_get_upload_dir() . '/file_driver' ),
-			scm_get_driver_setting( 'file' )
+			array( 'storage' => khse_get_upload_dir() . '/file_driver' ),
+			khse_get_driver_setting( 'file' )
 		);
 	}
 
@@ -34,7 +34,7 @@ class DriverSettingsTest extends WP_UnitTestCase {
 				'port'     => 6379,
 				'database' => 0,
 			),
-			scm_get_driver_setting( 'redis' )
+			khse_get_driver_setting( 'redis' )
 		);
 	}
 
@@ -49,7 +49,7 @@ class DriverSettingsTest extends WP_UnitTestCase {
 				'host' => '127.0.0.1',
 				'port' => 27017,
 			),
-			scm_get_driver_setting( 'mongo' )
+			khse_get_driver_setting( 'mongo' )
 		);
 	}
 
@@ -60,8 +60,8 @@ class DriverSettingsTest extends WP_UnitTestCase {
 	 */
 	public function test_unknown_driver_falls_back_to_file() {
 		$this->assertSame(
-			scm_get_driver_setting( 'file' ),
-			scm_get_driver_setting( 'unknown-driver' )
+			khse_get_driver_setting( 'file' ),
+			khse_get_driver_setting( 'unknown-driver' )
 		);
 	}
 
@@ -79,7 +79,7 @@ class DriverSettingsTest extends WP_UnitTestCase {
 				'pass'    => DB_PASSWORD,
 				'charset' => DB_CHARSET,
 			),
-			scm_get_driver_setting( 'mysql' )
+			khse_get_driver_setting( 'mysql' )
 		);
 	}
 
@@ -89,7 +89,7 @@ class DriverSettingsTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_driver_settings_merge_advanced_options() {
-		$resolved = scm_get_driver_settings(
+		$resolved = khse_get_driver_settings(
 			'redis',
 			array(
 				'host' => '10.0.0.5',
@@ -109,7 +109,7 @@ class DriverSettingsTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_driver_settings_preserve_connection_type() {
-		$resolved = scm_get_driver_settings( 'redis', array(), 'socket' );
+		$resolved = khse_get_driver_settings( 'redis', array(), 'socket' );
 
 		$this->assertSame( 'socket', $resolved['connection_type'] );
 	}

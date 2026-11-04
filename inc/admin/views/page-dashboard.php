@@ -1,19 +1,19 @@
 <?php
 /**
- * AMS Cache - React admin console mount.
+ * KH Speed Engine - React admin console mount.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
 ?>
 
-<div id="ams-cache-admin-root" class="ams-cache-admin-root"></div>
+<div id="khse-admin-root" class="khse-admin-root"></div>
 
 <noscript>
-	<div class="notice notice-warning"><p><?php _e( 'JavaScript is required for the interactive AMS Cache console.', 'ams-cache' ); ?></p></div>
+	<div class="notice notice-warning"><p><?php _e( 'JavaScript is required for the interactive KH Speed Engine console.', 'kh-speed-engine' ); ?></p></div>
 </noscript>

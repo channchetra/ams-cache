@@ -1,12 +1,12 @@
 <?php
 /**
- * AMS Cache helper functions — bootstrap.
+ * KH Speed Engine helper functions — bootstrap.
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
@@ -19,7 +19,7 @@ require_once __DIR__ . '/cache-nginx-config.php';
 require_once __DIR__ . '/page-optimizer.php';
 require_once __DIR__ . '/cache-preload.php';
 
-function scm_register_wordpress_hooks() {
+function khse_register_wordpress_hooks() {
 	static $registered = false;
 
 	if ( $registered || ! function_exists( 'add_filter' ) || ! function_exists( 'add_action' ) ) {
@@ -31,4 +31,4 @@ function scm_register_wordpress_hooks() {
 	$registered = true;
 }
 
-scm_register_wordpress_hooks();
+khse_register_wordpress_hooks();

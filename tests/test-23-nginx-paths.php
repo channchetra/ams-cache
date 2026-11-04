@@ -2,7 +2,7 @@
 /**
  * Class NginxPathsTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 class NginxPathsTest extends WP_UnitTestCase {
@@ -13,14 +13,14 @@ class NginxPathsTest extends WP_UnitTestCase {
 	}
 
 	public function test_absolute_dir_is_built_from_the_plugin_upload_dir() {
-		$this->assertSame( scm_get_upload_dir() . '/nginx', scm_get_nginx_static_cache_dir() );
+		$this->assertSame( khse_get_upload_dir() . '/nginx', khse_get_nginx_static_cache_dir() );
 	}
 
 	public function test_absolute_and_relative_dirs_share_the_same_suffix() {
-		$suffix = '/ams-cache/' . scm_get_blog_id() . '_' . scm_get_dir_hash() . '/nginx';
+		$suffix = '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '/nginx';
 
-		$this->assertStringEndsWith( $suffix, scm_get_nginx_static_cache_dir() );
-		$this->assertStringEndsWith( $suffix, '/' . scm_get_nginx_static_cache_relative_dir() );
+		$this->assertStringEndsWith( $suffix, khse_get_nginx_static_cache_dir() );
+		$this->assertStringEndsWith( $suffix, '/' . khse_get_nginx_static_cache_relative_dir() );
 	}
 
 	public function test_relative_dir_uses_content_url_path() {
@@ -33,16 +33,16 @@ class NginxPathsTest extends WP_UnitTestCase {
 			2
 		);
 
-		$relative = scm_get_nginx_static_cache_relative_dir();
+		$relative = khse_get_nginx_static_cache_relative_dir();
 
-		$this->assertStringStartsWith( 'custom-content/uploads/ams-cache/', $relative );
+		$this->assertStringStartsWith( 'custom-content/uploads/kh-speed-engine/', $relative );
 	}
 
 	public function test_snippet_deny_rule_uses_the_derived_parent() {
-		$parent  = dirname( '/' . scm_get_nginx_static_cache_relative_dir() );
-		$snippet = scm_get_nginx_direct_cache_snippet();
+		$parent  = dirname( '/' . khse_get_nginx_static_cache_relative_dir() );
+		$snippet = khse_get_nginx_direct_cache_snippet();
 
 		$this->assertStringContainsString( 'location ~* ' . $parent . '/', $snippet );
-		$this->assertStringNotContainsString( 'location ~* /wp-content/uploads/ams-cache/[^/]+/', $snippet );
+		$this->assertStringNotContainsString( 'location ~* /wp-content/uploads/kh-speed-engine/[^/]+/', $snippet );
 	}
 }

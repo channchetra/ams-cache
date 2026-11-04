@@ -1,12 +1,12 @@
 <?php
 /**
- * AMS Cache — cache-purger.php
+ * KH Speed Engine — cache-purger.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
@@ -20,14 +20,14 @@ if ( ! defined( 'SCM_INC' ) ) {
  *
  * @return int
  */
-function scm_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $driver = null ) {
-	$dir = scm_get_stats_dir( $type );
+function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $driver = null ) {
+	$dir = khse_get_stats_dir( $type );
 
 	if ( ! is_dir( $dir ) ) {
 		return 0;
 	}
 
-	$target_uri = scm_normalize_cache_uri( $uri );
+	$target_uri = khse_normalize_cache_uri( $uri );
 	$removed    = 0;
 
 	foreach ( new DirectoryIterator( $dir ) as $file ) {
@@ -41,9 +41,9 @@ function scm_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $dr
 			continue;
 		}
 
-		$stats = scm_read_stats_file( $file->getPathname() );
+		$stats = khse_read_stats_file( $file->getPathname() );
 
-		if ( empty( $stats['uri'] ) || scm_normalize_cache_uri( $stats['uri'] ) !== $target_uri ) {
+		if ( empty( $stats['uri'] ) || khse_normalize_cache_uri( $stats['uri'] ) !== $target_uri ) {
 			continue;
 		}
 
@@ -65,8 +65,8 @@ function scm_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $dr
  *
  * @return int
  */
-function scm_delete_cache_stats_by_key( $key ) {
-	$stats_root = scm_get_upload_dir() . '/stats';
+function khse_delete_cache_stats_by_key( $key ) {
+	$stats_root = khse_get_upload_dir() . '/stats';
 
 	if ( empty( $key ) || ! is_dir( $stats_root ) ) {
 		return 0;
@@ -95,10 +95,10 @@ function scm_delete_cache_stats_by_key( $key ) {
  *
  * @return array
  */
-function scm_purge_cache_uri( $uri, $driver = null ) {
-	$uri = scm_normalize_cache_uri( $uri );
+function khse_purge_cache_uri( $uri, $driver = null ) {
+	$uri = khse_normalize_cache_uri( $uri );
 
-	if ( ! scm_is_cacheable_document_path( $uri ) ) {
+	if ( ! khse_is_cacheable_document_path( $uri ) ) {
 		return array(
 			'key'     => '',
 			'uri'     => $uri,
@@ -107,14 +107,14 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 	}
 
 	if ( null === $driver ) {
-		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
 	}
 
 	if ( is_wp_error( $driver ) ) {
 		$driver = null;
 	}
 
-	$key     = scm_get_cache_key( $uri );
+	$key     = khse_get_cache_key( $uri );
 	$removed = 0;
 
 	if ( $driver ) {
@@ -122,10 +122,10 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 		$removed++;
 	}
 
-	$removed += scm_delete_cache_stats_by_key( $key );
+	$removed += khse_delete_cache_stats_by_key( $key );
 
 	// Remove stale entries written under an older cache key prefix too.
-	$stats_root = scm_get_upload_dir() . '/stats';
+	$stats_root = khse_get_upload_dir() . '/stats';
 
 	if ( is_dir( $stats_root ) ) {
 		foreach ( new DirectoryIterator( $stats_root ) as $type_dir ) {
@@ -133,11 +133,11 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 				continue;
 			}
 
-			$removed += scm_delete_duplicate_stats_for_uri( $type_dir->getFilename(), $uri, $key, $driver );
+			$removed += khse_delete_duplicate_stats_for_uri( $type_dir->getFilename(), $uri, $key, $driver );
 		}
 	}
 
-	if ( scm_delete_nginx_static_cache( $uri ) ) {
+	if ( khse_delete_nginx_static_cache( $uri ) ) {
 		$removed++;
 	}
 
@@ -156,7 +156,7 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
  *
  * @return array|false Purge result, or false when the URL is invalid.
  */
-function scm_purge_permalink( $url, $driver = null ) {
+function khse_purge_permalink( $url, $driver = null ) {
 	if ( false === $url || null === $url || '' === trim( (string) $url ) ) {
 		return false;
 	}
@@ -167,5 +167,5 @@ function scm_purge_permalink( $url, $driver = null ) {
 		return false;
 	}
 
-	return scm_purge_cache_uri( $path, $driver );
+	return khse_purge_cache_uri( $path, $driver );
 }

@@ -2,7 +2,7 @@
 /**
  * Class PageOptimizationReportTest
  *
- * @package Cache_Master
+ * @package KHSE_Cache
  */
 
 /**
@@ -16,8 +16,8 @@ class PageOptimizationReportTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_report_has_all_features_in_order() {
-		$settings = scm_get_default_page_optimization_settings();
-		$report   = scm_build_page_optimization_report(
+		$settings = khse_get_default_page_optimization_settings();
+		$report   = khse_build_page_optimization_report(
 			'<html><body><p>before</p></body></html>',
 			'<html><body><p>after</p></body></html>',
 			$settings
@@ -49,10 +49,10 @@ class PageOptimizationReportTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_disabled_metric_feature_reports_disabled() {
-		$settings                = scm_get_default_page_optimization_settings();
+		$settings                = khse_get_default_page_optimization_settings();
 		$settings['minify_html'] = 'no';
 
-		$report = scm_build_page_optimization_report( 'a', 'b', $settings );
+		$report = khse_build_page_optimization_report( 'a', 'b', $settings );
 
 		$this->assertSame( 'disabled', $report['features']['minify_html']['status'] );
 		$this->assertSame( 'Disabled.', $report['features']['minify_html']['detail'] );

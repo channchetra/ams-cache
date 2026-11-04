@@ -1,12 +1,12 @@
 <?php
 /**
- * AMS Cache — cache-driver.php
+ * KH Speed Engine — cache-driver.php
  *
- * @package   AMS Cache
+ * @package   KH Speed Engine
  * @license   GPLv3 (or later)
  */
 
-if ( ! defined( 'SCM_INC' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
@@ -17,8 +17,8 @@ if ( ! defined( 'SCM_INC' ) ) {
  *
  * @return int
  */
-function scm_get_cache_max_entries() {
-	$limit = (int) get_option( 'scm_option_cache_max_entries', 0 );
+function khse_get_cache_max_entries() {
+	$limit = (int) get_option( 'khse_option_cache_max_entries', 0 );
 
 	return max( 0, $limit );
 }
@@ -33,14 +33,14 @@ function scm_get_cache_max_entries() {
  *
  * @return int Removed entry count.
  */
-function scm_enforce_cache_entry_limit( $driver = null ) {
-	$limit = scm_get_cache_max_entries();
+function khse_enforce_cache_entry_limit( $driver = null ) {
+	$limit = khse_get_cache_max_entries();
 
 	if ( $limit <= 0 ) {
 		return 0;
 	}
 
-	$stats_root = scm_get_upload_dir() . '/stats';
+	$stats_root = khse_get_upload_dir() . '/stats';
 
 	if ( ! is_dir( $stats_root ) ) {
 		return 0;
@@ -60,7 +60,7 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
 			continue;
 		}
 
-		$stats = scm_read_stats_file( $file->getPathname() );
+		$stats = khse_read_stats_file( $file->getPathname() );
 
 		$entries[] = array(
 			'key'  => $key,
@@ -82,7 +82,7 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
 	);
 
 	if ( null === $driver ) {
-		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
 	}
 
 	if ( is_wp_error( $driver ) ) {
@@ -98,7 +98,7 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
 		}
 
 		if ( ! empty( $entries[ $i ]['uri'] ) ) {
-			scm_delete_nginx_static_cache( $entries[ $i ]['uri'] );
+			khse_delete_nginx_static_cache( $entries[ $i ]['uri'] );
 		}
 
 		if ( file_exists( $entries[ $i ]['path'] ) ) {
@@ -108,7 +108,7 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
 		$removed++;
 	}
 
-	update_option( 'scm_last_cache_prune_count', $removed );
+	update_option( 'khse_last_cache_prune_count', $removed );
 
 	return $removed;
 }
@@ -120,21 +120,21 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
  *
  * @return array
  */
-function scm_get_driver_advanced_settings( $type ) {
+function khse_get_driver_advanced_settings( $type ) {
 	if ( 'file' === $type ) {
-		return (array) get_option( 'scm_option_advanced_driver_file', array() );
+		return (array) get_option( 'khse_option_advanced_driver_file', array() );
 	}
 
 	if ( 'memcache' === $type || 'memcached' === $type ) {
-		return (array) get_option( 'scm_option_advanced_driver_memcached', array() );
+		return (array) get_option( 'khse_option_advanced_driver_memcached', array() );
 	}
 
 	if ( 'redis' === $type ) {
-		return (array) get_option( 'scm_option_advanced_driver_redis', array() );
+		return (array) get_option( 'khse_option_advanced_driver_redis', array() );
 	}
 
 	if ( 'mongo' === $type ) {
-		return (array) get_option( 'scm_option_advanced_driver_mongodb', array() );
+		return (array) get_option( 'khse_option_advanced_driver_mongodb', array() );
 	}
 
 	return array();
@@ -147,17 +147,17 @@ function scm_get_driver_advanced_settings( $type ) {
  *
  * @return string
  */
-function scm_get_driver_connection_type( $type ) {
+function khse_get_driver_connection_type( $type ) {
 	if ( 'memcache' === $type || 'memcached' === $type ) {
-		return get_option( 'scm_option_advanced_driver_memcached_connection_type', 'tcp' );
+		return get_option( 'khse_option_advanced_driver_memcached_connection_type', 'tcp' );
 	}
 
 	if ( 'redis' === $type ) {
-		return get_option( 'scm_option_advanced_driver_redis_connection_type', 'tcp' );
+		return get_option( 'khse_option_advanced_driver_redis_connection_type', 'tcp' );
 	}
 
 	if ( 'mongo' === $type ) {
-		return get_option( 'scm_option_advanced_driver_mongodb_connection_type', 'tcp' );
+		return get_option( 'khse_option_advanced_driver_mongodb_connection_type', 'tcp' );
 	}
 
 	return 'tcp';
@@ -171,7 +171,7 @@ function scm_get_driver_connection_type( $type ) {
  *
  * @return array
  */
-function scm_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
+function khse_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
 	foreach ( $setting as $k => $v ) {
 		if ( is_string( $v ) ) {
 			$v = trim( $v );
@@ -217,7 +217,7 @@ function scm_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
  *
  * @return array
  */
-function scm_get_driver_setting( $type ) {
+function khse_get_driver_setting( $type ) {
 	switch ( $type ) {
 		case 'mysql':
 			return array(
@@ -230,7 +230,7 @@ function scm_get_driver_setting( $type ) {
 
 		case 'sqlite':
 			return array(
-				'storage' => scm_get_upload_dir() . '/sqlite_driver',
+				'storage' => khse_get_upload_dir() . '/sqlite_driver',
 			);
 
 		case 'redis':
@@ -261,7 +261,7 @@ function scm_get_driver_setting( $type ) {
 		case 'file':
 		default:
 			return array(
-				'storage' => scm_get_upload_dir() . '/file_driver',
+				'storage' => khse_get_upload_dir() . '/file_driver',
 			);
 	}
 }
@@ -275,19 +275,19 @@ function scm_get_driver_setting( $type ) {
  *
  * @return array
  */
-function scm_get_driver_settings( $type, $advanced_settings = null, $connection_type = null ) {
-	$setting = scm_get_driver_setting( $type );
+function khse_get_driver_settings( $type, $advanced_settings = null, $connection_type = null ) {
+	$setting = khse_get_driver_setting( $type );
 
 	if ( null === $advanced_settings ) {
-		$advanced_settings = scm_get_driver_advanced_settings( $type );
+		$advanced_settings = khse_get_driver_advanced_settings( $type );
 	}
 
 	if ( null === $connection_type ) {
-		$connection_type = scm_get_driver_connection_type( $type );
+		$connection_type = khse_get_driver_connection_type( $type );
 	}
 
 	if ( ! empty( $advanced_settings ) ) {
-		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $connection_type ) );
+		$setting = array_merge( $setting, khse_normalize_driver_settings( $advanced_settings, $connection_type ) );
 	}
 
 	return array(
@@ -303,7 +303,7 @@ function scm_get_driver_settings( $type, $advanced_settings = null, $connection_
  *
  * @return \Shieldon\SimpleCache\Cache|\WP_Error
  */
-function scm_driver_factory( $type ) {
+function khse_driver_factory( $type ) {
 
 	$known_types = array( 'mysql', 'sqlite', 'redis', 'mongo', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'file' );
 
@@ -311,7 +311,7 @@ function scm_driver_factory( $type ) {
 		$type = 'file';
 	}
 
-	$resolved = scm_get_driver_settings( $type );
+	$resolved = khse_get_driver_settings( $type );
 	$setting  = $resolved['setting'];
 
 	try {
@@ -327,21 +327,21 @@ function scm_driver_factory( $type ) {
 			try {
 				$driver = new \Shieldon\SimpleCache\Cache( $type, $setting );
 			} catch ( \Throwable $exception ) {
-				return new \WP_Error( 'scm_driver_unavailable', $exception->getMessage() );
+				return new \WP_Error( 'khse_driver_unavailable', $exception->getMessage() );
 			}
 		} else {
 
-			error_log( sprintf( '[AMS Cache] Driver %s is not supported, fallback to use File driver.', $type ) );
+			error_log( sprintf( '[KH Speed Engine] Driver %s is not supported, fallback to use File driver.', $type ) );
 
 			try {
 				$driver = new \Shieldon\SimpleCache\Cache(
 					'file',
 					array(
-						'storage' => scm_get_upload_dir() . '/file_driver',
+						'storage' => khse_get_upload_dir() . '/file_driver',
 					)
 				);
 			} catch ( \Throwable $exception ) {
-				return new \WP_Error( 'scm_driver_unavailable', $exception->getMessage() );
+				return new \WP_Error( 'khse_driver_unavailable', $exception->getMessage() );
 			}
 		}
 	}
