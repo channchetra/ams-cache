@@ -244,7 +244,6 @@ is_excluded() {
         'DESIGN.md'
         'skills-lock.json'
         'vite.config.js'
-        'economy.ams.com.kh-20260521T162807.json'
     )
 
     local name

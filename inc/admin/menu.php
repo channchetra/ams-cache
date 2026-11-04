@@ -329,6 +329,7 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 				'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),
 				'view'    => khse_get_admin_console_view(),
 				'status'  => khse_dashboard_get_status_data(),
+				'version' => KHSE_PLUGIN_VERSION,
 				'user'    => array(
 					'name'   => wp_get_current_user()->display_name,
 					'role'   => ! empty( wp_get_current_user()->roles ) ? translate_user_role( ucfirst( wp_get_current_user()->roles[0] ) ) : __( 'Administrator', 'kh-speed-engine' ),

@@ -38,6 +38,7 @@ import {
 
 const boot = window.khseDashboard || {};
 const i18n = boot.i18n || {};
+const VERSION = boot.version || '4.0.0';
 
 const NAV = [
 	{key: 'overview', label: 'Overview', icon: Gauge, group: 'Home'},
@@ -976,7 +977,7 @@ function AboutPage({data}) {
 		<div className="khse-about-page">
 			<section className="khse-about-hero">
 				<div>
-					<Pill tone="info">KH Speed Engine 3.1.5</Pill>
+					<Pill tone="info">KH Speed Engine {VERSION}</Pill>
 					<h2>Performance console for real WordPress pages.</h2>
 					<p>KH Speed Engine combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
 					<p className="khse-muted">KHSE Technical Team Â· Simple Cache Core</p>
@@ -990,7 +991,7 @@ function AboutPage({data}) {
 					<div className="khse-progress"><span style={{width: '58%'}} /></div>
 				</div>
 			</section>
-			<Panel title="Welcome to KH Speed Engine 3.1.5" className="khse-full-width">
+			<Panel title={`Welcome to KH Speed Engine ${VERSION}`} className="khse-full-width">
 				<p className="khse-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
 			<div className="khse-about-feature-grid grid w-full grid-cols-1 gap-4 xl:grid-cols-2">

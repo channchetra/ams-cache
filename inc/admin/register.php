@@ -70,6 +70,7 @@ function khse_maybe_migrate_legacy_brand() {
 		khse_clear_all_cache();
 	}
 
+	update_option( 'khse_version', KHSE_PLUGIN_VERSION );
 	update_option( 'khse_brand_migrated', 1 );
 
 	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {

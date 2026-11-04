@@ -3,7 +3,7 @@
  * Plugin Name: KH Speed Engine
  * Plugin URI:  https://khspeed.com/
  * Description: A WordPress cache plugin.
- * Version:     3.1.5
+ * Version:     4.0.0
  * Requires at least: 5.8
  * Requires PHP: 7.1
  * Author:      Chetra Chann
@@ -50,7 +50,7 @@ define( 'KHSE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KHSE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'KHSE_PLUGIN_PATH', __FILE__ );
 define( 'KHSE_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-define( 'KHSE_PLUGIN_VERSION', '3.1.5' );
+define( 'KHSE_PLUGIN_VERSION', '4.0.0' );
 define( 'KHSE_CORE_VERSION', '1.3.4' );
 define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
 

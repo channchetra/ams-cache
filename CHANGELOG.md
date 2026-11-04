@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.0] - 2026-11-04
+
+### Changed
+- Rebranded the plugin as KH Speed Engine (KHSE), with the admin menu label "KH Speed". Renamed the plugin folder, main file, text domain, functions, constants, classes, options, AJAX actions, nonces, CSS classes, asset handles, and language files.
+- Added a one-time migration for legacy `scm_*` options, cache/uploads, and the Expert Mode runtime directory.
+- Redesigned the dashboard with a full-width Modernize-style shell, grouped navigation, KPI cards, CSS charts, and responsive settings views.
+
 ## [3.1.5] - 2026-11-04
 
 ### Changed

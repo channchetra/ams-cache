@@ -254,7 +254,6 @@ function Test-ReleaseExclude {
         'DESIGN.md',
         'skills-lock.json',
         'vite.config.js',
-        'economy.ams.com.kh-20260521T162807.json'
     )
 
     if ($excludedNames -contains $path) {
