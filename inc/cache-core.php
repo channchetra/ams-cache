@@ -101,6 +101,149 @@ function scm_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
 }
 
 /**
+ * Return the canonical settings schema.
+ *
+ * Each field maps a dashboard payload key to its option, default, sanitizer,
+ * read shape, and optional Expert Mode config mapping.
+ *
+ * @return array
+ */
+function scm_get_settings_schema() {
+	return array(
+		'cache'       => array(
+			'cachingStatus'       => array( 'option' => 'scm_option_caching_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled', 'config' => 'cache_enabled', 'config_type' => 'enabled' ),
+			'driver'              => array( 'option' => 'scm_option_driver', 'default' => 'file', 'sanitize' => 'enum', 'values' => array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' ), 'fallback' => 'file', 'read' => 'raw', 'config' => 'cache_driver', 'config_type' => 'raw' ),
+			'ttlMechanism'        => array( 'option' => 'scm_option_ttl_mechanism', 'default' => 'enable', 'sanitize' => 'enable_disable', 'fallback' => 'enable', 'read' => 'enabled' ),
+			'ttl'                 => array( 'option' => 'scm_option_ttl', 'default' => 86400, 'sanitize' => 'absint', 'min' => 300, 'max' => 2592000, 'read' => 'int' ),
+			'cacheKeyPrefix'      => array( 'option' => 'scm_option_cache_key_prefix', 'default' => '', 'sanitize' => 'key', 'read' => 'cache_prefix', 'dynamic_default' => true, 'config' => 'cache_key_prefix', 'config_type' => 'raw' ),
+			'maxEntries'          => array( 'option' => 'scm_option_cache_max_entries', 'default' => 0, 'sanitize' => 'absint', 'min' => 0, 'read' => 'cache_max_entries', 'dynamic_default' => true, 'config' => 'cache_max_entries', 'config_type' => 'int' ),
+			'expertModeStatus'    => array( 'option' => 'scm_option_expert_mode_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
+			'nginxDirect'         => array( 'option' => 'scm_option_nginx_direct_cache_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'nginx_direct_cache', 'config_type' => 'enabled' ),
+			'debugComment'        => array( 'option' => 'scm_option_html_debug_comment', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'html_debug_comment', 'config_type' => 'enabled' ),
+			'visibilityLoginUser' => array( 'option' => 'scm_option_visibility_login_user', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'visibilityGuest'     => array( 'option' => 'scm_option_visibility_guest', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
+		),
+		'preload'     => array(
+			'enabled'       => array( 'option' => 'scm_option_preload_cache', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'preload.enable', 'config_type' => 'enabled' ),
+			'limit'         => array( 'option' => 'scm_option_preload_limit', 'default' => 50, 'sanitize' => 'absint', 'min' => 1, 'max' => 1000, 'read' => 'int', 'config' => 'preload.limit', 'config_type' => 'int' ),
+			'crawlHomepage' => array( 'option' => 'scm_option_preload_homepage_links', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled', 'config' => 'preload.crawl_homepage_links', 'config_type' => 'enabled' ),
+			'homepage'      => array( 'option' => 'scm_option_post_homepage', 'default' => 'yes', 'sanitize' => 'yes_no', 'fallback' => 'yes', 'read' => 'enabled' ),
+		),
+		'rules'       => array(
+			'enabled'      => array( 'option' => 'scm_option_exclusion_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'excludedList' => array( 'option' => 'scm_option_excluded_list', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'getVars'      => array( 'option' => 'scm_option_excluded_get_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'postVars'     => array( 'option' => 'scm_option_excluded_post_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+			'cookieVars'   => array( 'option' => 'scm_option_excluded_cookie_vars', 'default' => '', 'sanitize' => 'textarea', 'read' => 'raw' ),
+		),
+		'statistics'  => array(
+			'enabled' => array( 'option' => 'scm_option_statistics_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled' ),
+		),
+		'benchmark'   => array(
+			'widget'        => array( 'option' => 'scm_option_benchmark_widget', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'footer'        => array( 'option' => 'scm_option_benchmark_footer_text', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+			'widgetDisplay' => array( 'option' => 'scm_option_benchmark_widget_display', 'default' => 'both', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'both', 'read' => 'raw' ),
+			'footerDisplay' => array( 'option' => 'scm_option_benchmark_footer_text_display', 'default' => 'text', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'text', 'read' => 'raw' ),
+		),
+		'woocommerce' => array(
+			'enabled'         => array( 'option' => 'scm_option_woocommerce_status', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled', 'config' => 'woocommerce.enable', 'config_type' => 'enabled' ),
+			'paymentComplete' => array( 'option' => 'scm_option_woocommerce_event_payment_complete', 'default' => 'no', 'sanitize' => 'yes_no', 'fallback' => 'no', 'read' => 'enabled' ),
+		),
+	);
+}
+
+/**
+ * Return one settings schema section.
+ *
+ * @param string $section Section name.
+ *
+ * @return array
+ */
+function scm_get_settings_section_schema( $section ) {
+	$schema = scm_get_settings_schema();
+
+	return isset( $schema[ $section ] ) && is_array( $schema[ $section ] ) ? $schema[ $section ] : array();
+}
+
+/**
+ * Read one setting using the canonical schema.
+ *
+ * @param string $section Section name.
+ * @param string $field   Field name.
+ *
+ * @return mixed
+ */
+function scm_get_setting( $section, $field ) {
+	$schema = scm_get_settings_section_schema( $section );
+
+	if ( ! isset( $schema[ $field ] ) ) {
+		return null;
+	}
+
+	$rule  = $schema[ $field ];
+	$value = get_option( $rule['option'], isset( $rule['default'] ) ? $rule['default'] : '' );
+	$read  = isset( $rule['read'] ) ? $rule['read'] : 'raw';
+
+	switch ( $read ) {
+		case 'enabled':
+			return scm_option_is_enabled( $rule['option'], isset( $rule['default'] ) ? $rule['default'] : 'no' );
+
+		case 'int':
+			return (int) $value;
+
+		case 'cache_prefix':
+			return scm_get_cache_key_prefix();
+
+		case 'cache_max_entries':
+			return scm_get_cache_max_entries();
+
+		default:
+			return $value;
+	}
+}
+
+/**
+ * Build the runtime config from the canonical settings schema.
+ *
+ * @return array
+ */
+function scm_get_config_from_schema() {
+	$config = array();
+
+	foreach ( scm_get_settings_schema() as $section => $fields ) {
+		foreach ( $fields as $field => $rule ) {
+			if ( empty( $rule['config'] ) ) {
+				continue;
+			}
+
+			$value = scm_get_setting( $section, $field );
+
+			if ( isset( $rule['config_type'] ) && 'enabled' === $rule['config_type'] ) {
+				$value = (bool) $value;
+			} elseif ( isset( $rule['config_type'] ) && 'int' === $rule['config_type'] ) {
+				$value = (int) $value;
+			}
+
+			$path = explode( '.', $rule['config'] );
+			$ref  = &$config;
+
+			foreach ( $path as $key ) {
+				if ( ! isset( $ref[ $key ] ) || ! is_array( $ref[ $key ] ) ) {
+					$ref[ $key ] = array();
+				}
+
+				$ref = &$ref[ $key ];
+			}
+
+			$ref = $value;
+			unset( $ref );
+		}
+	}
+
+	return $config;
+}
+
+/**
  * Ensure caching is disabled when permalinks are plain.
  *
  * @return void
@@ -547,31 +690,19 @@ function scm_update_config( $setting ) {
  * @return void
  */
 function scm_sync_expert_mode_runtime() {
-	$driver_type      = get_option( 'scm_option_driver', 'file' );
+	$driver_type      = scm_get_setting( 'cache', 'driver' );
 	$connection_type  = scm_get_driver_connection_type( $driver_type );
 	$advanced_setting = scm_normalize_driver_settings(
 		scm_get_driver_advanced_settings( $driver_type ),
 		$connection_type
 	);
 
-	$setting['cache_driver']             = $driver_type;
-	$setting['cache_key_prefix']         = scm_get_cache_key_prefix();
-	$setting['site_url']      = rtrim( get_site_url(), '/' );
-	$setting['cache_enabled'] = 'enable' === get_option( 'scm_option_caching_status', 'disable' );
+	$setting = scm_get_config_from_schema();
+
+	$setting['site_url']                 = rtrim( get_site_url(), '/' );
 	$setting['driver_advanced_settings'] = $advanced_setting;
 	$setting['driver_connection_type']   = $connection_type;
-	$setting['nginx_direct_cache']       = scm_is_nginx_direct_cache_enabled();
-	$setting['html_debug_comment']       = 'yes' === get_option( 'scm_option_html_debug_comment', 'yes' );
-	$setting['woocommerce']              = array(
-		'enable' => 'yes' === get_option( 'scm_option_woocommerce_status', 'no' ),
-	);
 	$setting['exclusion']                = scm_get_runtime_exclusion_config();
-	$setting['preload']                  = array(
-		'enable'               => scm_is_preload_enabled(),
-		'limit'                => (int) get_option( 'scm_option_preload_limit', 50 ),
-		'crawl_homepage_links' => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
-	);
-	$setting['cache_max_entries']        = scm_get_cache_max_entries();
 
 	scm_update_config( $setting );
 
