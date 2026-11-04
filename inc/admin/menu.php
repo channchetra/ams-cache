@@ -367,7 +367,7 @@ function scm_show_settings_header() {
 	echo '<div class="wrap scm-wrap">';
 
 	if ( '' === get_option( 'permalink_structure' ) ) {
-		$url_html = '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/options-permalink.php">' . __( 'Permalink Setting', 'seo-search-permalink' ) . '</a>';
+		$url_html = '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/options-permalink.php">' . __( 'Permalink Setting', 'ams-cache' ) . '</a>';
 		echo '<div class="notice notice-error is-dismissible"><p>';
 		echo __( 'AMS Cache supports only static URL structure.', 'ams-cache' ) . ' ';
 		// translators: %s: permalink setting url.

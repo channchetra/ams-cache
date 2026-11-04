@@ -146,15 +146,9 @@ function scm_update_scm_option_expert_mode_status() {
  * @return void
  */
 function scm_update_scm_option_html_debug_comment() {
-	$status = get_option( 'scm_option_html_debug_comment', true );
-
-	if ( 'no' === $status ) {
-		$setting['html_debug_comment'] = false;
-	}
-
-	if ( 'yes' === $status ) {
-		$setting['html_debug_comment'] = true;
-	}
+	$setting = array(
+		'html_debug_comment' => scm_option_is_enabled( 'scm_option_html_debug_comment', 'yes' ),
+	);
 
 	scm_update_config( $setting );
 	scm_clear_all_cache();

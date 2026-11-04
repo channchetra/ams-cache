@@ -46,6 +46,17 @@ class ConfigContractTest extends WP_UnitTestCase {
 		$this->assertSame( 'socket', $config['driver_connection_type'] );
 	}
 
+	public function test_html_debug_comment_defaults_to_enabled() {
+		delete_option( 'scm_option_html_debug_comment' );
+		@unlink( scm_get_config_path() );
+
+		scm_update_scm_option_html_debug_comment();
+
+		$config = scm_get_config_data();
+
+		$this->assertTrue( $config['html_debug_comment'] );
+	}
+
 	public function test_cache_master_reads_partial_config() {
 		@unlink( scm_get_config_path() );
 		update_option( 'scm_config', array( 'cache_driver' => 'file' ) );

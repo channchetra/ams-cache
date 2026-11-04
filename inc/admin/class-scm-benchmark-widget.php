@@ -48,7 +48,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					<div class="scm-tr">
 						<div class="scm-td">
 							<span class="scm-img scm-img-1" title="<?php echo esc_attr__( 'Cache status powered by AMS Cache plugin', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'status' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'ស្ថានភាពឃ្លាំង', 'ams-cache' ); ?></span>
+							<span class="scm-text"><?php echo esc_html__( 'Cache status', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-cache-status">-</span>
@@ -57,7 +57,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					<div class="scm-tr">
 						<div class="scm-td">
 							<span class="scm-img scm-img-2" title="<?php echo esc_attr__( 'Memory usage', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'memory' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'អង្គចងចាំ', 'ams-cache' ); ?></span>
+							<span class="scm-text"><?php echo esc_html__( 'Memory usage', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-memory-usage">-</span> MB
@@ -66,7 +66,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					<div class="scm-tr">
 						<div class="scm-td">
 							<span class="scm-img scm-img-3" title="<?php echo esc_attr__( 'SQL queries', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'database' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'សំណួរ SQL', 'ams-cache' ); ?></span>
+							<span class="scm-text"><?php echo esc_html__( 'SQL queries', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
 							<span class="scm-field-sql-queries">-</span>
@@ -75,10 +75,10 @@ class SCM_Benchmark_Widget extends WP_Widget {
 					<div class="scm-tr">
 						<div class="scm-td">
 							<span class="scm-img scm-img-4" title="<?php echo esc_attr__( 'Page generation time', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'speed' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'ពេលបង្កើតទំព័រ', 'ams-cache' ); ?></span>
+							<span class="scm-text"><?php echo esc_html__( 'Page generation time', 'ams-cache' ); ?></span>
 						</div>
 						<div class="scm-td">
-							<span class="scm-field-page-generation-time">-</span> (<?php echo esc_html__( 'វិនាទី', 'ams-cache' ); ?>)
+							<span class="scm-field-page-generation-time">-</span> (<?php echo esc_html__( 'seconds', 'ams-cache' ); ?>)
 						</div>
 					</div>
 				</div>
@@ -98,7 +98,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 	 * @param array $instance Previously saved values from database.
 	 */
 	public function form( $instance ) {
-		$title = __( 'របាយការណ៍ AMS Cache', 'ams-cache' );
+		$title = __( 'AMS Cache Report', 'ams-cache' );
 
 		if ( isset( $instance['title'] ) ) {
 			$title = $instance['title'];
