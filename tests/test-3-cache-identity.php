@@ -238,8 +238,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 			'plugins_loaded/ob_start must not be registered for /?p=123.'
 		);
 		$this->assertFalse(
-			has_action( 'wp', array( $cm, 'get_post_data' ) ),
-			'wp/get_post_data must not be registered for /?p=123.'
+			has_action( 'wp', array( $cm, 'resolve_post_cache_state' ) ),
+			'wp/resolve_post_cache_state must not be registered for /?p=123.'
 		);
 		$this->assertFalse(
 			has_action( 'shutdown', array( $cm, 'ob_stop' ) ),
@@ -306,8 +306,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 			'plugins_loaded/ob_start must be registered for /?utm_source=newsletter.'
 		);
 		$this->assertNotFalse(
-			has_action( 'wp', array( $cm, 'get_post_data' ) ),
-			'wp/get_post_data must be registered for /?utm_source=newsletter.'
+			has_action( 'wp', array( $cm, 'resolve_post_cache_state' ) ),
+			'wp/resolve_post_cache_state must be registered for /?utm_source=newsletter.'
 		);
 		$this->assertNotFalse(
 			has_action( 'shutdown', array( $cm, 'ob_stop' ) ),

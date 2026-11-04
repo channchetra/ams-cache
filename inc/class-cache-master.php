@@ -101,7 +101,7 @@ class Cache_Master {
 
 		add_action( 'plugins_loaded', array( $this, 'ob_start' ), 5 );
 		add_action( 'shutdown', array( $this, 'ob_stop' ), 0 );
-		add_action( 'wp', array( $this, 'get_post_data' ), 0 );
+		add_action( 'wp', array( $this, 'resolve_post_cache_state' ), 0 );
 	}
 
 	/**
@@ -116,11 +116,11 @@ class Cache_Master {
 	}
 
 	/**
-	 * Get posts' information.
+	 * Resolve whether the current request is cacheable and which cache bucket it belongs to.
 	 *
 	 * @return void
 	 */
-	public function get_post_data() {
+	public function resolve_post_cache_state() {
 
 		// Logged-in users will not trigger the cache.
 		if ( is_user_logged_in() ) {
