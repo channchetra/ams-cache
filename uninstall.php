@@ -15,6 +15,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	die;
 }
 
+require_once __DIR__ . '/inc/admin/option-schema.php';
+
 $option_uninstall = get_option( 'scm_option_uninstall' );
 $runtime_root     = '';
 $runtime_candidates = array();
@@ -43,55 +45,17 @@ $runtime_blog     = get_option( 'scm_blog_id', 1 );
 
 if ( 'yes' === $option_uninstall ) {
 
-	$options = array(
-		'driver',
-		'ttl',
-		'uninstall',
-		'caching_status',
-		'expert_mode_status',
-		'post_homepage',
-		'visibility_login_user',
-		'visibility_guest',
-		'statistics_status',
-		'clear_cache',
-		'benchmark_widget',
-		'benchmark_footer_text',
-		'benchmark_widget_display',
-		'benchmark_footer_text_display',
-		'exclusion_status',
-		'excluded_list',
-		'excluded_list_filtered',
-		'excluded_get_vars',
-		'excluded_post_vars',
-		'excluded_cookie_vars',
-		'advanced_driver_file',
-		'advanced_driver_memcached',
-		'advanced_driver_redis',
-		'advanced_driver_mongodb',
-		'advanced_driver_mongodb_connection_type',
-		'advanced_driver_redis_connection_type',
-		'advanced_driver_memcached_connection_type',
-		'cache_key_prefix',
-		'cache_max_entries',
-		'ttl_mechanism',
-		'config',
-		'nginx_direct_cache_status',
-		'page_optimization',
-		'preload_cache',
-		'preload_limit',
-		'preload_homepage_links',
-		'html_debug_comment',
-		'post_types',
-		'post_archives',
-		'woocommerce_status',
-		'woocommerce_post_types',
-		'woocommerce_taxonomies',
-		'woocommerce_event_payment_complete',
-	);
+	$options = scm_get_option_keys();
 
 	foreach ( $options as $option ) {
 		delete_option( 'scm_option_' . $option );
 	}
+
+	// Legacy keys removed by the unified schema.
+	delete_option( 'scm_option_excluded_get_variables' );
+	delete_option( 'scm_option_excluded_post_variables' );
+	delete_option( 'scm_option_excluded_cookie_variables' );
+	delete_option( 'scm_option_woocommerce_taxonomies' );
 
 	delete_option( 'scm_last_reset_time' );
 	delete_option( 'scm_version' );
