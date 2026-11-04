@@ -106,7 +106,7 @@ export function Field({label, description, htmlFor, hint, children}) {
 	);
 }
 
-export function Switch({checked, onChange, label, description, disabled = false}) {
+export function Switch({checked, onChange, label, description, disabled = false, ariaLabel}) {
 	const labelId = useId();
 
 	return (
@@ -116,6 +116,7 @@ export function Switch({checked, onChange, label, description, disabled = false}
 			role="switch"
 			aria-checked={Boolean(checked)}
 			aria-labelledby={label ? labelId : undefined}
+			aria-label={!label ? ariaLabel : undefined}
 			disabled={disabled}
 			onClick={() => onChange(!checked)}
 		>

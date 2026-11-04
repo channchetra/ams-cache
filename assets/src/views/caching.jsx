@@ -481,6 +481,18 @@ function NginxSnippet({snippet}) {
 	);
 }
 
+function AdvancedRow({title, description, htmlFor, wide = false, children}) {
+	return (
+		<div className={`khse-adv-row${wide ? ' khse-adv-row--wide' : ''}`}>
+			<div className="khse-adv-row__text">
+				{htmlFor ? <label className="khse-adv-row__title" htmlFor={htmlFor}>{title}</label> : <strong className="khse-adv-row__title">{title}</strong>}
+				<span>{description}</span>
+			</div>
+			<div className="khse-adv-row__control">{children}</div>
+		</div>
+	);
+}
+
 function AdvancedCard({cache, update, actions}) {
 	const [snippet, setSnippet] = useState(null);
 	const [loading, setLoading] = useState(false);
@@ -498,37 +510,46 @@ function AdvancedCard({cache, update, actions}) {
 
 	return (
 		<Disclosure title="Advanced" description="Cache key prefix, Expert mode, and Nginx direct cache.">
-			<Field label="Cache key prefix" description="Isolate sites that share the same cache store." htmlFor="khse-cache-key-prefix">
-				<div className="khse-copy-field">
-					<TextInput
-						id="khse-cache-key-prefix"
-						value={cache.cacheKeyPrefix ?? ''}
-						onChange={(event) => update('cache', 'cacheKeyPrefix', event.target.value)}
-					/>
-					<CopyButton value={cache.cacheKeyPrefix || ''} />
-				</div>
-			</Field>
-			<div className="khse-divider" />
-			<div className="khse-row">
-				<Switch
-					label="Expert mode"
+			<div className="khse-adv">
+				<AdvancedRow
+					title="Cache key prefix"
+					description="Isolate sites that share the same cache store."
+					htmlFor="khse-cache-key-prefix"
+					wide
+				>
+					<div className="khse-copy-field">
+						<TextInput
+							id="khse-cache-key-prefix"
+							value={cache.cacheKeyPrefix ?? ''}
+							onChange={(event) => update('cache', 'cacheKeyPrefix', event.target.value)}
+						/>
+						<CopyButton value={cache.cacheKeyPrefix || ''} />
+					</div>
+				</AdvancedRow>
+				<AdvancedRow
+					title="Expert mode"
 					description="Read runtime configuration early from wp-config.php. Optional."
-					checked={Boolean(cache.expertModeStatus)}
-					onChange={(checked) => update('cache', 'expertModeStatus', checked)}
-				/>
-				<Button size="sm" variant="ghost" icon={Code2} onClick={() => actions.go('expert')}>Open Expert mode</Button>
-			</div>
-			<div className="khse-divider" />
-			<div className="khse-row">
-				<Switch
-					label="Nginx direct cache"
+				>
+					<Switch
+						ariaLabel="Expert mode"
+						checked={Boolean(cache.expertModeStatus)}
+						onChange={(checked) => update('cache', 'expertModeStatus', checked)}
+					/>
+					<Button size="sm" variant="ghost" icon={Code2} onClick={() => actions.go('expert')}>Open Expert mode</Button>
+				</AdvancedRow>
+				<AdvancedRow
+					title="Nginx direct cache"
 					description="Expose the raw file cache for a server-level FastCGI bypass."
-					checked={Boolean(cache.nginxDirect)}
-					onChange={(checked) => update('cache', 'nginxDirect', checked)}
-				/>
-				<Button size="sm" variant="secondary" busy={loading} onClick={loadSnippet}>
-					{loading ? 'Loading…' : 'Copy Nginx snippet'}
-				</Button>
+				>
+					<Switch
+						ariaLabel="Nginx direct cache"
+						checked={Boolean(cache.nginxDirect)}
+						onChange={(checked) => update('cache', 'nginxDirect', checked)}
+					/>
+					<Button size="sm" variant="secondary" busy={loading} onClick={loadSnippet}>
+						{loading ? 'Loading…' : 'Copy Nginx snippet'}
+					</Button>
+				</AdvancedRow>
 			</div>
 			{error ? <p className="khse-error" role="alert">{error}</p> : null}
 			{snippet ? <NginxSnippet snippet={snippet} /> : null}
