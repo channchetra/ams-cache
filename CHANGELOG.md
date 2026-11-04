@@ -5,7 +5,9 @@
 ### Changed
 - Rebranded the plugin as KH Speed Engine (KHSE), with the admin menu label "KH Speed". Renamed the plugin folder, main file, text domain, functions, constants, classes, options, AJAX actions, nonces, CSS classes, asset handles, and language files.
 - Added a one-time migration for legacy `scm_*` options, cache/uploads, and the Expert Mode runtime directory.
-- Redesigned the dashboard with a full-width Modernize-style shell, grouped navigation, KPI cards, CSS charts, and responsive settings views.
+- Redesigned the admin console around the native WordPress admin menu, with a hero page header, horizontal section tabs, KPI cards, CSS charts, and consistent two-column settings panels.
+- Added a static save bar with unsaved-change tracking, discard support, and a compact Quick actions menu.
+- Removed the WooCommerce integration.
 
 ## [3.1.5] - 2026-11-04
 
@@ -154,7 +156,7 @@
 
 ### Added
 - Rebuild the KH Speed Engine admin console with React, HeroUI components, lucide icons, and Tailwind CSS 4.3.
-- Add a compact React settings payload and authenticated AJAX save bridge for cache, preload, performance, rules, statistics, benchmark, WooCommerce, and image optimizer settings.
+- Add a compact React settings payload and authenticated AJAX save bridge for cache, preload, performance, rules, statistics, and benchmark settings.
 - Add React driver cards, preload option groups, Expert Mode code preview, and primary upload image format selection.
 
 ### Changed
@@ -244,12 +246,12 @@
 ## [2.6.4] - 2026-05-15
 
 ### Changed
-- Rebuild checkbox settings into consistent switch controls across Preload, Performance, WooCommerce, and remaining console tabs.
+- Rebuild checkbox settings into consistent switch controls across Preload, Performance, and remaining console tabs.
 - Improve Advanced driver connection controls, including disabled TCP / Unix Socket states.
 - Replace the old Statistics split view with a searchable live table and per-row clear-cache actions.
 
 ### Fixed
-- Re-run settings enhancement across hidden and newly opened console tabs so Rules, Statistics, Expert Mode, Benchmark, and WooCommerce no longer keep legacy controls.
+- Re-run settings enhancement across hidden and newly opened console tabs so Rules, Statistics, Expert Mode, and Benchmark no longer keep legacy controls.
 
 ## [2.6.3] - 2026-05-15
 
@@ -286,7 +288,7 @@
 
 ### Added
 
-- Unified Vue admin console covering cache, preload, performance, advanced, rules, statistics, expert, benchmark, WooCommerce, and about views.
+- Unified Vue admin console covering cache, preload, performance, advanced, rules, statistics, expert, benchmark, and about views.
 - Page optimization reports that record bytes before/after, saved bytes, and feature-level result states for recent cached pages.
 - Performance workspace with requirement checks, recent page reports, and detailed latest-page feature diagnostics.
 
@@ -389,7 +391,7 @@
 - File driver compression options.
 - Maximum cache entries option that prunes oldest known cache rows.
 - Cache key prefix option for shared Redis, Memcached, APC, APCu, WinCache, MongoDB, and MySQL stores.
-- Cache preload option that warms selected homepage, post type, archive, and WooCommerce URLs.
+- Cache preload option that warms selected homepage, post type, and archive URLs.
 - Immediate critical preload for homepage and archive URLs after cache clear or published post save.
 - Nginx direct static cache option for File driver with server requirement checks and generated Nginx snippet.
 - Custom post type and custom post type archive cache support.

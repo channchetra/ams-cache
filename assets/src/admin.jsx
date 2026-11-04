@@ -24,12 +24,10 @@ import {
 	Home,
 	Info,
 	Link2,
-	LogOut,
-	Menu,
 	Play,
 	RefreshCcw,
 	Save,
-	ShoppingCart,
+	SlidersHorizontal,
 	Trash2,
 	WandSparkles,
 	X,
@@ -41,31 +39,31 @@ const i18n = boot.i18n || {};
 const VERSION = boot.version || '4.0.0';
 
 const NAV = [
-	{key: 'overview', label: 'Overview', icon: Gauge, group: 'Home'},
-	{key: 'cache', label: 'Cache', icon: Database, group: 'Cache'},
-	{key: 'preload', label: 'Preload', icon: Zap, group: 'Cache'},
-	{key: 'rules', label: 'Rules', icon: Filter, group: 'Cache'},
-	{key: 'performance', label: 'Performance', icon: Activity, group: 'Insights'},
-	{key: 'statistics', label: 'Statistics', icon: BarChart3, group: 'Insights'},
-	{key: 'expert', label: 'Expert Mode', icon: Code2, group: 'Tools'},
-	{key: 'benchmark', label: 'Benchmark', icon: WandSparkles, group: 'Tools'},
-	{key: 'woocommerce', label: 'WooCommerce', icon: ShoppingCart, group: 'Tools'},
-	{key: 'about', label: 'About', icon: Info, group: 'About'}
+	{key: 'overview', label: 'Overview', icon: Gauge},
+	{key: 'cache', label: 'Cache', icon: Database},
+	{key: 'preload', label: 'Preload', icon: Zap},
+	{key: 'rules', label: 'Rules', icon: Filter},
+	{key: 'performance', label: 'Performance', icon: Activity},
+	{key: 'statistics', label: 'Statistics', icon: BarChart3},
+	{key: 'expert', label: 'Expert Mode', icon: Code2},
+	{key: 'benchmark', label: 'Benchmark', icon: WandSparkles},
+	{key: 'about', label: 'About', icon: Info}
 ];
 
-const NAV_GROUPS = NAV.reduce((groups, item) => {
-	const current = groups[groups.length - 1];
-
-	if (current && current.label === item.group) {
-		current.items.push(item);
-	} else {
-		groups.push({label: item.group, items: [item]});
-	}
-
-	return groups;
-}, []);
+const TITLES = {
+	overview: 'Overview',
+	cache: 'Cache Settings',
+	preload: 'Preload Settings',
+	rules: 'Exclusion Rules',
+	performance: 'Performance',
+	statistics: 'Statistics',
+	expert: 'Expert Mode',
+	benchmark: 'Benchmark',
+	about: 'About KH Speed Engine'
+};
 
 const SUBTITLES = {
+	overview: 'Live cache controls and page optimization state.',
 	cache: 'Driver, TTL, visibility, and expert controls.',
 	preload: 'Queue, crawl, and priority warming.',
 	performance: 'HTML, CSS, and JavaScript optimization.',
@@ -73,7 +71,6 @@ const SUBTITLES = {
 	statistics: 'Cache footprint and per-type storage.',
 	expert: 'Early runtime config for advanced hosts.',
 	benchmark: 'Frontend benchmark widget and footer.',
-	woocommerce: 'Cart and checkout cache rules.',
 	about: 'About KH Speed Engine.'
 };
 
@@ -82,7 +79,7 @@ const DONUT_EMPTY_COLOR = '#e3ebf7';
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-const SAVE_VIEWS = new Set(['cache', 'preload', 'performance', 'rules', 'statistics', 'expert', 'benchmark', 'woocommerce']);
+const SAVE_VIEWS = new Set(['cache', 'preload', 'performance', 'rules', 'statistics', 'expert', 'benchmark']);
 
 const percent = (value) => `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
 const clone = (value) => JSON.parse(JSON.stringify(value || {}));
@@ -160,38 +157,75 @@ function Panel({title, action, children, className = ''}) {
 	);
 }
 
-function UserAvatar({size = 38, className = ''}) {
-	const user = boot.user || {};
-	const initial = String(user.name || 'K').trim().charAt(0).toUpperCase() || 'K';
-
-	if (user.avatar) {
-		return <img className={`khse-avatar ${className}`.trim()} src={user.avatar} alt="" width={size} height={size} loading="lazy" />;
-	}
-
-	return (
-		<span className={`khse-avatar khse-avatar--fallback ${className}`.trim()} style={{width: size, height: size}} aria-hidden="true">
-			{initial}
-		</span>
-	);
-}
-
 function PageHeader({viewLabel, subtitle, busy, actions}) {
+	const closeMenu = (event) => event.currentTarget.closest('details')?.removeAttribute('open');
+
+	useEffect(() => {
+		const closeOnOutside = (event) => {
+			const menu = document.querySelector('.khse-quick-menu');
+
+			if (!menu || !menu.open) {
+				return;
+			}
+
+			if (event.type === 'keydown' && event.key === 'Escape') {
+				menu.open = false;
+				return;
+			}
+
+			if (event.type === 'click' && !menu.contains(event.target)) {
+				menu.open = false;
+			}
+		};
+
+		document.addEventListener('click', closeOnOutside);
+		document.addEventListener('keydown', closeOnOutside);
+
+		return () => {
+			document.removeEventListener('click', closeOnOutside);
+			document.removeEventListener('keydown', closeOnOutside);
+		};
+	}, []);
+
 	return (
 		<header className="khse-page-header">
 			<div className="khse-page-heading">
-				<nav className="khse-breadcrumb" aria-label="Breadcrumb">
-					<span>KH Speed</span>
-					<span className="khse-breadcrumb-sep" aria-hidden="true">/</span>
-					<span aria-current="page">{viewLabel}</span>
-				</nav>
-				<h1>{viewLabel}</h1>
-				<p>{subtitle}</p>
+				<span className="khse-page-mark" aria-hidden="true"><Zap size={22} /></span>
+				<div className="khse-page-heading-text">
+					<nav className="khse-breadcrumb" aria-label="Breadcrumb">
+						<span>KH Speed</span>
+						<span className="khse-breadcrumb-sep" aria-hidden="true">/</span>
+						<span aria-current="page">{viewLabel}</span>
+					</nav>
+					<div className="khse-page-title-row">
+						<h1>{viewLabel}</h1>
+					</div>
+					<p>{subtitle}</p>
+				</div>
 			</div>
 			<div className="khse-toolbar-actions">
+				<span className="khse-live"><span className="khse-live-dot" aria-hidden="true" />Live</span>
 				<AmsButton icon={RefreshCcw} busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
-				<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
-				<AmsButton icon={Home} busy={busy} onPress={actions.purgeHomepage}>Purge Homepage</AmsButton>
-				<AmsButton icon={Trash2} tone="danger" busy={busy} onPress={actions.clearAll}>Clear All Cache</AmsButton>
+				<details className="khse-quick-menu">
+					<summary className="khse-button khse-button--default khse-button--md">
+						<SlidersHorizontal size={16} aria-hidden="true" />
+						<span>Quick actions</span>
+					</summary>
+					<div className="khse-quick-menu-popover">
+						<button type="button" onClick={(event) => { closeMenu(event); actions.runPreload(); }}>
+							<Play size={16} aria-hidden="true" />
+							<span>Run Preload</span>
+						</button>
+						<button type="button" onClick={(event) => { closeMenu(event); actions.purgeHomepage(); }}>
+							<Home size={16} aria-hidden="true" />
+							<span>Purge Homepage</span>
+						</button>
+						<button type="button" className="is-danger" onClick={(event) => { closeMenu(event); actions.clearAll(); }}>
+							<Trash2 size={16} aria-hidden="true" />
+							<span>Clear All Cache</span>
+						</button>
+					</div>
+				</details>
 			</div>
 		</header>
 	);
@@ -413,10 +447,14 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 	return <div className="khse-driver-advanced">{health}<p className="khse-muted">No extra settings for this driver. Use Cache Key Prefix to isolate sites sharing the same store.</p></div>;
 }
 
-function SaveBar({isBusy, onSave, global = false}) {
+function SaveBar({isBusy, dirty, onSave, onDiscard}) {
 	return (
-		<div className={`khse-savebar ${global ? 'khse-savebar--global' : ''}`.trim()}>
-			<AmsButton tone="primary" icon={Save} busy={isBusy} onPress={onSave}>Save Changes</AmsButton>
+		<div className="khse-savebar">
+			<span className="khse-savebar-status">{dirty ? 'Unsaved changes' : 'All changes saved'}</span>
+			<div className="khse-savebar-actions">
+				<AmsButton disabled={!dirty} onPress={onDiscard}>Discard</AmsButton>
+				<AmsButton tone="primary" icon={Save} busy={isBusy} onPress={onSave}>Save Changes</AmsButton>
+			</div>
 		</div>
 	);
 }
@@ -662,21 +700,23 @@ function CacheSettings({settings, update, save, isBusy, testDriver}) {
 	};
 
 	return (
-		<div className="grid w-full grid-cols-1 items-stretch gap-4">
-			<Panel title="Driver" className="khse-wide-panel">
+		<div className="khse-settings-stack">
+			<Panel title="Cache Status" action={<Pill tone={cache.cachingStatus ? 'good' : 'muted'}>{cache.cachingStatus ? 'Enabled' : 'Disabled'}</Pill>}>
 				<SwitchRow label="Caching Status" description="Guest-only page cache. Logged-in users never receive cached HTML." checked={Boolean(cache.cachingStatus)} onChange={(checked) => update('cache', 'cachingStatus', checked)} />
+			</Panel>
+			<Panel title="Driver">
 				<DriverSelect settings={settings} update={update} />
 				<DriverGrid drivers={cache.drivers || []} selected={selectedDriver} onSelect={(value) => update('cache', 'driver', value)} />
-				<div className="khse-driver-form-grid">
-					<TextFieldRow label="Time to Live" type="number" min="300" max="2592000" value={cache.ttl} onChange={(value) => update('cache', 'ttl', value)} />
-					<SwitchRow label="TTL Auto Clear" checked={Boolean(cache.ttlMechanism)} onChange={(checked) => update('cache', 'ttlMechanism', checked)} />
-					<TextFieldRow label="Cache Key Prefix" value={cache.cacheKeyPrefix} onChange={(value) => update('cache', 'cacheKeyPrefix', value)} />
-					<TextFieldRow label="Max Cache Entries" type="number" min="0" value={cache.maxEntries} onChange={(value) => update('cache', 'maxEntries', value)} />
-					<SwitchRow label="Expert Mode" checked={Boolean(cache.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
-					<SwitchRow label="Debug Comment" checked={Boolean(cache.debugComment)} onChange={(checked) => update('cache', 'debugComment', checked)} />
-				</div>
 			</Panel>
-			<Panel title={`${selectedLabel} Advanced Settings`} action={<Pill tone="info">{selectedDriver}</Pill>} className="khse-wide-panel">
+			<Panel title="Storage & Expiry">
+				<TextFieldRow label="Time to Live" type="number" min="300" max="2592000" value={cache.ttl} onChange={(value) => update('cache', 'ttl', value)} />
+				<SwitchRow label="TTL Auto Clear" checked={Boolean(cache.ttlMechanism)} onChange={(checked) => update('cache', 'ttlMechanism', checked)} />
+				<TextFieldRow label="Cache Key Prefix" value={cache.cacheKeyPrefix} onChange={(value) => update('cache', 'cacheKeyPrefix', value)} />
+				<TextFieldRow label="Max Cache Entries" type="number" min="0" value={cache.maxEntries} onChange={(value) => update('cache', 'maxEntries', value)} />
+				<SwitchRow label="Expert Mode" checked={Boolean(cache.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
+				<SwitchRow label="Debug Comment" checked={Boolean(cache.debugComment)} onChange={(checked) => update('cache', 'debugComment', checked)} />
+			</Panel>
+			<Panel title="Advanced" action={<Pill tone="info">{selectedLabel}</Pill>}>
 				<DriverAdvanced cache={cache} updateAdvanced={setAdvanced} updateConnection={setConnection} testDriver={testDriver} isBusy={isBusy} />
 			</Panel>
 		</div>
@@ -735,22 +775,28 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, l
 
 	return (
 		<>
-			<div className="khse-tabs">
+			<div className="khse-seg-tabs" aria-label="Performance sections">
 				{tabs.map((item) => (
-					<button key={item} type="button" className={`khse-tab ${tab === item ? 'is-active' : ''}`} onClick={() => setTab(item)}>
+					<button
+						key={item}
+						type="button"
+						aria-pressed={tab === item}
+						className={`khse-seg-tab ${tab === item ? 'is-active' : ''}`.trim()}
+						onClick={() => setTab(item)}
+					>
 						{item[0].toUpperCase() + item.slice(1)}
 					</button>
 				))}
 			</div>
 			{tab === 'overview' ? (
 				<>
-					<div className="grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 2xl:grid-cols-4">
-						<StatCard icon={FileText} title="Recent Reports" value={reports.totalReports || 0} detail="stored page reports" progress={100} />
-						<StatCard icon={CheckCircle2} title="Optimized Pages" value={reports.appliedPages || 0} detail="with at least one applied transform" progress={reports.totalReports ? ((reports.appliedPages || 0) / reports.totalReports) * 100 : 0} />
-						<StatCard icon={HardDrive} title="Bytes Saved" value={reports.savedLabel || '0 B'} detail="across recent reports" progress={100} />
-						<StatCard icon={Link2} title="External UCSS Saved" value={reports.externalUcssSavedLabel || '0 B'} detail="linked CSS removed" progress={100} />
-						<StatCard icon={Code2} title="Local UCSS Saved" value={reports.ucssSavedLabel || '0 B'} detail="inline CSS removed" progress={100} />
-						<StatCard icon={FastForward} title="JS Analysis" value={`${reports.jsDeferred || 0} / ${reports.jsAnalyzed || 0}`} detail="safely deferred / analyzed" progress={reports.jsAnalyzed ? ((reports.jsDeferred || 0) / reports.jsAnalyzed) * 100 : 0} />
+					<div className="khse-stat-grid khse-stat-grid--triple">
+						<StatCard icon={FileText} tone="blue" title="Recent Reports" value={reports.totalReports || 0} detail="stored page reports" progress={100} />
+						<StatCard icon={CheckCircle2} tone="amber" title="Optimized Pages" value={reports.appliedPages || 0} detail="with at least one applied transform" progress={reports.totalReports ? ((reports.appliedPages || 0) / reports.totalReports) * 100 : 0} />
+						<StatCard icon={HardDrive} tone="mint" title="Bytes Saved" value={reports.savedLabel || '0 B'} detail="across recent reports" progress={100} />
+						<StatCard icon={Link2} tone="cyan" title="External UCSS Saved" value={reports.externalUcssSavedLabel || '0 B'} detail="linked CSS removed" progress={100} />
+						<StatCard icon={Code2} tone="lavender" title="Local UCSS Saved" value={reports.ucssSavedLabel || '0 B'} detail="inline CSS removed" progress={100} />
+						<StatCard icon={FastForward} tone="coral" title="JS Analysis" value={`${reports.jsDeferred || 0} / ${reports.jsAnalyzed || 0}`} detail="safely deferred / analyzed" progress={reports.jsAnalyzed ? ((reports.jsDeferred || 0) / reports.jsAnalyzed) * 100 : 0} />
 					</div>
 					<div className="grid w-full grid-cols-1 items-stretch gap-4 2xl:grid-cols-2">
 						<Panel title="Optimization Summary">
@@ -854,13 +900,19 @@ function RulesSettings({settings, update, save, isBusy}) {
 	const rules = settings.rules || {};
 
 	return (
-		<Panel title="Rules">
-			<SwitchRow label="Enable exclusion rules" checked={Boolean(rules.enabled)} onChange={(checked) => update('rules', 'enabled', checked)} />
-			<TextAreaRow label="Excluded URL Path List" value={rules.excludedList} onChange={(value) => update('rules', 'excludedList', value)} rows={8} />
-			<TextAreaRow label="Excluded GET variables" value={rules.getVars} onChange={(value) => update('rules', 'getVars', value)} />
-			<TextAreaRow label="Excluded POST variables" value={rules.postVars} onChange={(value) => update('rules', 'postVars', value)} />
-			<TextAreaRow label="Excluded Cookie variables" value={rules.cookieVars} onChange={(value) => update('rules', 'cookieVars', value)} />
-		</Panel>
+		<div className="khse-settings-stack">
+			<Panel title="Exclusion Rules">
+				<p className="khse-muted">Skip caching for matching paths and any request once rules are enabled.</p>
+				<SwitchRow label="Enable exclusion rules" checked={Boolean(rules.enabled)} onChange={(checked) => update('rules', 'enabled', checked)} />
+				<TextAreaRow label="Excluded URL Path List" value={rules.excludedList} onChange={(value) => update('rules', 'excludedList', value)} rows={8} />
+			</Panel>
+			<Panel title="Request Variables">
+				<p className="khse-muted">Requests carrying any of these variables bypass the page cache.</p>
+				<TextAreaRow label="Excluded GET variables" value={rules.getVars} onChange={(value) => update('rules', 'getVars', value)} />
+				<TextAreaRow label="Excluded POST variables" value={rules.postVars} onChange={(value) => update('rules', 'postVars', value)} />
+				<TextAreaRow label="Excluded Cookie variables" value={rules.cookieVars} onChange={(value) => update('rules', 'cookieVars', value)} />
+			</Panel>
+		</div>
 	);
 }
 
@@ -877,10 +929,6 @@ function StatisticsSettings({data, settings, update, save, isBusy, clearType}) {
 			</Panel>
 		</div>
 	);
-}
-
-function SimpleTogglePage({title, children}) {
-	return <Panel title={title}>{children}</Panel>;
 }
 
 function ExpertSettings({settings, update, save, isBusy}) {
@@ -972,25 +1020,9 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 	);
 }
 
-function AboutPage({data}) {
+function AboutPage() {
 	return (
 		<div className="khse-about-page">
-			<section className="khse-about-hero">
-				<div>
-					<Pill tone="info">KH Speed Engine {VERSION}</Pill>
-					<h2>Performance console for real WordPress pages.</h2>
-					<p>KH Speed Engine combines guest-only page caching, preload control, page optimization, External UCSS, and JS analysis in one clean WordPress admin experience.</p>
-					<p className="khse-muted">KHSE Technical Team Â· Simple Cache Core</p>
-				</div>
-				<div className="khse-about-window" aria-hidden="true">
-					<div className="khse-window-dots"><span /><span /><span /></div>
-					<div className="khse-mini-metric"><strong>{data.optimization?.reqPassed || 0} / {data.optimization?.reqTotal || 0}</strong><span>requirements</span></div>
-					<div className="khse-mini-metric"><strong>Guest</strong><span>safe cache</span></div>
-					<div className="khse-mini-metric"><strong>UCSS</strong><span>local engine</span></div>
-					<div className="khse-progress"><span style={{width: '82%'}} /></div>
-					<div className="khse-progress"><span style={{width: '58%'}} /></div>
-				</div>
-			</section>
 			<Panel title={`Welcome to KH Speed Engine ${VERSION}`} className="khse-full-width">
 				<p className="khse-center-copy">This release focuses on cleaner dashboard surfaces, restored Expert Mode configuration, and page cache controls that stay guest-only.</p>
 			</Panel>
@@ -1005,37 +1037,26 @@ function AboutPage({data}) {
 function App() {
 	const [data, setData] = useState(clone(boot.status));
 	const [settings, setSettings] = useState(clone(boot.status?.settings));
+	const [savedSettings, setSavedSettings] = useState(clone(boot.status?.settings));
 	const [view, setView] = useState(boot.view || 'overview');
 	const [busy, setBusy] = useState(false);
 	const [notice, setNotice] = useState(null);
-	const [navOpen, setNavOpen] = useState(false);
 
-	const viewLabel = useMemo(() => (i18n.views && i18n.views[view]) || NAV.find((item) => item.key === view)?.label || 'Overview', [view]);
-	const subtitle = useMemo(() => (
-		view === 'overview'
-			? `Live cache controls and page optimization state. Updated: ${data.generatedAt || '—'}`
-			: (SUBTITLES[view] || '')
-	), [view, data.generatedAt]);
+	const viewLabel = useMemo(() => TITLES[view] || (i18n.views && i18n.views[view]) || NAV.find((item) => item.key === view)?.label || 'Overview', [view]);
+	const subtitle = useMemo(() => {
+		const base = SUBTITLES[view] || '';
+
+		return view === 'overview' ? `${base} Updated: ${data.generatedAt || '—'}` : base;
+	}, [view, data.generatedAt]);
+	const dirty = useMemo(() => JSON.stringify(settings) !== JSON.stringify(savedSettings), [settings, savedSettings]);
 
 	useEffect(() => {
-		if (!navOpen) {
-			return undefined;
+		const activeTab = document.querySelector('.khse-view-tab.is-active');
+
+		if (activeTab) {
+			activeTab.scrollIntoView({block: 'nearest', inline: 'center'});
 		}
-
-		const onKeyDown = (event) => {
-			if (event.key === 'Escape') {
-				setNavOpen(false);
-			}
-		};
-
-		document.addEventListener('keydown', onKeyDown);
-		return () => document.removeEventListener('keydown', onKeyDown);
-	}, [navOpen]);
-
-	const selectView = (key) => {
-		setView(key);
-		setNavOpen(false);
-	};
+	}, [view]);
 
 	const setStatus = (status) => {
 		if (!status) {
@@ -1043,7 +1064,10 @@ function App() {
 		}
 		setData(clone(status));
 		setSettings(clone(status.settings));
+		setSavedSettings(clone(status.settings));
 	};
+
+	const discard = () => setSettings(clone(savedSettings));
 
 	const run = (action, payload = {}) => {
 		setBusy(true);
@@ -1108,80 +1132,24 @@ function App() {
 	};
 
 	return (
-		<div className={`khse-admin ${navOpen ? 'is-nav-open' : ''}`.trim()}>
-			<button
-				type="button"
-				className="khse-nav-backdrop"
-				aria-label="Close navigation"
-				tabIndex={-1}
-				onClick={() => setNavOpen(false)}
-			/>
-			<aside className="khse-sidebar" id="khse-sidebar" aria-label="KH Speed Engine">
-				<div className="khse-brand">
-					<span className="khse-brand-mark"><Zap size={19} aria-hidden="true" /></span>
-					<span className="khse-brand-text">
-						<strong>KH Speed</strong>
-						<small>ENGINE</small>
-					</span>
-				</div>
-				<nav className="khse-nav" aria-label="Dashboard sections">
-					{NAV_GROUPS.map((group) => (
-						<div className="khse-sidebar-group" key={group.label}>
-							<p className="khse-sidebar-group-label">{group.label}</p>
-							{group.items.map(({key, label, icon: Icon}) => (
-								<button
-									key={key}
-									type="button"
-									className={`khse-nav-item ${view === key ? 'is-active' : ''}`.trim()}
-									onClick={() => selectView(key)}
-									title={label}
-									aria-current={view === key ? 'page' : undefined}
-								>
-									<Icon size={18} aria-hidden="true" />
-									<span>{label}</span>
-								</button>
-							))}
-						</div>
-					))}
-				</nav>
-				<div className="khse-sidebar-footer">
-					<UserAvatar />
-					<div className="khse-user">
-						<strong>{boot.user?.name || 'KH Speed'}</strong>
-						<span>{boot.user?.role || ''}</span>
-					</div>
-					<a className="khse-logout" href={boot.logoutUrl || '#'} aria-label={i18n.logout || 'Log out'} title={i18n.logout || 'Log out'}>
-						<LogOut size={17} aria-hidden="true" />
-					</a>
-				</div>
-			</aside>
+		<div className="khse-admin">
 			<main className="khse-main">
-				<header className="khse-topbar">
-					<div className="khse-topbar-left">
-						<button
-							type="button"
-							className="khse-menu-toggle"
-							aria-label="Open navigation"
-							aria-expanded={navOpen}
-							aria-controls="khse-sidebar"
-							onClick={() => setNavOpen(true)}
-						>
-							<Menu size={20} aria-hidden="true" />
-						</button>
-						<nav className="khse-breadcrumb" aria-label="Breadcrumb">
-							<span>KH Speed</span>
-							<span className="khse-breadcrumb-sep" aria-hidden="true">/</span>
-							<strong aria-current="page">{viewLabel}</strong>
-						</nav>
-					</div>
-					<div className="khse-topbar-right">
-						<span className="khse-live"><span className="khse-live-dot" aria-hidden="true" />Live</span>
-						<AmsButton icon={RefreshCcw} iconOnly size="sm" busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
-						<UserAvatar size={34} />
-					</div>
-				</header>
 				<div className="khse-page">
 					<PageHeader viewLabel={viewLabel} subtitle={subtitle} busy={busy} actions={actions} />
+					<nav className="khse-view-tabs" aria-label="KH Speed Engine sections">
+						{NAV.map(({key, label, icon: Icon}) => (
+							<button
+								key={key}
+								type="button"
+								className={`khse-view-tab ${view === key ? 'is-active' : ''}`.trim()}
+								onClick={() => setView(key)}
+								aria-current={view === key ? 'page' : undefined}
+							>
+								<Icon size={17} aria-hidden="true" />
+								<span>{label}</span>
+							</button>
+						))}
+					</nav>
 					{notice ? (
 						<div className={`khse-notice khse-notice--${notice.type}`} role="status" aria-live="polite">
 							<span>{notice.text}</span>
@@ -1191,7 +1159,7 @@ function App() {
 						</div>
 					) : null}
 					<section className="khse-view">
-						{view === 'overview' ? <Overview data={data} go={selectView} actions={actions} /> : null}
+						{view === 'overview' ? <Overview data={data} go={setView} actions={actions} /> : null}
 						{view === 'cache' ? <CacheSettings settings={settings} update={update} save={save} isBusy={busy} testDriver={actions.testDriver} /> : null}
 						{view === 'preload' ? <PreloadSettings data={data} settings={settings} update={update} save={save} isBusy={busy} runPreload={actions.runPreload} purgeHomepage={actions.purgeHomepage} /> : null}
 						{view === 'performance' ? <PerformanceSettings data={data} settings={settings} updatePerformance={updatePerformance} save={save} isBusy={busy} loadReports={loadReports} /> : null}
@@ -1199,17 +1167,9 @@ function App() {
 						{view === 'statistics' ? <StatisticsSettings data={data} settings={settings} update={update} save={save} isBusy={busy} clearType={actions.clearType} /> : null}
 						{view === 'expert' ? <ExpertSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
 						{view === 'benchmark' ? <BenchmarkSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
-						{view === 'woocommerce' ? (
-							<SimpleTogglePage title="WooCommerce">
-								{settings.woocommerce?.active ? null : <Pill tone="warning">WooCommerce is not active</Pill>}
-								<SwitchRow label="WooCommerce cache rules" checked={Boolean(settings.woocommerce?.enabled)} onChange={(checked) => update('woocommerce', 'enabled', checked)} />
-								<SwitchRow label="Clear after payment complete" checked={Boolean(settings.woocommerce?.paymentComplete)} onChange={(checked) => update('woocommerce', 'paymentComplete', checked)} />
-							</SimpleTogglePage>
-						) : null}
-						{view === 'about' ? <AboutPage data={data} /> : null}
+						{view === 'about' ? <AboutPage /> : null}
 					</section>
-					{SAVE_VIEWS.has(view) ? <div className="khse-page-spacer" aria-hidden="true" /> : null}
-					{SAVE_VIEWS.has(view) ? <SaveBar isBusy={busy} onSave={save} global /> : null}
+					{SAVE_VIEWS.has(view) ? <SaveBar isBusy={busy} dirty={dirty} onSave={save} onDiscard={discard} /> : null}
 				</div>
 			</main>
 		</div>
