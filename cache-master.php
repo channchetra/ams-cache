@@ -82,7 +82,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		// loaded first and the local library loader registered afterwards to win.
 		require_once SCM_PLUGIN_DIR . 'vendor/autoload.php';
 		require_once SCM_PLUGIN_DIR . 'inc/lib/autoload.php';
-		require_once SCM_PLUGIN_DIR . 'inc/autoload.php';
+		require_once SCM_PLUGIN_DIR . 'inc/class-cache-master.php';
 
 		foreach ( $required_files as $file ) {
 			require_once SCM_PLUGIN_DIR . 'inc/admin/' . $file . '.php';
@@ -133,7 +133,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 				}
 			} else {
 
-				require_once SCM_PLUGIN_DIR . 'inc/autoload.php';
+				require_once SCM_PLUGIN_DIR . 'inc/class-cache-master.php';
 				require_once SCM_PLUGIN_DIR . 'inc/admin/admin-bar.php';
 
 				$cm = new Cache_Master();

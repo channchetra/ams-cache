@@ -77,4 +77,10 @@ class SettingsBooleansTest extends WP_UnitTestCase {
 
 		$this->assertNotFalse( has_action( 'widgets_init', 'scm_register_benchmark_widget' ) );
 	}
+
+	public function test_benchmark_widget_class_loads_from_its_consumer() {
+		scm_register_benchmark_widget();
+
+		$this->assertTrue( class_exists( 'SCM_Benchmark_Widget' ) );
+	}
 }
