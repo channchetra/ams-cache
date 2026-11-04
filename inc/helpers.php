@@ -11,12 +11,13 @@ if ( ! defined( 'SCM_INC' ) ) {
 }
 
 require_once __DIR__ . '/cache-core.php';
+require_once __DIR__ . '/cache-driver.php';
+require_once __DIR__ . '/cache-view.php';
 require_once __DIR__ . '/cache-nginx.php';
 require_once __DIR__ . '/cache-purger.php';
 require_once __DIR__ . '/cache-nginx-config.php';
 require_once __DIR__ . '/page-optimizer.php';
 require_once __DIR__ . '/cache-preload.php';
-require_once __DIR__ . '/cache-utils.php';
 
 function scm_register_wordpress_hooks() {
 	static $registered = false;

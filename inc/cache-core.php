@@ -416,3 +416,56 @@ function scm_is_homepage_uri( $uri ) {
 function scm_get_cache_key( $uri ) {
 	return md5( scm_get_cache_key_prefix() . '|' . scm_normalize_cache_uri( $uri ) );
 }
+
+/**
+ * Get default configuation.
+ *
+ * This function is also used in expert mode.
+ *
+ * @return array
+ */
+function scm_get_default_config() {
+
+	return array(
+		'cache_driver'             => 'file',
+		'cache_key_prefix'         => '',
+		'cache_max_entries'        => 0,
+		'nginx_direct_cache'       => false,
+		'html_debug_comment'       => true,
+		'driver_advanced_settings' => array(),
+		'site_url'                 => '',
+		'preload'                  => array(
+			'enable'               => false,
+			'limit'                => 50,
+			'crawl_homepage_links' => true,
+		),
+		'woocommerce'              => array(
+			'enable' => false,
+		),
+
+		'exclusion'                => array(
+			'enable'             => false,
+			'excluded_list'      => array(),
+			'excluded_get_vars'  => array(),
+			'excluded_post_vars' => array(),
+			'excluded_cookie_vars' => array(),
+		),
+	);
+}
+
+function scm_read_stats_file( $path ) {
+	$content = file_exists( $path ) ? file_get_contents( $path ) : '';
+	$data    = json_decode( $content, true );
+
+	if ( is_array( $data ) ) {
+		return array(
+			'size' => isset( $data['size'] ) ? (int) $data['size'] : 0,
+			'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
+		);
+	}
+
+	return array(
+		'size' => (int) $content,
+		'uri'  => '',
+	);
+}

@@ -29,13 +29,14 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 | Module | Purpose |
 |--------|---------|
-| `cache-core.php` | Dir hash, upload dir, cache key, URI normalization, cacheable checks |
+| `cache-core.php` | Dir hash, upload dir, cache key, URI normalization, cacheable checks, config defaults |
+| `cache-driver.php` | Driver settings normalization + factory, cache entry limits |
+| `cache-view.php` | SVG icons, benchmark footer markup/JS |
 | `cache-nginx.php` | Nginx static cache write/delete/clear |
 | `cache-nginx-config.php` | Nginx requirements check + config snippet generation |
 | `cache-purger.php` | Cache statistics + purge operations |
 | `page-optimizer.php` | HTML/CSS minification, lazy loading, UCSS, media optimization, reports |
 | `cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
-| `cache-utils.php` | Driver factory, benchmark footer JS, shell exec, config defaults |
 
 ## Nginx Direct Static Cache
 

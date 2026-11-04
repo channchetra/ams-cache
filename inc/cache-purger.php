@@ -10,23 +10,6 @@ if ( ! defined( 'SCM_INC' ) ) {
     die;
 }
 
-function scm_read_stats_file( $path ) {
-	$content = file_exists( $path ) ? file_get_contents( $path ) : '';
-	$data    = json_decode( $content, true );
-
-	if ( is_array( $data ) ) {
-		return array(
-			'size' => isset( $data['size'] ) ? (int) $data['size'] : 0,
-			'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
-		);
-	}
-
-	return array(
-		'size' => (int) $content,
-		'uri'  => '',
-	);
-}
-
 /**
  * Delete stale stats/cache rows that point to the same URI.
  *

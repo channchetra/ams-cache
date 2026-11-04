@@ -170,7 +170,8 @@ require_once dirname( __DIR__ ) . '/inc/cache-nginx-config.php';
 require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
 require_once dirname( __DIR__ ) . '/inc/cache-preload.php';
 require_once dirname( __DIR__ ) . '/inc/page-optimizer.php';
-require_once dirname( __DIR__ ) . '/inc/cache-utils.php';
+require_once dirname( __DIR__ ) . '/inc/cache-driver.php';
+require_once dirname( __DIR__ ) . '/inc/cache-view.php';
 
 function smoke_assert( $condition, $message ) {
 	if ( ! $condition ) {
