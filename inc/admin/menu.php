@@ -275,10 +275,10 @@ function scm_admin_enqueue_styles( $hook_suffix ) {
 			wp_enqueue_style( 'ams-cache-admin-built-' . $index, scm_get_admin_build_asset_url( $css_file ), array(), scm_get_admin_build_asset_version( $css_file ), 'all' );
 		}
 	} else {
-		wp_enqueue_style( 'custom-wp-admin-css', SCM_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), SCM_PLUGIN_VERSION, 'all' );
+		wp_enqueue_style( 'ams-cache-admin-css', SCM_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), SCM_PLUGIN_VERSION, 'all' );
 	}
 
-	wp_enqueue_style( 'code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), SCM_PLUGIN_VERSION, 'all' );
+	wp_enqueue_style( 'ams-cache-code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), SCM_PLUGIN_VERSION, 'all' );
 	wp_enqueue_style( 'wp-jquery-ui-dialog' );
 }
 
@@ -290,7 +290,7 @@ function scm_admin_enqueue_scripts( $hook_suffix ) {
 	if ( false === strpos( $hook_suffix, 'ams-cache' ) ) {
 		return;
 	}
-	wp_enqueue_script( 'code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/highlight.pack.js', array(), SCM_PLUGIN_VERSION, 'all' );
+	wp_enqueue_script( 'ams-cache-code-highlight', SCM_PLUGIN_URL . 'inc/assets/highlight/highlight.pack.js', array(), SCM_PLUGIN_VERSION, 'all' );
 	wp_enqueue_script( 'jquery-ui-dialog' );
 
 	if ( false !== strpos( $hook_suffix, 'ams-cache' ) ) {

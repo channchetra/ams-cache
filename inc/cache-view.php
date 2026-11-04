@@ -96,9 +96,14 @@ function scm_drain_view_variables() {
  *
  * This function is also used in expert mode.
  *
- * @return void
+ * @return string
  */
 function scm_javascript() {
+	$cache_status_empty = function_exists( '__' ) ? __( 'No', 'ams-cache' ) : 'No';
+	$cache_status_hit   = function_exists( '__' ) ? __( 'Yes', 'ams-cache' ) : 'Yes';
+	$cache_status_empty_js = json_encode( $cache_status_empty );
+	$cache_status_hit_js   = json_encode( $cache_status_hit );
+
 	$script = '
 		<script id="ams-cache-plugin">
 			var cache_master = \'' . scm_drain_view_variables() . '\';
@@ -110,13 +115,13 @@ function scm_javascript() {
 			var scm_text_page_generation_time = "";
 
 			if ("before" in scm_report) {
-				scm_text_cache_status = "ទេ";
+				scm_text_cache_status = ' . $cache_status_empty_js . ';
 				scm_text_memory_usage = scm_report["before"]["memory_usage"];
 				scm_text_sql_queries = scm_report["before"]["sql_queries"];
 				scm_text_page_generation_time = scm_report["before"]["page_generation_time"];
 			}
 			if ("after" in scm_report) {
-				scm_text_cache_status = "មាន";
+				scm_text_cache_status = ' . $cache_status_hit_js . ';
 				scm_text_memory_usage = scm_report["after"]["memory_usage"];
 				scm_text_sql_queries = scm_report["after"]["sql_queries"];
 				scm_text_page_generation_time = scm_report["after"]["page_generation_time"];
