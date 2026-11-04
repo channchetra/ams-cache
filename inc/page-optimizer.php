@@ -286,130 +286,115 @@ function scm_build_page_optimization_report( $before, $after, $settings, $uri = 
 	$defer_after     = scm_count_html_matches( '/<script\b[^>]*\bdefer\b/i', $after );
 	$features        = array();
 	$runtime         = scm_get_page_optimization_runtime();
-
-	$features['minify_html'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['minify_html'],
-		'yes' !== $settings['minify_html'] ? 'disabled' : ( $after_bytes < $before_bytes ? 'applied' : 'no_change' ),
-		'yes' !== $settings['minify_html']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before size, 2: after size. */
-				__( '%1$s before, %2$s after.', 'ams-cache' ),
-				size_format( $before_bytes, 2 ),
-				size_format( $after_bytes, 2 )
-			)
+	$metric_features = array(
+		'minify_html'        => array(
+			'setting' => 'minify_html',
+			'before'  => $before_bytes,
+			'after'   => $after_bytes,
+			'compare' => 'lt',
+			'format'  => 'size',
+			'label'   => __( '%1$s before, %2$s after.', 'ams-cache' ),
+		),
+		'remove_comments'    => array(
+			'setting' => 'remove_comments',
+			'before'  => $comments_before,
+			'after'   => $comments_after,
+			'compare' => 'lt',
+			'format'  => 'count',
+			'label'   => __( '%1$s comments before, %2$s after.', 'ams-cache' ),
+		),
+		'minify_inline_css'  => array(
+			'setting' => 'minify_inline_css',
+			'before'  => $styles_before,
+			'after'   => $styles_after,
+			'compare' => 'lt',
+			'format'  => 'size',
+			'label'   => __( '%1$s inline CSS before, %2$s after.', 'ams-cache' ),
+		),
+		'lazy_media'         => array(
+			'setting' => 'lazy_media',
+			'before'  => $lazy_before,
+			'after'   => $lazy_after,
+			'compare' => 'gt',
+			'format'  => 'count',
+			'label'   => __( '%1$s lazy tags before, %2$s after.', 'ams-cache' ),
+		),
+		'critical_images'    => array(
+			'setting' => 'critical_images',
+			'before'  => $critical_before,
+			'after'   => $critical_after,
+			'compare' => 'gt',
+			'format'  => 'count',
+			'label'   => __( '%1$s priority images before, %2$s after.', 'ams-cache' ),
+		),
+		'preconnect_fonts'   => array(
+			'setting' => 'preconnect_fonts',
+			'before'  => $fonts_before,
+			'after'   => $fonts_after,
+			'compare' => 'gt',
+			'format'  => 'count',
+			'label'   => __( '%1$s font hints before, %2$s after.', 'ams-cache' ),
+		),
+		'defer_js'           => array(
+			'setting' => 'defer_js',
+			'before'  => $defer_before,
+			'after'   => $defer_after,
+			'compare' => 'gt',
+			'format'  => 'count',
+			'label'   => __( '%1$s deferred scripts before, %2$s after.', 'ams-cache' ),
+		),
 	);
 
-	$features['remove_comments'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['remove_comments'],
-		'yes' !== $settings['remove_comments'] ? 'disabled' : ( $comments_after < $comments_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['remove_comments']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before comments, 2: after comments. */
-				__( '%1$s comments before, %2$s after.', 'ams-cache' ),
-				number_format_i18n( $comments_before ),
-				number_format_i18n( $comments_after )
-			)
+	foreach ( $metric_features as $key => $descriptor ) {
+		$enabled = 'yes' === $settings[ $descriptor['setting'] ];
+
+		if ( 'size' === $descriptor['format'] ) {
+			$before_label = size_format( $descriptor['before'], 2 );
+			$after_label  = size_format( $descriptor['after'], 2 );
+		} else {
+			$before_label = number_format_i18n( $descriptor['before'] );
+			$after_label  = number_format_i18n( $descriptor['after'] );
+		}
+
+		$changed = 'lt' === $descriptor['compare']
+			? $descriptor['after'] < $descriptor['before']
+			: $descriptor['after'] > $descriptor['before'];
+
+		$features[ $key ] = scm_build_page_optimization_feature_report(
+			$enabled,
+			! $enabled ? 'disabled' : ( $changed ? 'applied' : 'no_change' ),
+			! $enabled ? __( 'Disabled.', 'ams-cache' ) : sprintf( $descriptor['label'], $before_label, $after_label )
+		);
+	}
+
+	$runtime_features = array(
+		'external_ucss' => array(
+			'setting' => 'external_ucss',
+			'missing' => __( 'External UCSS engine did not return a result.', 'ams-cache' ),
+		),
+		'local_ucss'    => array(
+			'setting' => 'local_ucss',
+			'missing' => __( 'Local UCSS engine did not return a result.', 'ams-cache' ),
+		),
+		'js_analysis'   => array(
+			'setting' => 'js_analysis',
+			'missing' => __( 'JS analysis engine did not return a result.', 'ams-cache' ),
+		),
 	);
 
-	$features['minify_inline_css'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['minify_inline_css'],
-		'yes' !== $settings['minify_inline_css'] ? 'disabled' : ( $styles_after < $styles_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['minify_inline_css']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before size, 2: after size. */
-				__( '%1$s inline CSS before, %2$s after.', 'ams-cache' ),
-				size_format( $styles_before, 2 ),
-				size_format( $styles_after, 2 )
-			)
-	);
+	foreach ( $runtime_features as $key => $descriptor ) {
+		$enabled         = 'yes' === $settings[ $descriptor['setting'] ];
+		$runtime_feature = isset( $runtime[ $key ] ) ? $runtime[ $key ] : array();
 
-	$features['lazy_media'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['lazy_media'],
-		'yes' !== $settings['lazy_media'] ? 'disabled' : ( $lazy_after > $lazy_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['lazy_media']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before tags, 2: after tags. */
-				__( '%1$s lazy tags before, %2$s after.', 'ams-cache' ),
-				number_format_i18n( $lazy_before ),
-				number_format_i18n( $lazy_after )
-			)
-	);
-
-	$features['critical_images'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['critical_images'],
-		'yes' !== $settings['critical_images'] ? 'disabled' : ( $critical_after > $critical_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['critical_images']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before tags, 2: after tags. */
-				__( '%1$s priority images before, %2$s after.', 'ams-cache' ),
-				number_format_i18n( $critical_before ),
-				number_format_i18n( $critical_after )
-			)
-	);
-
-	$features['preconnect_fonts'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['preconnect_fonts'],
-		'yes' !== $settings['preconnect_fonts'] ? 'disabled' : ( $fonts_after > $fonts_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['preconnect_fonts']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before links, 2: after links. */
-				__( '%1$s font hints before, %2$s after.', 'ams-cache' ),
-				number_format_i18n( $fonts_before ),
-				number_format_i18n( $fonts_after )
-			)
-	);
-
-	$features['defer_js'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['defer_js'],
-		'yes' !== $settings['defer_js'] ? 'disabled' : ( $defer_after > $defer_before ? 'applied' : 'no_change' ),
-		'yes' !== $settings['defer_js']
-			? __( 'Disabled.', 'ams-cache' )
-			: sprintf(
-				/* translators: 1: before scripts, 2: after scripts. */
-				__( '%1$s deferred scripts before, %2$s after.', 'ams-cache' ),
-				number_format_i18n( $defer_before ),
-				number_format_i18n( $defer_after )
-			)
-	);
-
-	$features['external_ucss'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['external_ucss'],
-		'yes' !== $settings['external_ucss']
-			? 'disabled'
-			: ( isset( $runtime['external_ucss']['status'] ) ? $runtime['external_ucss']['status'] : 'failed' ),
-		'yes' === $settings['external_ucss']
-			? ( isset( $runtime['external_ucss']['detail'] ) ? $runtime['external_ucss']['detail'] : __( 'External UCSS engine did not return a result.', 'ams-cache' ) )
-			: __( 'Disabled.', 'ams-cache' ),
-		isset( $runtime['external_ucss']['metrics'] ) ? $runtime['external_ucss']['metrics'] : array()
-	);
-
-	$features['local_ucss'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['local_ucss'],
-		'yes' !== $settings['local_ucss']
-			? 'disabled'
-			: ( isset( $runtime['local_ucss']['status'] ) ? $runtime['local_ucss']['status'] : 'failed' ),
-		'yes' === $settings['local_ucss']
-			? ( isset( $runtime['local_ucss']['detail'] ) ? $runtime['local_ucss']['detail'] : __( 'Local UCSS engine did not return a result.', 'ams-cache' ) )
-			: __( 'Disabled.', 'ams-cache' ),
-		isset( $runtime['local_ucss']['metrics'] ) ? $runtime['local_ucss']['metrics'] : array()
-	);
-
-	$features['js_analysis'] = scm_build_page_optimization_feature_report(
-		'yes' === $settings['js_analysis'],
-		'yes' !== $settings['js_analysis']
-			? 'disabled'
-			: ( isset( $runtime['js_analysis']['status'] ) ? $runtime['js_analysis']['status'] : 'failed' ),
-		'yes' === $settings['js_analysis']
-			? ( isset( $runtime['js_analysis']['detail'] ) ? $runtime['js_analysis']['detail'] : __( 'JS analysis engine did not return a result.', 'ams-cache' ) )
-			: __( 'Disabled.', 'ams-cache' ),
-		isset( $runtime['js_analysis']['metrics'] ) ? $runtime['js_analysis']['metrics'] : array()
-	);
+		$features[ $key ] = scm_build_page_optimization_feature_report(
+			$enabled,
+			! $enabled ? 'disabled' : ( isset( $runtime_feature['status'] ) ? $runtime_feature['status'] : 'failed' ),
+			$enabled
+				? ( isset( $runtime_feature['detail'] ) ? $runtime_feature['detail'] : $descriptor['missing'] )
+				: __( 'Disabled.', 'ams-cache' ),
+			isset( $runtime_feature['metrics'] ) ? $runtime_feature['metrics'] : array()
+		);
+	}
 
 	$applied_count = 0;
 
