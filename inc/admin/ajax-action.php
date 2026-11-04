@@ -53,6 +53,28 @@ function scm_ajax_dashboard_guard( $nonce_action = 'scm_dashboard', $capability 
 }
 
 /**
+ * Send the shared clear-cache success payload.
+ *
+ * @return void
+ */
+function scm_ajax_clear_cache_response() {
+	$rows = scm_clear_all_cache();
+	scm_schedule_preload_cache( true );
+
+	wp_send_json_success(
+		array(
+			'message' => sprintf(
+				/* translators: %s is the number of rows. */
+				__( '%s rows deleted. Background preload queued.', 'ams-cache' ),
+				$rows
+			),
+			'rows'    => $rows,
+			'status'  => scm_dashboard_get_status_data(),
+		)
+	);
+}
+
+/**
  * Check whether the current user may purge the cache for a URL.
  *
  * Users with edit_posts may purge only the canonical path of a post they
@@ -90,29 +112,7 @@ function scm_can_purge_url( $url ) {
  */
 function scm_ajax_clear_cache_callback() {
 	scm_ajax_dashboard_guard( 'scm_clear_cache', 'manage_options' );
-
-	$rows        = scm_clear_all_cache();
-	$has_deleted = $rows > 0;
-	$message     = $has_deleted
-		? sprintf( __( '%s rows have been deleted.', 'ams-cache' ), $rows )
-		: __( 'There is no cache on your site currently.', 'ams-cache' );
-
-	if ( $has_deleted ) {
-		wp_send_json_success(
-			array(
-				'message' => $message,
-				'rows'    => $rows,
-				'status'  => scm_dashboard_get_status_data(),
-			)
-		);
-	}
-
-	wp_send_json_error(
-		array(
-			'message' => $message,
-			'rows'    => $rows,
-		)
-	);
+	scm_ajax_clear_cache_response();
 }
 
 /**
@@ -570,20 +570,7 @@ function scm_ajax_dashboard_save_settings_callback() {
  */
 function scm_ajax_dashboard_clear_cache_callback() {
 	scm_ajax_dashboard_guard();
-
-	$rows = scm_clear_all_cache();
-	scm_schedule_preload_cache( true );
-
-	wp_send_json_success(
-		array(
-			'message' => sprintf(
-				/* translators: %s is the number of rows. */
-				__( '%s rows deleted. Background preload queued.', 'ams-cache' ),
-				$rows
-			),
-			'status'  => scm_dashboard_get_status_data(),
-		)
-	);
+	scm_ajax_clear_cache_response();
 }
 
 /**
