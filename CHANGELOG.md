@@ -1,12 +1,14 @@
 # Changelog
 
-## [4.0.0] - 2026-11-04
+## [4.0.0] - 2026-11-05
 
 ### Changed
 - Rebranded the plugin as KH Speed Engine (KHSE), with the admin menu label "KH Speed". Renamed the plugin folder, main file, text domain, functions, constants, classes, options, AJAX actions, nonces, CSS classes, asset handles, and language files.
 - Added a one-time migration for legacy `scm_*` options, cache/uploads, and the Expert Mode runtime directory.
-- Redesigned the admin console around the native WordPress admin menu, with a hero page header, horizontal section tabs, KPI cards, CSS charts, and consistent two-column settings panels.
-- Added a static save bar with unsaved-change tracking, discard support, and a compact Quick actions menu.
+- Rebuilt the admin console as five workspaces (Dashboard, Caching, Optimization, Tools, About) with a status-first dashboard, grouped settings, CSS charts, and consistent settings panels.
+- Added a contextual save bar with unsaved-change tracking and discard, plus a compact Quick actions menu.
+- Added a cache eligibility URL checker and an on-demand Nginx direct-cache snippet generator.
+- Self-hosted the Google Sans variable font for the admin UI.
 - Removed the WooCommerce integration.
 
 ## [3.1.5] - 2026-11-04

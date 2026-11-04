@@ -24,7 +24,7 @@ First release date: October, 1, 2020
 * Extremely lightweight and high-performance.
 * Support up to 10 cache drivers such as File, Redis, Memcache, Memcached, APC, APCu, WinCache, MySQL, SQLite, and MongoDB.
 * Provide detailed cache statistics, easy to manage.
-* Vite-built React admin console using HeroUI components and Tailwind CSS 4.3 design tokens, with live status, settings views, requirement checks, and one-click actions.
+* Vite-built React admin console with a self-hosted Google Sans design system, live status, a URL cache checker, requirement checks, and one-click actions.
 * Optional Redis and File cache compression.
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
@@ -44,9 +44,9 @@ External UCSS reads only same-site .css files under the WordPress root, skips SR
 
 Large sites can preload up to 1000 URLs. KH Speed Engine queues preload work in small batches so dashboard actions do not have to wait for every URL in one request.
 
-== Vite and Tailwind Admin Console ==
+== Vite and Google Sans Admin Console ==
 
-The KH Speed Engine admin console uses native WordPress admin screens, Vite-built assets that bundle React and HeroUI, and Tailwind CSS 4.3 design tokens. The console covers cache, preload, performance, rules, statistics, expert, benchmark, and about views, with AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
+The KH Speed Engine admin console uses native WordPress admin screens, Vite-built assets that bundle React, and a self-hosted Google Sans variable font. The console is organized into five workspaces: Dashboard, Caching (cache, preload, exclusion rules), Optimization (performance, statistics), Tools (expert mode, benchmark), and About. It includes a cache eligibility URL checker, an on-demand Nginx snippet generator, and AJAX controls for refresh, preload, homepage purge, image queueing, and full cache clear.
 
 Build assets with:
 
@@ -155,6 +155,14 @@ If there is no debug message in the source code, or if the cache status consiste
 Japanese (ja_JP) by [Colocal](https://colocal.com).
 
 == Changelog ==
+
+= 4.0.0 (11/5/2026) =
+
+* Rebrand the plugin as KH Speed Engine (KHSE) with the admin menu label "KH Speed".
+* Rebuild the admin console as five workspaces: Dashboard, Caching, Optimization, Tools, and About.
+* Add a status-first dashboard, contextual save bar, cache eligibility URL checker, and Nginx snippet generator.
+* Self-host the Google Sans variable font for the admin UI.
+* Remove the WooCommerce integration.
 
 = 3.0.1 (5/23/2026) =
 

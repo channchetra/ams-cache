@@ -15,7 +15,7 @@ KH Speed Engine is an extremely lightweight, high-performance cache plugin that 
 * Extremely lightweight and high-performance.
 * Support up to 10 cache drivers such as File, Redis, Memcache, Memcached, APC, APCu, WinCache, MySQL, SQLite, and MongoDB.
 * Provide detailed cache statistics, easy to manage.
-* Vite-built React admin console using HeroUI components and Tailwind CSS 4.3 design tokens, with live status, settings views, requirement checks, and one-click actions.
+* Vite-built React admin console with a self-hosted Google Sans design system, live status, a URL cache checker, requirement checks, and one-click actions.
 * Optional Redis and File cache compression.
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
@@ -53,9 +53,9 @@ Preloading warms the homepage first (with a blocking request), then same-site li
 
 Large sites can preload up to 1000 URLs. KH Speed Engine queues preload work in small batches so dashboard actions do not have to wait for every URL in one request. Remaining batches are processed via WordPress cron.
 
-## Vite and Tailwind Admin Console
+## Vite and Google Sans Admin Console
 
-KH Speed Engine uses native WordPress admin pages plus a Vite-built admin asset pipeline that bundles React and HeroUI. Tailwind CSS 4.3 is used as the design utility layer while the existing KH Speed Engine dashboard system remains the visual baseline. The console includes cache, preload, performance, rules, statistics, expert, benchmark, and about views, with AJAX controls for refresh, preload, homepage purge, and full cache clear.
+KH Speed Engine uses native WordPress admin pages plus a Vite-built admin asset pipeline that bundles React and a self-hosted Google Sans variable font. The console is organized into five workspaces: Dashboard, Caching (cache, preload, exclusion rules), Optimization (performance, statistics), Tools (expert mode, benchmark), and About. It includes a cache eligibility URL checker, an on-demand Nginx snippet generator, and AJAX controls for refresh, preload, homepage purge, and full cache clear.
 
 Development build:
 
