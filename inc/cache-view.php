@@ -138,3 +138,61 @@ function scm_javascript() {
 
 	return preg_replace( '/\s+/', ' ', $script );
 }
+
+/**
+ * Render the benchmark metric rows shared by the widget and footer.
+ *
+ * @param string $layout widget|footer.
+ *
+ * @return string
+ */
+function scm_render_benchmark_metrics( $layout = 'footer' ) {
+	$metrics = array(
+		array(
+			'key'    => 'cache-status',
+			'label'  => __( 'Cache status', 'ams-cache' ),
+			'title'  => __( 'Cache status powered by AMS Cache plugin', 'ams-cache' ),
+			'icon'   => 'status',
+			'suffix' => '',
+		),
+		array(
+			'key'    => 'memory-usage',
+			'label'  => __( 'Memory usage', 'ams-cache' ),
+			'title'  => __( 'Memory usage', 'ams-cache' ),
+			'icon'   => 'memory',
+			'suffix' => ' MB',
+		),
+		array(
+			'key'    => 'sql-queries',
+			'label'  => __( 'SQL queries', 'ams-cache' ),
+			'title'  => __( 'SQL queries', 'ams-cache' ),
+			'icon'   => 'database',
+			'suffix' => '',
+		),
+		array(
+			'key'    => 'page-generation-time',
+			'label'  => __( 'Page generation time', 'ams-cache' ),
+			'title'  => __( 'Page generation time', 'ams-cache' ),
+			'icon'   => 'speed',
+			'suffix' => ' (' . __( 'seconds', 'ams-cache' ) . ')',
+		),
+	);
+
+	$html  = '';
+	$index = 0;
+
+	foreach ( $metrics as $metric ) {
+		$index++;
+		$icon  = '<span class="scm-img scm-img-' . $index . '" title="' . esc_attr( $metric['title'] ) . '">' . scm_get_svg_icon( $metric['icon'] ) . '</span>';
+		$label = '<span class="scm-text">' . esc_html( $metric['label'] ) . ( 'footer' === $layout ? ': ' : '' ) . '</span>';
+		$value = '<span class="scm-field-' . esc_attr( $metric['key'] ) . '">-</span>' . esc_html( $metric['suffix'] );
+
+		if ( 'widget' === $layout ) {
+			$html .= '<div class="scm-tr"><div class="scm-td">' . $icon . $label . '</div><div class="scm-td">' . $value . '</div></div>';
+		} else {
+			$html .= '<div class="scm-td">' . $icon . $label . '<span class="scm-value">' . $value . '</span></div>';
+		}
+	}
+
+	return $html;
+}

@@ -45,42 +45,7 @@ class SCM_Benchmark_Widget extends WP_Widget {
 		?>
 			<div class="ams-cache-plugin-widget">
 				<div class="scm-table">
-					<div class="scm-tr">
-						<div class="scm-td">
-							<span class="scm-img scm-img-1" title="<?php echo esc_attr__( 'Cache status powered by AMS Cache plugin', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'status' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'Cache status', 'ams-cache' ); ?></span>
-						</div>
-						<div class="scm-td">
-							<span class="scm-field-cache-status">-</span>
-						</div>
-					</div>
-					<div class="scm-tr">
-						<div class="scm-td">
-							<span class="scm-img scm-img-2" title="<?php echo esc_attr__( 'Memory usage', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'memory' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'Memory usage', 'ams-cache' ); ?></span>
-						</div>
-						<div class="scm-td">
-							<span class="scm-field-memory-usage">-</span> MB
-						</div>
-					</div>
-					<div class="scm-tr">
-						<div class="scm-td">
-							<span class="scm-img scm-img-3" title="<?php echo esc_attr__( 'SQL queries', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'database' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'SQL queries', 'ams-cache' ); ?></span>
-						</div>
-						<div class="scm-td">
-							<span class="scm-field-sql-queries">-</span>
-						</div>
-					</div>
-					<div class="scm-tr">
-						<div class="scm-td">
-							<span class="scm-img scm-img-4" title="<?php echo esc_attr__( 'Page generation time', 'ams-cache' ); ?>"><?php echo scm_get_svg_icon( 'speed' ); ?></span>
-							<span class="scm-text"><?php echo esc_html__( 'Page generation time', 'ams-cache' ); ?></span>
-						</div>
-						<div class="scm-td">
-							<span class="scm-field-page-generation-time">-</span> (<?php echo esc_html__( 'seconds', 'ams-cache' ); ?>)
-						</div>
-					</div>
+					<?php echo scm_render_benchmark_metrics( 'widget' ); ?>
 				</div>
 			</div>
 		<?php

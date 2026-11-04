@@ -393,40 +393,7 @@ trait SCM_Cache_Master_Debug {
 	 * @return string
 	 */
 	private function footer_html() {
-		
-		$html = '
-			<div class="ams-cache-benchmark-report" style="display: none">
-				<div class="scm-td">
-					<span class="scm-img scm-img-1" title="' . esc_attr( __( 'Cache status powered by AMS Cache plugin', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'status' ) . '</span>
-					<span class="scm-text">' .  __( 'Cache status', 'ams-cache' ) . ': </span>
-					<span class="scm-value">
-						<span class="scm-field-cache-status">-</span>
-					</span>
-				</div>
-				<div class="scm-td">
-					<span class="scm-img scm-img-2" title="' . esc_attr( __( 'Memory usage', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'memory' ) . '</span>
-					<span class="scm-text">' .  __( 'Memory usage', 'ams-cache' ) . ': </span>
-					<span class="scm-value">
-						<span class="scm-field-memory-usage">-</span> MB
-					</span>
-				</div>
-				<div class="scm-td">
-					<span class="scm-img scm-img-3" title="' . esc_attr( __( 'SQL queries', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'database' ) . '</span>
-					<span class="scm-text">' .  __( 'SQL queries', 'ams-cache' ) . ': </span>
-					<span class="scm-value">
-						<span class="scm-field-sql-queries">-</span>
-					</span>
-				</div>
-				<div class="scm-td">
-					<span class="scm-img scm-img-4" title="' . esc_attr( __( 'Page generation time', 'ams-cache' ) ) . '">' . scm_get_svg_icon( 'speed' ) . '</span>
-					<span class="scm-text">' .  __( 'Page generation time', 'ams-cache' ) . ': </span>
-					<span class="scm-value">
-						<span class="scm-field-page-generation-time">-</span> (' .  __( 'seconds', 'ams-cache' ) . ')
-					</span>
-				</div>
-			</div>';
-		
-		return $html;
+		return '<div class="ams-cache-benchmark-report" style="display: none">' . scm_render_benchmark_metrics( 'footer' ) . '</div>';
 	}
 
 	}
