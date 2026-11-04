@@ -114,7 +114,7 @@ function scm_update_scm_option_driver() {
 	foreach ( $rebuld_list as $db ) {
 		$db_driver = scm_driver_factory( $db );
 
-		if ( $db_driver ) {
+		if ( $db_driver && ! is_wp_error( $db_driver ) ) {
 			$db_driver->rebuild();
 		}
 	}

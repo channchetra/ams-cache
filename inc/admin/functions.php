@@ -911,7 +911,7 @@ function scm_clear_all_cache() {
 	$driver_type = get_option( 'scm_option_driver' );
 	$driver      = scm_driver_factory( $driver_type );
 
-	if ( ! $driver ) {
+	if ( ! $driver || is_wp_error( $driver ) ) {
 		return 0;
 	}
 
@@ -957,7 +957,7 @@ function scm_clear_cache_type( $cache_type ) {
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
 	$list   = scm_get_cache_type_list( true );
 
-	if ( ! $driver || ! in_array( $cache_type, $list, true ) ) {
+	if ( ! $driver || is_wp_error( $driver ) || ! in_array( $cache_type, $list, true ) ) {
 		return 0;
 	}
 

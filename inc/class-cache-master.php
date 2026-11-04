@@ -60,6 +60,11 @@ class Cache_Master {
 	 */
 	public function __construct() {
 		$this->driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
+
+		if ( is_wp_error( $this->driver ) ) {
+			$this->driver = null;
+		}
+
 		$this->config = scm_get_config_data();
 	}
 
@@ -258,7 +263,7 @@ class Cache_Master {
 	 */
 	public function ob_start() {
 
-		if ( $this->is_cache_visible() ) {
+		if ( $this->is_cache_visible() && $this->driver ) {
 
 			$cached_content = $this->driver->get( $this->cache_key );
 
@@ -328,7 +333,7 @@ class Cache_Master {
 		$cache_content = $content;
 		$debug_message = $this->debug_message( 'ob_stop' );
 
-		if ( $this->is_cache ) {
+		if ( $this->is_cache && $this->driver ) {
 			$ttl = (int) get_option( 'scm_option_ttl' );
 
 			$cache_content .= $debug_message;

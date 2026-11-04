@@ -671,6 +671,10 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
 	}
 
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
 	$result = array(
 		'dispatched' => 0,
 		'failed'     => 0,

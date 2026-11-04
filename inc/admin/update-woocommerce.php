@@ -33,6 +33,10 @@ function scm_payment_complete( $order_id ) {
 	$items = $order->get_items();
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
 
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
 	foreach ( $items as $item ) {
 		if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
 			continue;

@@ -51,6 +51,10 @@ function scm_update_post( $post_ID, $post, $update ) {
 		$driver_type = get_option( 'scm_option_driver' );
 		$driver      = scm_driver_factory( $driver_type );
 
+		if ( is_wp_error( $driver ) ) {
+			$driver = null;
+		}
+
 		scm_purge_permalink( $post_url, $driver );
 		scm_preload_critical_urls( $post_ID, true, $driver );
 		scm_preload_url( $post_url );
@@ -83,6 +87,10 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
 	$post_url = get_permalink( $post->ID );
+
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
 
 	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
 		if ( $post_url ) {
@@ -131,10 +139,13 @@ function scm_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 	$post_url = get_permalink( $post_ID );
 
 	if ( $post_url ) {
-		scm_purge_permalink(
-			$post_url,
-			scm_driver_factory( get_option( 'scm_option_driver', 'file' ) )
-		);
+		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
+
+		if ( is_wp_error( $driver ) ) {
+			$driver = null;
+		}
+
+		scm_purge_permalink( $post_url, $driver );
 	}
 }
 
@@ -167,6 +178,10 @@ function scm_delete_post( $post_ID, $post = null ) {
 
 	$driver = scm_driver_factory( get_option( 'scm_option_driver' ) );
 	$post_url = get_permalink( $post_ID );
+
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
 
 	if ( $post_url ) {
 		scm_purge_permalink( $post_url, $driver );

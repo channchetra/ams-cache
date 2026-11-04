@@ -1089,6 +1089,10 @@ function scm_enforce_cache_entry_limit( $driver = null ) {
 		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
 	}
 
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
 	$remove_count = count( $entries ) - $limit;
 	$removed      = 0;
 
@@ -1301,7 +1305,7 @@ function scm_get_driver_settings( $type, $advanced_settings = null, $connection_
  *
  * @param string $type The type of the driver.
  *
- * @return \Shieldon\SimpleCache\Cache
+ * @return \Shieldon\SimpleCache\Cache|\WP_Error
  */
 function scm_driver_factory( $type ) {
 
@@ -1318,23 +1322,31 @@ function scm_driver_factory( $type ) {
 
 		$driver = new \Shieldon\SimpleCache\Cache( $type, $setting );
 
-	} catch ( \Exception $e ) {
+	} catch ( \Throwable $e ) {
 
 		if ( in_array( $type, array( 'file', 'sqlite' ), true ) && ! file_exists( $setting['storage'] ) ) {
 			wp_mkdir_p( $setting['storage'] );
 
 			// Let's try again.
-			$driver = new \Shieldon\SimpleCache\Cache( $type, $setting );
+			try {
+				$driver = new \Shieldon\SimpleCache\Cache( $type, $setting );
+			} catch ( \Throwable $exception ) {
+				return new \WP_Error( 'scm_driver_unavailable', $exception->getMessage() );
+			}
 		} else {
 
 			error_log( sprintf( '[AMS Cache] Driver %s is not supported, fallback to use File driver.', $type ) );
 
-			$driver = new \Shieldon\SimpleCache\Cache(
-				'file',
-				array(
-					'storage' => scm_get_upload_dir() . '/file_driver',
-				)
-			);
+			try {
+				$driver = new \Shieldon\SimpleCache\Cache(
+					'file',
+					array(
+						'storage' => scm_get_upload_dir() . '/file_driver',
+					)
+				);
+			} catch ( \Throwable $exception ) {
+				return new \WP_Error( 'scm_driver_unavailable', $exception->getMessage() );
+			}
 		}
 	}
 

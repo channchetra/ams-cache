@@ -127,6 +127,10 @@ function scm_purge_cache_uri( $uri, $driver = null ) {
 		$driver = scm_driver_factory( get_option( 'scm_option_driver', 'file' ) );
 	}
 
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
 	$key     = scm_get_cache_key( $uri );
 	$removed = 0;
 
