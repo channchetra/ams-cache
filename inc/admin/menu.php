@@ -289,12 +289,7 @@ function khse_admin_enqueue_styles( $hook_suffix ) {
 		foreach ( $css_files as $index => $css_file ) {
 			wp_enqueue_style( 'kh-speed-engine-admin-built-' . $index, khse_get_admin_build_asset_url( $css_file ), array(), khse_get_admin_build_asset_version( $css_file ), 'all' );
 		}
-	} else {
-		wp_enqueue_style( 'kh-speed-engine-admin-css', KHSE_PLUGIN_URL . 'inc/assets/css/admin-style.css', array(), KHSE_PLUGIN_VERSION, 'all' );
 	}
-
-	wp_enqueue_style( 'kh-speed-engine-code-highlight', KHSE_PLUGIN_URL . 'inc/assets/highlight/default.css', array(), KHSE_PLUGIN_VERSION, 'all' );
-	wp_enqueue_style( 'wp-jquery-ui-dialog' );
 }
 
 /**
@@ -305,9 +300,6 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 	if ( false === strpos( $hook_suffix, 'kh-speed-engine' ) ) {
 		return;
 	}
-	wp_enqueue_script( 'kh-speed-engine-code-highlight', KHSE_PLUGIN_URL . 'inc/assets/highlight/highlight.pack.js', array(), KHSE_PLUGIN_VERSION, 'all' );
-	wp_enqueue_script( 'jquery-ui-dialog' );
-
 	if ( false !== strpos( $hook_suffix, 'kh-speed-engine' ) ) {
 		$entry = khse_get_admin_build_asset_entry();
 

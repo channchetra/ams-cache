@@ -131,6 +131,14 @@ function home_url( $path = '/' ) {
 	return 'https://example.test' . $path;
 }
 
+function content_url( $path = '' ) {
+	return 'https://example.test/wp-content' . $path;
+}
+
+function wp_parse_url( $url, $component = -1 ) {
+	return parse_url( $url, $component );
+}
+
 function get_post( $post_id ) {
 	global $smoke_post;
 	return $smoke_post && (int) $smoke_post->ID === (int) $post_id ? $smoke_post : null;
@@ -279,7 +287,7 @@ $runtime = wp_normalize_path( khse_get_private_runtime_dir() );
 smoke_assert( 0 !== strncasecmp( $runtime . '/', wp_normalize_path( ABSPATH ) . '/', strlen( wp_normalize_path( ABSPATH ) ) + 1 ), 'runtime directory is outside public root' );
 
 $requirements = khse_get_page_optimization_requirements();
-smoke_assert( ! empty( $requirements['php_css']['passed'] ) && ! empty( $requirements['php_js']['passed'] ), 'dashboard reports PHP engines ready' );
+smoke_assert( isset( $requirements['server_gzip'], $requirements['work_dir'] ), 'dashboard reports runtime requirements' );
 smoke_assert( ! isset( $requirements['purgecss'] ) && ! isset( $requirements['bun'] ), 'dashboard does not require runtime CLI tools' );
 
 $plugin_source = file_get_contents( dirname( __DIR__ ) . '/kh-speed-engine.php' );
@@ -294,6 +302,6 @@ smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $th
 $preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache-preload.php' );
 smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
 $admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/functions.php' );
-smoke_assert( false !== strpos( $admin_source, "khse_search_expert_mode_code_snippet( wp_normalize_path( khse_get_private_runtime_dir() ) )" ), 'Expert Mode readiness checks private runtime path' );
+smoke_assert( false !== strpos( $admin_source, 'khse_expert_mode_snippet_matches( khse_get_wp_config_contents(), $upload_dir, $runtime_dir )' ), 'Expert Mode readiness checks private runtime path' );
 
 echo "KH Speed Engine smoke tests passed\n";

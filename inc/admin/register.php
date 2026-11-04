@@ -150,11 +150,15 @@ function khse_setup_security_files() {
 	if ( file_exists( $legacy_config_file ) ) {
 		$legacy_config = json_decode( file_get_contents( $legacy_config_file ), true );
 
-		if ( is_array( $legacy_config ) && empty( get_option( 'khse_config', array() ) ) ) {
-			update_option( 'khse_config', $legacy_config );
-		}
+		if ( is_array( $legacy_config ) ) {
+			if ( empty( get_option( 'khse_config', array() ) ) ) {
+				update_option( 'khse_config', $legacy_config );
+			}
 
-		@unlink( $legacy_config_file );
+			@unlink( $legacy_config_file );
+		} else {
+			error_log( '[KH Speed Engine] Legacy config.json could not be parsed; it was left in place.' );
+		}
 	}
 
 	$public_dirs = array_unique(

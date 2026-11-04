@@ -246,7 +246,6 @@ function Test-ReleaseExclude {
         'bun.lock',
         'bun.lockb',
         'yarn.lock',
-        'pnpm-lock.yaml',
         '.phpunit.result.cache',
         'graphify-out',
         'AGENTS.md',

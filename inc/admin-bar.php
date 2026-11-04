@@ -56,8 +56,8 @@ function khse_footer_js_clear_cache() {
 	?>
 	<script>
 		(function() {
-			var scmAjaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
-			var scmActions = {
+			var khseAjaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+			var khseActions = {
 				'#wp-admin-bar-khse-clear-cache .ab-item': {
 					action: 'khse_action_clear_cache',
 					nonce: <?php echo wp_json_encode( wp_create_nonce( 'khse_clear_cache_' . khse_get_dir_hash() ) ); ?>
@@ -69,7 +69,7 @@ function khse_footer_js_clear_cache() {
 			};
 
 			document.addEventListener('click', function(event) {
-				Object.keys(scmActions).some(function(selector) {
+				Object.keys(khseActions).some(function(selector) {
 					var target = event.target.closest ? event.target.closest(selector) : null;
 
 					if (!target) {
@@ -77,14 +77,14 @@ function khse_footer_js_clear_cache() {
 					}
 
 					event.preventDefault();
-					var action = scmActions[selector];
+					var action = khseActions[selector];
 					var data = new URLSearchParams({action: action.action, _wpnonce: action.nonce});
 
 					if ('khse_action_purge_current_page' === action.action) {
 						data.set('url', window.location.href);
 					}
 
-					fetch(scmAjaxUrl, {
+					fetch(khseAjaxUrl, {
 						method: 'POST',
 						credentials: 'same-origin',
 						headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},

@@ -395,23 +395,6 @@ function LimitsDisclosure({perf, updatePerformance}) {
 					/>
 				</Field>
 			</div>
-			<div className="khse-divider" />
-			<div className="khse-grid khse-grid--2">
-				<Field label="Legacy Bun path" description="Optional path for hosts that keep the older optimizer binaries." htmlFor="khse-bun-path">
-					<TextInput
-						id="khse-bun-path"
-						value={perf.bun_path || ''}
-						onChange={(event) => updatePerformance('bun_path', event.target.value)}
-					/>
-				</Field>
-				<Field label="Legacy PurgeCSS path" description="Optional path to a legacy PurgeCSS binary." htmlFor="khse-purgecss-path">
-					<TextInput
-						id="khse-purgecss-path"
-						value={perf.purgecss_path || ''}
-						onChange={(event) => updatePerformance('purgecss_path', event.target.value)}
-					/>
-				</Field>
-			</div>
 		</Disclosure>
 	);
 }

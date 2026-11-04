@@ -102,14 +102,11 @@ if [[ $SKIP_BUN_BUILD -eq 0 && -f "$ROOT/package.json" ]]; then
         if command -v bun >/dev/null 2>&1; then
             bun install --frozen-lockfile
             bun run build
-        elif command -v pnpm >/dev/null 2>&1; then
-            pnpm install --frozen-lockfile
-            pnpm run build
         elif command -v npm >/dev/null 2>&1; then
             npm ci || npm install
             npm run build
         else
-            fail 'No JS package manager found (bun, pnpm, or npm). Install one or pass --skip-bun-build with prebuilt assets.'
+            fail 'No JS package manager found (bun or npm). Install one or pass --skip-bun-build with prebuilt assets.'
         fi
     )
 fi
@@ -236,7 +233,6 @@ is_excluded() {
         'bun.lock'
         'bun.lockb'
         'yarn.lock'
-        'pnpm-lock.yaml'
         '.phpunit.result.cache'
         'graphify-out'
         'AGENTS.md'

@@ -46,20 +46,17 @@ function khse_run_expert_mode( $args ) {
 		return;
 	}
 
-	// New snippets use a private runtime directory. Old snippets continue to
-	// work until the dashboard generates a replacement snippet.
-	$runtime_dir = '' !== $runtime_dir ? $runtime_dir : $plugin_upload_dir;
+	// New snippets use a private runtime directory. Legacy snippets that point at
+	// a public upload directory are rejected below and must be regenerated from
+	// the dashboard.
+	if ( '' === $runtime_dir ) {
+		return;
+	}
+
 	$lock_file   = $runtime_dir . '/expert.lock';
 	$config_file = $runtime_dir . '/config.json';
 
-	if ( ( ! file_exists( $lock_file ) || ! file_exists( $config_file ) ) && $runtime_dir !== $plugin_upload_dir ) {
-		$runtime_dir = $plugin_upload_dir;
-		$lock_file   = $runtime_dir . '/expert.lock';
-		$config_file = $runtime_dir . '/config.json';
-	}
-
-	// Never read control files from the public document root. Old snippets fail
-	// safe and must be regenerated from the dashboard.
+	// Never read control files from the public document root.
 	$runtime_compare = realpath( $runtime_dir );
 	$runtime_compare = false !== $runtime_compare ? $runtime_compare : $runtime_dir;
 	$runtime_compare = rtrim( str_replace( '\\', '/', $runtime_compare ), '/' );

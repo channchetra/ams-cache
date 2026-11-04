@@ -21,11 +21,9 @@ class ConventionsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( "'kh-speed-engine-style'", $core );
 		$this->assertStringNotContainsString( "'khse-style'", $core );
 
-		$this->assertStringContainsString( "'kh-speed-engine-admin-css'", $menu );
-		$this->assertStringNotContainsString( "'custom-wp-admin-css'", $menu );
-
-		$this->assertStringContainsString( "'kh-speed-engine-code-highlight'", $menu );
-		$this->assertStringNotContainsString( "'code-highlight'", $menu );
+		$this->assertStringContainsString( "'kh-speed-engine-admin-built-'", $menu );
+		$this->assertStringNotContainsString( "'admin-style.css'", $menu );
+		$this->assertStringNotContainsString( "'kh-speed-engine-code-highlight'", $menu );
 	}
 
 	public function test_benchmark_widget_title_uses_text_domain() {

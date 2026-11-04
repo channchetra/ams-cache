@@ -2,7 +2,6 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 
 const ADMIN_FONTS = [
 	{ token: '__KHSE_FONT_LATIN__', file: 'google-sans-latin.woff2' },
@@ -66,8 +65,7 @@ export default defineConfig({
 	},
 	plugins: [
 		khseAdminFonts(),
-		react(),
-		tailwindcss()
+		react()
 	],
 	build: {
 		outDir: 'inc/assets/build',
@@ -76,7 +74,7 @@ export default defineConfig({
 		cssCodeSplit: false,
 		lib: {
 			entry: resolve(__dirname, 'assets/src/admin.jsx'),
-			name: 'AmsCacheAdmin',
+			name: 'KhseAdmin',
 			formats: ['iife'],
 			fileName: () => 'admin.js'
 		},
