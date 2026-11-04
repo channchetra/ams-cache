@@ -1,11 +1,9 @@
 <?php
 /**
- * AMS Cache - WooCommerce events.
+ * AMS Cache - WooCommerce hooks.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- * @since 1.6.0
- * @version 1.6.0
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

@@ -1,13 +1,9 @@
 <?php
 /**
- * Class SCM_Benchmark_Widget
+ * AMS Cache - Benchmark widget class.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- *
- * @package AMS Cache
- * @since 1.5.0
- * @version 1.5.0
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

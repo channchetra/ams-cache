@@ -1,11 +1,9 @@
 <?php
 /**
- * AMS Cache - Setting page.
+ * AMS Cache - Admin bar.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- * @since 1.5.2
- * @version 1.5.2
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

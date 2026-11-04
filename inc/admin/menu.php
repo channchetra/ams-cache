@@ -1,11 +1,9 @@
 <?php
 /**
- * AMS Cache - Menu.
+ * AMS Cache - Admin menu and assets.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- * @since 1.0.0
- * @version 1.2.1
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

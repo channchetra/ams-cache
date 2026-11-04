@@ -1,11 +1,9 @@
 <?php
 /**
- * AMS Cache - Update setting.
+ * AMS Cache - Settings update hooks.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- * @since 1.0.0
- * @version 1.3.0
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

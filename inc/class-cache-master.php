@@ -1,13 +1,9 @@
 <?php
 /**
- * Class Cache_Master
+ * AMS Cache - Cache lifecycle controller.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- *
- * @package AMS Cache
- * @since 1.0.0
- * @version 1.5.0
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {

@@ -2,9 +2,8 @@
 /**
  * AMS Cache - React admin console mount.
  *
- * @author Terry Lin
- * @link https://terryl.in/
- * @since 2.8.0
+ * @package   AMS Cache
+ * @license   GPLv3 (or later)
  */
 
 if ( ! defined( 'SCM_INC' ) ) {
