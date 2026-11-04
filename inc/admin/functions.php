@@ -697,6 +697,26 @@ function scm_dashboard_get_status_data() {
 }
 
 /**
+ * Ensure the storage directory exists for a cache driver.
+ *
+ * @param string $type Driver type.
+ *
+ * @return void
+ */
+function scm_ensure_driver_storage( $type ) {
+	if ( ! in_array( $type, array( 'file', 'sqlite' ), true ) ) {
+		return;
+	}
+
+	$resolved = scm_get_driver_settings( $type );
+	$storage  = isset( $resolved['setting']['storage'] ) ? $resolved['setting']['storage'] : '';
+
+	if ( '' !== $storage && ! is_dir( $storage ) ) {
+		wp_mkdir_p( $storage );
+	}
+}
+
+/**
  * Test if specific data driver is available or not.
  *
  * @param string $type Data driver.
@@ -711,10 +731,6 @@ function scm_test_driver( $type = '' ) {
 
 	$resolved = scm_get_driver_settings( $type );
 	$setting  = $resolved['setting'];
-
-	if ( in_array( $type, array( 'file', 'sqlite' ), true ) && ! empty( $setting['storage'] ) && ! is_dir( $setting['storage'] ) ) {
-		wp_mkdir_p( $setting['storage'] );
-	}
 
 	try {
 
@@ -785,6 +801,8 @@ function scm_dashboard_test_driver_connection( $type ) {
 			),
 		);
 	}
+
+	scm_ensure_driver_storage( $type );
 
 	$passed = scm_test_driver( $type );
 

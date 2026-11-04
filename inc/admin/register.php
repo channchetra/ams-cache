@@ -23,7 +23,7 @@ function scm_activation() {
 
 	$options = scm_get_option_schema();
 
-	$options['cache_key_prefix']  = 'scm_' . get_current_blog_id() . '_' . scm_get_dir_hash() . '_';
+	$options['cache_key_prefix']  = 'scm_' . get_current_blog_id() . '_' . scm_ensure_dir_hash() . '_';
 	$options['page_optimization'] = scm_get_default_page_optimization_settings();
 
 	foreach ( $options as $key => $value ) {
@@ -31,6 +31,7 @@ function scm_activation() {
 	}
 
 	scm_setup_security_files();
+	scm_ensure_upload_dir();
 
 	$file_dir = scm_get_upload_dir() . '/file_driver';
 
@@ -53,14 +54,11 @@ function scm_activation() {
  */
 function scm_setup_security_files() {
 	scm_set_blog_id();
+	scm_ensure_dir_hash();
+	scm_ensure_upload_dir();
 
 	update_option( 'scm_last_reset_time', time() );
 	update_option( 'scm_version', SCM_PLUGIN_VERSION );
-
-	// Add default setting. Only execute this action at the first time activation.
-	if ( false === scm_is_dir_hash() ) {
-		update_option( 'scm_dir_hash', scm_get_dir_hash() );
-	}
 
 	// Migrate the legacy public config into the protected option, then remove it.
 	$legacy_config_file = scm_get_upload_dir() . '/config.json';

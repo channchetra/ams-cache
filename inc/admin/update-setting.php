@@ -12,8 +12,6 @@ if ( ! defined( 'SCM_INC' ) ) {
 	die;
 }
 
-scm_check_permalink_structure();
-
 // Make changes on those setting options will trigger its action function.
 $register_general_action = array(
 	'scm_option_driver',
@@ -50,6 +48,8 @@ foreach ( $register_clear_cache_action as $option ) {
 	// `scm_clear_all_cache` is defined in functions.php
 	add_action( 'update_option_' . $option, 'scm_clear_all_cache' );
 }
+
+scm_ensure_permalink_structure();
 
 // Update WooCommerce settings.
 $register_woocommerce_action = array(
@@ -99,6 +99,8 @@ foreach ( $register_runtime_config_action as $option ) {
 function scm_update_scm_option_driver() {
 	$driver_type = get_option( 'scm_option_driver' );
 
+	scm_ensure_driver_storage( $driver_type );
+
 	if ( ! scm_test_driver( $driver_type ) ) {
 		update_option( 'scm_option_driver', 'file' );
 
@@ -129,17 +131,6 @@ function scm_update_scm_option_driver() {
  */
 function scm_update_runtime_config() {
 	scm_sync_expert_mode_runtime();
-}
-
-/**
- * Check permalink structure because only static URL structure is supported.
- *
- * @return void
- */
-function scm_check_permalink_structure() {
-	if ( '' === get_option( 'permalink_structure' ) ) {
-		update_option( 'option_caching_status', 'disable' );
-	}
 }
 
 /**

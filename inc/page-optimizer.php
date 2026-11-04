@@ -1789,7 +1789,7 @@ function scm_optimize_html( $html ) {
  */
 function scm_get_page_optimization_requirements() {
 	$work_dir       = scm_get_page_optimization_work_dir();
-	$work_dir_ready = is_dir( $work_dir ) ? is_writable( $work_dir ) : wp_mkdir_p( $work_dir );
+	$work_dir_ready = is_dir( $work_dir ) && is_writable( $work_dir );
 
 	return array(
 		'cache_status' => array(

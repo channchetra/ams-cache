@@ -15,45 +15,48 @@ function scm_load_textdomain() {
 }
 
 /**
- * Get driver hash.
+ * Return the site directory hash.
+ *
+ * Pure: returns the persisted hash or a deterministic fallback without
+ * writing. Use scm_ensure_dir_hash() when the value must be persisted.
  *
  * @return string
  */
 function scm_get_dir_hash() {
 	$hash = get_option( 'scm_dir_hash' );
 
-	if ( empty( $hash ) ) {
-		return scm_set_dir_hash();
+	if ( ! empty( $hash ) ) {
+		return $hash;
 	}
-	return $hash;
+
+	return scm_generate_dir_hash();
 }
 
 /**
- * Check driver hash exists or not.
- *
- * @return bool
- */
-function scm_is_dir_hash() {
-	$hash = get_option( 'scm_dir_hash' );
-
-	if ( empty( $hash ) ) {
-		return false;
-	}
-	return true;
-}
-
-/**
- * Set driver hash.
+ * Generate a deterministic directory hash for this site.
  *
  * @return string
  */
-function scm_set_dir_hash() {
-	$scm_dir_hash = wp_hash( gmdate( 'ymdhis' ) . wp_rand( 1, 86400 ) );
-	$scm_dir_hash = substr( $scm_dir_hash, 0, 8 );
+function scm_generate_dir_hash() {
+	$salt = defined( 'AUTH_SALT' ) ? AUTH_SALT : '';
 
-	update_option( 'scm_dir_hash', $scm_dir_hash );
+	return substr( wp_hash( get_site_url() . '|' . $salt ), 0, 8 );
+}
 
-	return $scm_dir_hash;
+/**
+ * Persist and return the site directory hash.
+ *
+ * @return string
+ */
+function scm_ensure_dir_hash() {
+	$hash = get_option( 'scm_dir_hash' );
+
+	if ( empty( $hash ) ) {
+		$hash = scm_generate_dir_hash();
+		update_option( 'scm_dir_hash', $hash );
+	}
+
+	return $hash;
 }
 
 /**
@@ -98,11 +101,36 @@ function scm_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
 }
 
 /**
- * Get upload dir.
+ * Ensure caching is disabled when permalinks are plain.
+ *
+ * @return void
+ */
+function scm_ensure_permalink_structure() {
+	if ( '' === get_option( 'permalink_structure' ) ) {
+		update_option( 'scm_option_caching_status', 'disable' );
+	}
+}
+
+/**
+ * Return the site upload directory.
+ *
+ * Pure: does not migrate or create directories. Use
+ * scm_ensure_upload_dir() before writing.
  *
  * @return string
  */
 function scm_get_upload_dir() {
+	$base_dir = WP_CONTENT_DIR . '/uploads/ams-cache';
+
+	return $base_dir . '/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+}
+
+/**
+ * Ensure the upload directory exists, migrating the legacy directory.
+ *
+ * @return string
+ */
+function scm_ensure_upload_dir() {
 	$base_dir   = WP_CONTENT_DIR . '/uploads/ams-cache';
 	$legacy_dir = WP_CONTENT_DIR . '/uploads/' . 'cache' . '-master';
 
@@ -110,7 +138,11 @@ function scm_get_upload_dir() {
 		@rename( $legacy_dir, $base_dir );
 	}
 
-	return $base_dir . '/' . scm_get_blog_id() . '_' . scm_get_dir_hash();
+	if ( ! is_dir( $base_dir ) ) {
+		wp_mkdir_p( $base_dir );
+	}
+
+	return scm_get_upload_dir();
 }
 
 /**
