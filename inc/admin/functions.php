@@ -506,7 +506,12 @@ function scm_dashboard_get_preload_options_data() {
  */
 function scm_dashboard_get_settings_data() {
 	$optimization = scm_get_page_optimization_settings();
-	$drivers      = array(
+
+	foreach ( array( 'status', 'minify_html', 'remove_comments', 'minify_inline_css', 'lazy_media', 'critical_images', 'preconnect_fonts', 'defer_js', 'external_ucss', 'local_ucss', 'js_analysis' ) as $toggle_key ) {
+		$optimization[ $toggle_key ] = 'yes' === $optimization[ $toggle_key ] || true === $optimization[ $toggle_key ] || 'enable' === $optimization[ $toggle_key ];
+	}
+
+	$drivers = array(
 		array( 'value' => 'file', 'label' => __( 'File', 'ams-cache' ) ),
 		array( 'value' => 'redis', 'label' => __( 'Redis', 'ams-cache' ) ),
 		array( 'value' => 'memcache', 'label' => __( 'Memcache', 'ams-cache' ) ),
@@ -529,48 +534,48 @@ function scm_dashboard_get_settings_data() {
 
 	return array(
 		'cache'       => array(
-			'cachingStatus'    => get_option( 'scm_option_caching_status', 'disable' ),
+			'cachingStatus'    => scm_option_is_enabled( 'scm_option_caching_status' ),
 			'driver'           => get_option( 'scm_option_driver', 'file' ),
 			'ttl'              => (int) get_option( 'scm_option_ttl', 86400 ),
-			'ttlMechanism'     => get_option( 'scm_option_ttl_mechanism', 'enable' ),
+			'ttlMechanism'     => scm_option_is_enabled( 'scm_option_ttl_mechanism', 'enable' ),
 			'cacheKeyPrefix'   => scm_get_cache_key_prefix(),
 			'maxEntries'       => scm_get_cache_max_entries(),
-			'expertModeStatus' => get_option( 'scm_option_expert_mode_status', 'disable' ),
-			'nginxDirect'      => get_option( 'scm_option_nginx_direct_cache_status', 'no' ),
-			'debugComment'     => get_option( 'scm_option_html_debug_comment', 'yes' ),
+			'expertModeStatus' => scm_option_is_enabled( 'scm_option_expert_mode_status' ),
+			'nginxDirect'      => scm_option_is_enabled( 'scm_option_nginx_direct_cache_status' ),
+			'debugComment'     => scm_option_is_enabled( 'scm_option_html_debug_comment', 'yes' ),
 			'drivers'          => $drivers,
 			'driverAdvanced'   => scm_dashboard_get_driver_advanced_settings_data(),
 			'expertModeCode'   => scm_expert_mode_code_template(),
 			'expertModeReady'  => scm_is_expert_mode_code_ready(),
 		),
 		'preload'     => array(
-			'enabled'       => get_option( 'scm_option_preload_cache', 'no' ),
+			'enabled'       => scm_option_is_enabled( 'scm_option_preload_cache' ),
 			'limit'         => (int) get_option( 'scm_option_preload_limit', 50 ),
-			'crawlHomepage' => get_option( 'scm_option_preload_homepage_links', 'yes' ),
+			'crawlHomepage' => scm_option_is_enabled( 'scm_option_preload_homepage_links', 'yes' ),
 			'postTypes'     => $preload_options['postTypes'],
-			'homepage'      => $preload_options['homepage'],
+			'homepage'      => scm_option_is_enabled( 'scm_option_post_homepage', 'yes' ),
 			'archives'      => $preload_options['archives'],
 		),
 		'performance' => $optimization,
 		'rules'       => array(
-			'enabled'      => get_option( 'scm_option_exclusion_status', 'no' ),
+			'enabled'      => scm_option_is_enabled( 'scm_option_exclusion_status' ),
 			'excludedList' => get_option( 'scm_option_excluded_list_filtered', get_option( 'scm_option_excluded_list', '' ) ),
 			'getVars'      => get_option( 'scm_option_excluded_get_vars', '' ),
 			'postVars'     => get_option( 'scm_option_excluded_post_vars', '' ),
 			'cookieVars'   => get_option( 'scm_option_excluded_cookie_vars', '' ),
 		),
 		'statistics'  => array(
-			'enabled' => get_option( 'scm_option_statistics_status', 'disable' ),
+			'enabled' => scm_option_is_enabled( 'scm_option_statistics_status' ),
 		),
 		'benchmark'   => array(
-			'widget'        => get_option( 'scm_option_benchmark_widget', 'no' ),
-			'footer'        => get_option( 'scm_option_benchmark_footer_text', 'no' ),
+			'widget'        => scm_option_is_enabled( 'scm_option_benchmark_widget' ),
+			'footer'        => scm_option_is_enabled( 'scm_option_benchmark_footer_text' ),
 			'widgetDisplay' => get_option( 'scm_option_benchmark_widget_display', 'both' ),
 			'footerDisplay' => get_option( 'scm_option_benchmark_footer_text_display', 'text' ),
 		),
 		'woocommerce' => array(
-			'enabled'         => get_option( 'scm_option_woocommerce_status', 'no' ),
-			'paymentComplete' => get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ),
+			'enabled'         => scm_option_is_enabled( 'scm_option_woocommerce_status' ),
+			'paymentComplete' => scm_option_is_enabled( 'scm_option_woocommerce_event_payment_complete' ),
 			'active'          => function_exists( 'is_plugin_active' ) && is_plugin_active( 'woocommerce/woocommerce.php' ),
 		),
 	);

@@ -57,6 +57,47 @@ function scm_set_dir_hash() {
 }
 
 /**
+ * Check whether an option is enabled across yes/no and enable/disable vocabularies.
+ *
+ * @param string $key     Option name, with or without the scm_option_ prefix.
+ * @param string $default Default when the option is missing.
+ *
+ * @return bool
+ */
+function scm_option_is_enabled( $key, $default = 'no' ) {
+	$option = 0 === strpos( $key, 'scm_' ) ? $key : 'scm_option_' . $key;
+	$value  = get_option( $option, $default );
+
+	if ( is_bool( $value ) ) {
+		return $value;
+	}
+
+	if ( is_int( $value ) ) {
+		return 1 === $value;
+	}
+
+	return in_array( strtolower( (string) $value ), array( 'yes', 'enable', 'on', '1', 'true' ), true );
+}
+
+/**
+ * Set an option using its stored vocabulary.
+ *
+ * @param string $key     Option name, with or without the scm_option_ prefix.
+ * @param bool   $enabled Whether the option is enabled.
+ * @param string $format  yes_no|enable_disable.
+ *
+ * @return void
+ */
+function scm_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
+	$option = 0 === strpos( $key, 'scm_' ) ? $key : 'scm_option_' . $key;
+	$value  = 'enable_disable' === $format
+		? ( $enabled ? 'enable' : 'disable' )
+		: ( $enabled ? 'yes' : 'no' );
+
+	update_option( $option, $value );
+}
+
+/**
  * Get upload dir.
  *
  * @return string

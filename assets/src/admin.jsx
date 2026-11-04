@@ -297,7 +297,7 @@ function DriverAdvanced({cache, updateAdvanced, updateConnection, testDriver, is
 				<SwitchRow label="File Compression" description="Saves disk space for large HTML files. Raw files can be faster on fast SSD storage." checked={current.compress === 'yes'} onChange={(checked) => updateAdvanced('file', 'compress', checked ? 'yes' : 'no')} />
 				<TextFieldRow label="Compression Threshold" type="number" min="0" value={current.compress_threshold ?? 4096} onChange={(value) => updateAdvanced('file', 'compress_threshold', value)} />
 				<TextFieldRow label="Compression Level" type="number" min="1" max="9" value={current.compress_level ?? 1} onChange={(value) => updateAdvanced('file', 'compress_level', value)} />
-				<SwitchRow label="Nginx Direct Cache" description="Expose raw file cache for server-level FastCGI bypass. Install generated Nginx snippet manually." checked={cache.nginxDirect === 'yes'} onChange={(checked) => updateAdvanced('__cache', 'nginxDirect', checked ? 'yes' : 'no')} />
+				<SwitchRow label="Nginx Direct Cache" description="Expose raw file cache for server-level FastCGI bypass. Install generated Nginx snippet manually." checked={Boolean(cache.nginxDirect)} onChange={(checked) => updateAdvanced('__cache', 'nginxDirect', checked)} />
 			</div>
 		);
 	}
@@ -488,16 +488,16 @@ function CacheSettings({settings, update, save, isBusy, testDriver}) {
 	return (
 		<div className="grid w-full grid-cols-1 items-stretch gap-4">
 			<Panel title="Driver" className="ams-wide-panel">
-				<SwitchRow label="Caching Status" description="Guest-only page cache. Logged-in users never receive cached HTML." checked={cache.cachingStatus === 'enable'} onChange={(checked) => update('cache', 'cachingStatus', checked ? 'enable' : 'disable')} />
+				<SwitchRow label="Caching Status" description="Guest-only page cache. Logged-in users never receive cached HTML." checked={Boolean(cache.cachingStatus)} onChange={(checked) => update('cache', 'cachingStatus', checked)} />
 				<DriverSelect settings={settings} update={update} />
 				<DriverGrid drivers={cache.drivers || []} selected={selectedDriver} onSelect={(value) => update('cache', 'driver', value)} />
 				<div className="ams-driver-form-grid">
 					<TextFieldRow label="Time to Live" type="number" min="300" max="2592000" value={cache.ttl} onChange={(value) => update('cache', 'ttl', value)} />
-					<SwitchRow label="TTL Auto Clear" checked={cache.ttlMechanism === 'enable'} onChange={(checked) => update('cache', 'ttlMechanism', checked ? 'enable' : 'disable')} />
+					<SwitchRow label="TTL Auto Clear" checked={Boolean(cache.ttlMechanism)} onChange={(checked) => update('cache', 'ttlMechanism', checked)} />
 					<TextFieldRow label="Cache Key Prefix" value={cache.cacheKeyPrefix} onChange={(value) => update('cache', 'cacheKeyPrefix', value)} />
 					<TextFieldRow label="Max Cache Entries" type="number" min="0" value={cache.maxEntries} onChange={(value) => update('cache', 'maxEntries', value)} />
-					<SwitchRow label="Expert Mode" checked={cache.expertModeStatus === 'enable'} onChange={(checked) => update('cache', 'expertModeStatus', checked ? 'enable' : 'disable')} />
-					<SwitchRow label="Debug Comment" checked={cache.debugComment === 'yes'} onChange={(checked) => update('cache', 'debugComment', checked ? 'yes' : 'no')} />
+					<SwitchRow label="Expert Mode" checked={Boolean(cache.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
+					<SwitchRow label="Debug Comment" checked={Boolean(cache.debugComment)} onChange={(checked) => update('cache', 'debugComment', checked)} />
 				</div>
 			</Panel>
 			<Panel title={`${selectedLabel} Advanced Settings`} action={<Pill tone="info">{selectedDriver}</Pill>} className="ams-wide-panel">
@@ -532,16 +532,16 @@ function PreloadSettings({data, settings, update, save, isBusy, runPreload, purg
 				</div>
 			</Panel>
 			<Panel title="Preload Settings">
-				<SwitchRow label="Cache Preload" checked={preload.enabled === 'yes'} onChange={(checked) => update('preload', 'enabled', checked ? 'yes' : 'no')} />
+				<SwitchRow label="Cache Preload" checked={Boolean(preload.enabled)} onChange={(checked) => update('preload', 'enabled', checked)} />
 				<TextFieldRow label="Limit" type="number" min="1" max="1000" value={preload.limit} onChange={(value) => update('preload', 'limit', value)} />
-				<SwitchRow label="Homepage Crawl" description="Homepage links become priority cache-first URLs." checked={preload.crawlHomepage === 'yes'} onChange={(checked) => update('preload', 'crawlHomepage', checked ? 'yes' : 'no')} />
+				<SwitchRow label="Homepage Crawl" description="Homepage links become priority cache-first URLs." checked={Boolean(preload.crawlHomepage)} onChange={(checked) => update('preload', 'crawlHomepage', checked)} />
 			</Panel>
 			<Panel title="Preload Options" className="ams-full-width">
 				<div className="ams-option-columns">
 					<ToggleList title="Post Types" items={preload.postTypes || []} onToggle={(value, checked) => toggleList('postTypes', value, checked)} />
 					<div className="ams-toggle-list">
 						<h3>Homepage</h3>
-						<SwitchRow label="Homepage" checked={preload.homepage === 'yes'} onChange={(checked) => update('preload', 'homepage', checked ? 'yes' : 'no')} />
+						<SwitchRow label="Homepage" checked={Boolean(preload.homepage)} onChange={(checked) => update('preload', 'homepage', checked)} />
 					</div>
 					<ToggleList title="Archive Pages" items={preload.archives || []} onToggle={(value, checked) => toggleList('archives', value, checked)} />
 				</div>
@@ -611,7 +611,7 @@ function PerformanceSettings({data, settings, updatePerformance, save, isBusy, l
 						['local_ucss', 'Local UCSS Generation'],
 						['js_analysis', 'JS Analysis']
 					].map(([key, label]) => (
-						<SwitchRow key={key} label={label} checked={perf[key] === 'yes'} onChange={(checked) => updatePerformance(key, checked ? 'yes' : 'no')} />
+						<SwitchRow key={key} label={label} checked={Boolean(perf[key])} onChange={(checked) => updatePerformance(key, checked)} />
 					))}
 					<TextFieldRow label="Critical image count" type="number" min="0" max="5" value={perf.critical_image_count} onChange={(value) => updatePerformance('critical_image_count', value)} />
 					<TextFieldRow label="External CSS max file size" type="number" min="51200" max="1048576" value={perf.external_ucss_max_file_size} onChange={(value) => updatePerformance('external_ucss_max_file_size', value)} />
@@ -679,7 +679,7 @@ function RulesSettings({settings, update, save, isBusy}) {
 
 	return (
 		<Panel title="Rules">
-			<SwitchRow label="Enable exclusion rules" checked={rules.enabled === 'yes'} onChange={(checked) => update('rules', 'enabled', checked ? 'yes' : 'no')} />
+			<SwitchRow label="Enable exclusion rules" checked={Boolean(rules.enabled)} onChange={(checked) => update('rules', 'enabled', checked)} />
 			<TextAreaRow label="Excluded URL Path List" value={rules.excludedList} onChange={(value) => update('rules', 'excludedList', value)} rows={8} />
 			<TextAreaRow label="Excluded GET variables" value={rules.getVars} onChange={(value) => update('rules', 'getVars', value)} />
 			<TextAreaRow label="Excluded POST variables" value={rules.postVars} onChange={(value) => update('rules', 'postVars', value)} />
@@ -697,7 +697,7 @@ function StatisticsSettings({data, settings, update, save, isBusy, clearType}) {
 				<CacheRows rows={stats.rows || []} clearType={clearType} />
 			</Panel>
 			<Panel title="Statistics">
-				<SwitchRow label="Record cache statistics" checked={settings.statistics?.enabled === 'enable'} onChange={(checked) => update('statistics', 'enabled', checked ? 'enable' : 'disable')} />
+				<SwitchRow label="Record cache statistics" checked={Boolean(settings.statistics?.enabled)} onChange={(checked) => update('statistics', 'enabled', checked)} />
 			</Panel>
 		</div>
 	);
@@ -740,7 +740,7 @@ function ExpertSettings({settings, update, save, isBusy}) {
 	return (
 		<div className="grid w-full grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(280px,3fr)_minmax(0,7fr)]">
 			<Panel title="Expert Mode">
-				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={settings.cache?.expertModeStatus === 'enable'} onChange={(checked) => update('cache', 'expertModeStatus', checked ? 'enable' : 'disable')} />
+				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={Boolean(settings.cache?.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
 			</Panel>
 			<Panel title="Configure Code Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={copyCode}>{copied ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
 				<p className="ams-muted">Paste this block into wp-config.php above &ldquo;That&rsquo;s all, stop editing&rdquo;. It loads config before WordPress boots.</p>
@@ -767,9 +767,9 @@ function BenchmarkSettings({settings, update, save, isBusy}) {
 
 	return (
 		<Panel title="Benchmark">
-			<SwitchRow label="Frontend Widget" checked={settings.benchmark?.widget === 'yes'} onChange={(checked) => update('benchmark', 'widget', checked ? 'yes' : 'no')} />
+			<SwitchRow label="Frontend Widget" checked={Boolean(settings.benchmark?.widget)} onChange={(checked) => update('benchmark', 'widget', checked)} />
 			<MiniSelectRow label="Widget Display" value={settings.benchmark?.widgetDisplay || 'both'} options={displays} onChange={(value) => update('benchmark', 'widgetDisplay', value)} />
-			<SwitchRow label="Footer Text" checked={settings.benchmark?.footer === 'yes'} onChange={(checked) => update('benchmark', 'footer', checked ? 'yes' : 'no')} />
+			<SwitchRow label="Footer Text" checked={Boolean(settings.benchmark?.footer)} onChange={(checked) => update('benchmark', 'footer', checked)} />
 			<MiniSelectRow label="Footer Display" value={settings.benchmark?.footerDisplay || 'text'} options={displays} onChange={(value) => update('benchmark', 'footerDisplay', value)} />
 			<div className="ams-benchmark-preview">
 				<span>Your cached pages served to visitors will show this footer.</span>
@@ -932,8 +932,8 @@ function App() {
 					{view === 'woocommerce' ? (
 						<SimpleTogglePage title="WooCommerce">
 							{settings.woocommerce?.active ? null : <Pill tone="warning">WooCommerce is not active</Pill>}
-							<SwitchRow label="WooCommerce cache rules" checked={settings.woocommerce?.enabled === 'yes'} onChange={(checked) => update('woocommerce', 'enabled', checked ? 'yes' : 'no')} />
-							<SwitchRow label="Clear after payment complete" checked={settings.woocommerce?.paymentComplete === 'yes'} onChange={(checked) => update('woocommerce', 'paymentComplete', checked ? 'yes' : 'no')} />
+							<SwitchRow label="WooCommerce cache rules" checked={Boolean(settings.woocommerce?.enabled)} onChange={(checked) => update('woocommerce', 'enabled', checked)} />
+							<SwitchRow label="Clear after payment complete" checked={Boolean(settings.woocommerce?.paymentComplete)} onChange={(checked) => update('woocommerce', 'paymentComplete', checked)} />
 						</SimpleTogglePage>
 					) : null}
 					{view === 'about' ? <AboutPage data={data} /> : null}
