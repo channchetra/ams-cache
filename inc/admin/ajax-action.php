@@ -247,6 +247,64 @@ function scm_ajax_dashboard_save_toggle_map( $items, $option_key ) {
 }
 
 /**
+ * Apply a declarative option schema to an incoming settings section.
+ *
+ * @param array $incoming Incoming settings.
+ * @param array $schema   Field => rule map.
+ *
+ * @return void
+ */
+function scm_ajax_dashboard_apply_option_schema( $incoming, $schema ) {
+	foreach ( $schema as $field => $rule ) {
+		$value = array_key_exists( $field, $incoming ) ? $incoming[ $field ] : $rule['default'];
+
+		switch ( $rule['sanitize'] ) {
+			case 'yes_no':
+				$value = scm_ajax_dashboard_yes_no( $value, isset( $rule['fallback'] ) ? $rule['fallback'] : 'no' );
+				break;
+
+			case 'enable_disable':
+				$value = scm_ajax_dashboard_enable_disable( $value, isset( $rule['fallback'] ) ? $rule['fallback'] : 'disable' );
+				break;
+
+			case 'absint':
+				$value = absint( $value );
+				break;
+
+			case 'key':
+				$value = sanitize_key( (string) $value );
+				break;
+
+			case 'text':
+				$value = sanitize_text_field( (string) $value );
+				break;
+
+			case 'textarea':
+				$value = sanitize_textarea_field( (string) $value );
+				break;
+
+			case 'enum':
+				$value = sanitize_key( (string) $value );
+				$value = in_array( $value, $rule['values'], true ) ? $value : $rule['fallback'];
+				break;
+
+			default:
+				$value = $value;
+		}
+
+		if ( isset( $rule['min'] ) ) {
+			$value = max( $rule['min'], $value );
+		}
+
+		if ( isset( $rule['max'] ) ) {
+			$value = min( $rule['max'], $value );
+		}
+
+		update_option( $rule['option'], $value );
+	}
+}
+
+/**
  * Save React dashboard settings.
  *
  * @return void
@@ -268,19 +326,23 @@ function scm_ajax_dashboard_save_settings_callback() {
 	if ( isset( $settings['cache'] ) && is_array( $settings['cache'] ) ) {
 		$cache   = $settings['cache'];
 		$drivers = array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' );
-		$driver  = isset( $cache['driver'] ) ? sanitize_key( $cache['driver'] ) : get_option( 'scm_option_driver', 'file' );
 
-		update_option( 'scm_option_caching_status', scm_ajax_dashboard_enable_disable( isset( $cache['cachingStatus'] ) ? $cache['cachingStatus'] : get_option( 'scm_option_caching_status', 'disable' ) ) );
-		update_option( 'scm_option_driver', in_array( $driver, $drivers, true ) ? $driver : 'file' );
-		update_option( 'scm_option_ttl_mechanism', scm_ajax_dashboard_enable_disable( isset( $cache['ttlMechanism'] ) ? $cache['ttlMechanism'] : get_option( 'scm_option_ttl_mechanism', 'enable' ), 'enable' ) );
-		update_option( 'scm_option_ttl', max( 300, min( 2592000, absint( isset( $cache['ttl'] ) ? $cache['ttl'] : get_option( 'scm_option_ttl', 86400 ) ) ) ) );
-		update_option( 'scm_option_cache_key_prefix', sanitize_key( isset( $cache['cacheKeyPrefix'] ) ? $cache['cacheKeyPrefix'] : scm_get_cache_key_prefix() ) );
-		update_option( 'scm_option_cache_max_entries', max( 0, absint( isset( $cache['maxEntries'] ) ? $cache['maxEntries'] : scm_get_cache_max_entries() ) ) );
-		update_option( 'scm_option_expert_mode_status', scm_ajax_dashboard_enable_disable( isset( $cache['expertModeStatus'] ) ? $cache['expertModeStatus'] : get_option( 'scm_option_expert_mode_status', 'disable' ) ) );
-		update_option( 'scm_option_nginx_direct_cache_status', scm_ajax_dashboard_yes_no( isset( $cache['nginxDirect'] ) ? $cache['nginxDirect'] : get_option( 'scm_option_nginx_direct_cache_status', 'no' ) ) );
-		update_option( 'scm_option_html_debug_comment', scm_ajax_dashboard_yes_no( isset( $cache['debugComment'] ) ? $cache['debugComment'] : get_option( 'scm_option_html_debug_comment', 'yes' ), 'yes' ) );
-		update_option( 'scm_option_visibility_login_user', 'no' );
-		update_option( 'scm_option_visibility_guest', 'yes' );
+		scm_ajax_dashboard_apply_option_schema(
+			$cache,
+			array(
+				'cachingStatus'       => array( 'option' => 'scm_option_caching_status', 'sanitize' => 'enable_disable', 'default' => get_option( 'scm_option_caching_status', 'disable' ), 'fallback' => 'disable' ),
+				'driver'              => array( 'option' => 'scm_option_driver', 'sanitize' => 'enum', 'values' => $drivers, 'fallback' => 'file', 'default' => get_option( 'scm_option_driver', 'file' ) ),
+				'ttlMechanism'        => array( 'option' => 'scm_option_ttl_mechanism', 'sanitize' => 'enable_disable', 'default' => get_option( 'scm_option_ttl_mechanism', 'enable' ), 'fallback' => 'enable' ),
+				'ttl'                 => array( 'option' => 'scm_option_ttl', 'sanitize' => 'absint', 'default' => get_option( 'scm_option_ttl', 86400 ), 'min' => 300, 'max' => 2592000 ),
+				'cacheKeyPrefix'      => array( 'option' => 'scm_option_cache_key_prefix', 'sanitize' => 'key', 'default' => scm_get_cache_key_prefix() ),
+				'maxEntries'          => array( 'option' => 'scm_option_cache_max_entries', 'sanitize' => 'absint', 'default' => scm_get_cache_max_entries(), 'min' => 0 ),
+				'expertModeStatus'    => array( 'option' => 'scm_option_expert_mode_status', 'sanitize' => 'enable_disable', 'default' => get_option( 'scm_option_expert_mode_status', 'disable' ), 'fallback' => 'disable' ),
+				'nginxDirect'         => array( 'option' => 'scm_option_nginx_direct_cache_status', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_nginx_direct_cache_status', 'no' ), 'fallback' => 'no' ),
+				'debugComment'        => array( 'option' => 'scm_option_html_debug_comment', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_html_debug_comment', 'yes' ), 'fallback' => 'yes' ),
+				'visibilityLoginUser' => array( 'option' => 'scm_option_visibility_login_user', 'sanitize' => 'yes_no', 'default' => 'no', 'fallback' => 'no' ),
+				'visibilityGuest'     => array( 'option' => 'scm_option_visibility_guest', 'sanitize' => 'yes_no', 'default' => 'yes', 'fallback' => 'yes' ),
+			)
+		);
 
 		if ( isset( $cache['driverAdvanced'] ) && is_array( $cache['driverAdvanced'] ) ) {
 			$advanced = $cache['driverAdvanced'];
@@ -342,11 +404,16 @@ function scm_ajax_dashboard_save_settings_callback() {
 		$preload     = $settings['preload'];
 		$was_enabled = 'yes' === get_option( 'scm_option_preload_cache', 'no' );
 
-		update_option( 'scm_option_preload_cache', scm_ajax_dashboard_yes_no( isset( $preload['enabled'] ) ? $preload['enabled'] : get_option( 'scm_option_preload_cache', 'no' ) ) );
+		scm_ajax_dashboard_apply_option_schema(
+			$preload,
+			array(
+				'enabled'       => array( 'option' => 'scm_option_preload_cache', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_preload_cache', 'no' ), 'fallback' => 'no' ),
+				'limit'         => array( 'option' => 'scm_option_preload_limit', 'sanitize' => 'absint', 'default' => get_option( 'scm_option_preload_limit', 50 ), 'min' => 1, 'max' => 1000 ),
+				'crawlHomepage' => array( 'option' => 'scm_option_preload_homepage_links', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_preload_homepage_links', 'yes' ), 'fallback' => 'yes' ),
+				'homepage'      => array( 'option' => 'scm_option_post_homepage', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_post_homepage', 'yes' ), 'fallback' => 'yes' ),
+			)
+		);
 		$now_enabled = get_option( 'scm_option_preload_cache' );
-		update_option( 'scm_option_preload_limit', max( 1, min( 1000, absint( isset( $preload['limit'] ) ? $preload['limit'] : get_option( 'scm_option_preload_limit', 50 ) ) ) ) );
-		update_option( 'scm_option_preload_homepage_links', scm_ajax_dashboard_yes_no( isset( $preload['crawlHomepage'] ) ? $preload['crawlHomepage'] : get_option( 'scm_option_preload_homepage_links', 'yes' ), 'yes' ) );
-		update_option( 'scm_option_post_homepage', scm_ajax_dashboard_yes_no( isset( $preload['homepage'] ) ? $preload['homepage'] : get_option( 'scm_option_post_homepage', 'yes' ), 'yes' ) );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'scm_option_post_types' );
 		scm_ajax_dashboard_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'scm_option_post_archives' );
 
@@ -399,34 +466,51 @@ function scm_ajax_dashboard_save_settings_callback() {
 	if ( isset( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
 		$rules = $settings['rules'];
 
-		update_option( 'scm_option_exclusion_status', scm_ajax_dashboard_yes_no( isset( $rules['enabled'] ) ? $rules['enabled'] : get_option( 'scm_option_exclusion_status', 'no' ) ) );
-		update_option( 'scm_option_excluded_list', sanitize_textarea_field( isset( $rules['excludedList'] ) ? $rules['excludedList'] : get_option( 'scm_option_excluded_list', '' ) ) );
-		update_option( 'scm_option_excluded_get_vars', sanitize_textarea_field( isset( $rules['getVars'] ) ? $rules['getVars'] : get_option( 'scm_option_excluded_get_vars', '' ) ) );
-		update_option( 'scm_option_excluded_post_vars', sanitize_textarea_field( isset( $rules['postVars'] ) ? $rules['postVars'] : get_option( 'scm_option_excluded_post_vars', '' ) ) );
-		update_option( 'scm_option_excluded_cookie_vars', sanitize_textarea_field( isset( $rules['cookieVars'] ) ? $rules['cookieVars'] : get_option( 'scm_option_excluded_cookie_vars', '' ) ) );
+		scm_ajax_dashboard_apply_option_schema(
+			$rules,
+			array(
+				'enabled'      => array( 'option' => 'scm_option_exclusion_status', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_exclusion_status', 'no' ), 'fallback' => 'no' ),
+				'excludedList' => array( 'option' => 'scm_option_excluded_list', 'sanitize' => 'textarea', 'default' => get_option( 'scm_option_excluded_list', '' ) ),
+				'getVars'      => array( 'option' => 'scm_option_excluded_get_vars', 'sanitize' => 'textarea', 'default' => get_option( 'scm_option_excluded_get_vars', '' ) ),
+				'postVars'     => array( 'option' => 'scm_option_excluded_post_vars', 'sanitize' => 'textarea', 'default' => get_option( 'scm_option_excluded_post_vars', '' ) ),
+				'cookieVars'   => array( 'option' => 'scm_option_excluded_cookie_vars', 'sanitize' => 'textarea', 'default' => get_option( 'scm_option_excluded_cookie_vars', '' ) ),
+			)
+		);
 	}
 
 	if ( isset( $settings['statistics'] ) && is_array( $settings['statistics'] ) ) {
-		update_option( 'scm_option_statistics_status', scm_ajax_dashboard_enable_disable( isset( $settings['statistics']['enabled'] ) ? $settings['statistics']['enabled'] : get_option( 'scm_option_statistics_status', 'disable' ) ) );
+		scm_ajax_dashboard_apply_option_schema(
+			$settings['statistics'],
+			array(
+				'enabled' => array( 'option' => 'scm_option_statistics_status', 'sanitize' => 'enable_disable', 'default' => get_option( 'scm_option_statistics_status', 'disable' ), 'fallback' => 'disable' ),
+			)
+		);
 	}
 
 	if ( isset( $settings['benchmark'] ) && is_array( $settings['benchmark'] ) ) {
 		$benchmark = $settings['benchmark'];
-		$display   = array( 'text', 'icon', 'both' );
-		$widget_display = isset( $benchmark['widgetDisplay'] ) ? sanitize_key( $benchmark['widgetDisplay'] ) : '';
-		$footer_display = isset( $benchmark['footerDisplay'] ) ? sanitize_key( $benchmark['footerDisplay'] ) : '';
 
-		update_option( 'scm_option_benchmark_widget', scm_ajax_dashboard_yes_no( isset( $benchmark['widget'] ) ? $benchmark['widget'] : get_option( 'scm_option_benchmark_widget', 'no' ) ) );
-		update_option( 'scm_option_benchmark_footer_text', scm_ajax_dashboard_yes_no( isset( $benchmark['footer'] ) ? $benchmark['footer'] : get_option( 'scm_option_benchmark_footer_text', 'no' ) ) );
-		update_option( 'scm_option_benchmark_widget_display', in_array( $widget_display, $display, true ) ? $widget_display : 'both' );
-		update_option( 'scm_option_benchmark_footer_text_display', in_array( $footer_display, $display, true ) ? $footer_display : 'text' );
+		scm_ajax_dashboard_apply_option_schema(
+			$benchmark,
+			array(
+				'widget'        => array( 'option' => 'scm_option_benchmark_widget', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_benchmark_widget', 'no' ), 'fallback' => 'no' ),
+				'footer'        => array( 'option' => 'scm_option_benchmark_footer_text', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_benchmark_footer_text', 'no' ), 'fallback' => 'no' ),
+				'widgetDisplay' => array( 'option' => 'scm_option_benchmark_widget_display', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'both', 'default' => '' ),
+				'footerDisplay' => array( 'option' => 'scm_option_benchmark_footer_text_display', 'sanitize' => 'enum', 'values' => array( 'text', 'icon', 'both' ), 'fallback' => 'text', 'default' => '' ),
+			)
+		);
 	}
 
 	if ( isset( $settings['woocommerce'] ) && is_array( $settings['woocommerce'] ) ) {
 		$woocommerce = $settings['woocommerce'];
 
-		update_option( 'scm_option_woocommerce_status', scm_ajax_dashboard_yes_no( isset( $woocommerce['enabled'] ) ? $woocommerce['enabled'] : get_option( 'scm_option_woocommerce_status', 'no' ) ) );
-		update_option( 'scm_option_woocommerce_event_payment_complete', scm_ajax_dashboard_yes_no( isset( $woocommerce['paymentComplete'] ) ? $woocommerce['paymentComplete'] : get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ) ) );
+		scm_ajax_dashboard_apply_option_schema(
+			$woocommerce,
+			array(
+				'enabled'         => array( 'option' => 'scm_option_woocommerce_status', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_woocommerce_status', 'no' ), 'fallback' => 'no' ),
+				'paymentComplete' => array( 'option' => 'scm_option_woocommerce_event_payment_complete', 'sanitize' => 'yes_no', 'default' => get_option( 'scm_option_woocommerce_event_payment_complete', 'no' ), 'fallback' => 'no' ),
+			)
+		);
 	}
 
 	scm_sync_expert_mode_runtime();
