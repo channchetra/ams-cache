@@ -795,10 +795,14 @@ function scm_test_driver( $type = '' ) {
 			$driver->delete( 'foo' );
 			return true;
 		}
-	} catch ( \Exception $e ) {
-		// Nothing here.
 	} catch ( \Throwable $e ) {
-		// Nothing here.
+		error_log(
+			sprintf(
+				'[AMS Cache] Driver %s connection test failed: %s',
+				'' !== $type ? $type : 'unknown',
+				$e->getMessage()
+			)
+		);
 	}
 
 	return false;
