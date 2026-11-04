@@ -1034,11 +1034,17 @@ function scm_clear_cache_type( $cache_type ) {
 }
 
 /**
- * Save the settings into a JSON file.
+ * Build the runtime exclusion configuration from the stored settings.
  *
- * @param array $settings The setting.
+ * Persists the normalized path list to scm_option_excluded_list_filtered.
  *
- * @return void
+ * @return array {
+ *     @type bool  $enable               Whether exclusion rules are enabled.
+ *     @type array $excluded_list        Normalized excluded paths.
+ *     @type array $excluded_get_vars    Excluded GET variables.
+ *     @type array $excluded_post_vars   Excluded POST variables.
+ *     @type array $excluded_cookie_vars Excluded cookie variables.
+ * }
  */
 function scm_get_runtime_exclusion_config() {
 	$list = array();
@@ -1081,6 +1087,13 @@ function scm_get_runtime_exclusion_config() {
 	);
 }
 
+/**
+ * Save the settings into the JSON runtime config.
+ *
+ * @param array $setting The setting.
+ *
+ * @return void
+ */
 function scm_update_config( $setting ) {
 	$config = scm_get_config_data();
 

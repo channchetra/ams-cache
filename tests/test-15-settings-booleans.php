@@ -55,4 +55,18 @@ class SettingsBooleansTest extends WP_UnitTestCase {
 			$this->assertIsBool( $data['performance'][ $key ] );
 		}
 	}
+
+	public function test_runtime_exclusion_config_shape() {
+		$config = scm_get_runtime_exclusion_config();
+
+		foreach ( array( 'enable', 'excluded_list', 'excluded_get_vars', 'excluded_post_vars', 'excluded_cookie_vars' ) as $key ) {
+			$this->assertArrayHasKey( $key, $config );
+		}
+
+		$this->assertIsBool( $config['enable'] );
+		$this->assertIsArray( $config['excluded_list'] );
+		$this->assertIsArray( $config['excluded_get_vars'] );
+		$this->assertIsArray( $config['excluded_post_vars'] );
+		$this->assertIsArray( $config['excluded_cookie_vars'] );
+	}
 }
