@@ -1001,30 +1001,10 @@ function scm_get_page_optimization_requirements() {
 			'passed' => '' !== get_option( 'permalink_structure', '' ),
 			'detail' => '' !== get_option( 'permalink_structure', '' ) ? get_option( 'permalink_structure' ) : __( 'Plain permalinks', 'ams-cache' ),
 		),
-		'html_parser'  => array(
-			'label'  => __( 'HTML rewrite engine available', 'ams-cache' ),
-			'passed' => true,
-			'detail' => __( 'Built-in PHP regex processor', 'ams-cache' ),
-		),
 		'server_gzip'  => array(
 			'label'  => __( 'Text compression', 'ams-cache' ),
 			'passed' => extension_loaded( 'zlib' ),
 			'detail' => extension_loaded( 'zlib' ) ? __( 'PHP zlib available; enable gzip/Brotli on your web server for best results.', 'ams-cache' ) : __( 'Enable gzip/Brotli on your web server.', 'ams-cache' ),
-		),
-		'php_css'      => array(
-			'label'  => __( 'Built-in PHP CSS optimizer', 'ams-cache' ),
-			'passed' => true,
-			'detail' => __( 'Conservative selector matching; unsupported and dynamic rules are preserved.', 'ams-cache' ),
-		),
-		'php_js'       => array(
-			'label'  => __( 'Built-in PHP JavaScript analyzer', 'ams-cache' ),
-			'passed' => true,
-			'detail' => __( 'Bounded same-site analysis; unsafe scripts remain blocking.', 'ams-cache' ),
-		),
-		'legacy_cli'   => array(
-			'label'  => __( 'Legacy CLI optimizer settings', 'ams-cache' ),
-			'passed' => true,
-			'detail' => __( 'Optional Bun and PurgeCSS fields remain for compatibility; runtime optimization does not require them.', 'ams-cache' ),
 		),
 		'work_dir'     => array(
 			'label'  => __( 'Local optimizer workspace', 'ams-cache' ),
