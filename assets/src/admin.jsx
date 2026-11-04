@@ -709,24 +709,25 @@ function SimpleTogglePage({title, children}) {
 
 function ExpertSettings({settings, update, save, isBusy}) {
 	const code = settings.cache?.expertModeCode || '';
-	const [copied, setCopied] = useState(false);
-	const copyCode = () => {
-		if (!code) {
+	const customValue = settings.cache?.expertModeCustomValue || '';
+	const [copied, setCopied] = useState('');
+	const copyText = (value, key) => {
+		if (!value) {
 			return;
 		}
 
 		const done = () => {
-			setCopied(true);
-			window.setTimeout(() => setCopied(false), 1600);
+			setCopied(key);
+			window.setTimeout(() => setCopied(''), 1600);
 		};
 
 		if (navigator.clipboard?.writeText) {
-			navigator.clipboard.writeText(code).then(done).catch(() => {});
+			navigator.clipboard.writeText(value).then(done).catch(() => {});
 			return;
 		}
 
 		const textarea = document.createElement('textarea');
-		textarea.value = code;
+		textarea.value = value;
 		textarea.setAttribute('readonly', 'readonly');
 		textarea.style.position = 'fixed';
 		textarea.style.left = '-9999px';
@@ -742,21 +743,37 @@ function ExpertSettings({settings, update, save, isBusy}) {
 			<Panel title="Expert Mode">
 				<SwitchRow label="Expert Mode" description="Reads runtime config early from wp-config.php. Guest-only bypass stays active." checked={Boolean(settings.cache?.expertModeStatus)} onChange={(checked) => update('cache', 'expertModeStatus', checked)} />
 			</Panel>
-			<Panel title="Configure Code Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={copyCode}>{copied ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
+			<Panel title="wp-config.php Block" action={<div className="ams-action-row ams-action-row--compact"><Pill tone={settings.cache?.expertModeReady ? 'good' : 'warning'}>{settings.cache?.expertModeReady ? 'Ready' : 'Not ready'}</Pill><AmsButton size="sm" icon={Copy} onPress={() => copyText(code, 'code')}>{copied === 'code' ? 'Copied' : 'Copy Code'}</AmsButton></div>}>
 				<p className="ams-muted">Paste this block into wp-config.php above &ldquo;That&rsquo;s all, stop editing&rdquo;. It loads config before WordPress boots.</p>
 				<pre
 					className="ams-code-block ams-code-block--copyable"
 					role="button"
 					tabIndex={0}
 					title="Click to copy"
-					onClick={copyCode}
+					onClick={() => copyText(code, 'code')}
 					onKeyDown={(event) => {
 						if (event.key === 'Enter' || event.key === ' ') {
 							event.preventDefault();
-							copyCode();
+							copyText(code, 'code');
 						}
 					}}
 				><code>{code}</code></pre>
+			</Panel>
+			<Panel title="Docker / Custom Value" className="ams-wide-panel" action={<AmsButton size="sm" icon={Copy} onPress={() => copyText(customValue, 'custom')}>{copied === 'custom' ? 'Copied' : 'Copy Value'}</AmsButton>}>
+				<p className="ams-muted">For Docker or hosts that only expose a custom wp-config value, paste this single line into <code>WORDPRESS_CONFIG_EXTRA</code>. It must run before WordPress boots.</p>
+				<pre
+					className="ams-code-block ams-code-block--copyable"
+					role="button"
+					tabIndex={0}
+					title="Click to copy"
+					onClick={() => copyText(customValue, 'custom')}
+					onKeyDown={(event) => {
+						if (event.key === 'Enter' || event.key === ' ') {
+							event.preventDefault();
+							copyText(customValue, 'custom');
+						}
+					}}
+				><code>{customValue}</code></pre>
 			</Panel>
 		</div>
 	);

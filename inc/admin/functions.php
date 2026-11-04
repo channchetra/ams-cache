@@ -546,6 +546,7 @@ function scm_dashboard_get_settings_data() {
 			'drivers'          => $drivers,
 			'driverAdvanced'   => scm_dashboard_get_driver_advanced_settings_data(),
 			'expertModeCode'   => scm_expert_mode_code_template(),
+			'expertModeCustomValue' => scm_expert_mode_custom_value(),
 			'expertModeReady'  => scm_is_expert_mode_code_ready(),
 		),
 		'preload'     => array(
@@ -850,47 +851,53 @@ if ( file_exists( <?php echo var_export( $expert_mode_file, true ); ?> ) ) {
 }
 
 /**
- * Check if the Expert Mode code snippet exists or not.
+ * Get the single-line Expert Mode value for Docker or custom wp-config fields.
  *
- * @param string $string The string that must be found.
- *
- * @return array
+ * @return string
  */
-function scm_search_expert_mode_code_snippet( $string ) {
+function scm_expert_mode_custom_value() {
+	$plugin_dir        = wp_normalize_path( rtrim( SCM_PLUGIN_DIR, '/\\' ) );
+	$plugin_upload_dir = wp_normalize_path( rtrim( scm_get_upload_dir(), '/\\' ) );
+	$runtime_dir       = wp_normalize_path( rtrim( scm_get_private_runtime_dir(), '/\\' ) );
+	$expert_mode_file  = $plugin_dir . '/inc/expert-mode.php';
+
+	return 'if ( file_exists( ' . var_export( $expert_mode_file, true ) . ' ) ) { require_once ' . var_export( $expert_mode_file, true ) . '; scm_run_expert_mode( array( '
+		. "'plugin_dir' => " . var_export( $plugin_dir, true ) . ', '
+		. "'plugin_upload_dir' => " . var_export( $plugin_upload_dir, true ) . ', '
+		. "'runtime_dir' => " . var_export( $runtime_dir, true )
+		. ' ) ); }';
+}
+
+/**
+ * Read wp-config.php contents, including the parent-directory fallback.
+ *
+ * @return string
+ */
+function scm_get_wp_config_contents() {
 	$wp_config_file = ABSPATH . 'wp-config.php';
 
-	if ( ! file_exists( $wp_config_file ) ) {
-
-		// For some users put the wp-config.php in parent folder...
-		if ( file_exists( ABSPATH . '../wp-config.php' ) ) {
-			$wp_config_file = ABSPATH . '../wp-config.php';
-		}
+	if ( ! file_exists( $wp_config_file ) && file_exists( ABSPATH . '../wp-config.php' ) ) {
+		$wp_config_file = ABSPATH . '../wp-config.php';
 	}
 
-	$found1 = false;
-	$found2 = false;
+	return file_exists( $wp_config_file ) ? (string) @file_get_contents( $wp_config_file ) : '';
+}
 
-	if ( file_exists( $wp_config_file ) ) {
-		$file    = @fopen( $wp_config_file, 'r' );
-		$target1 = 'expert-mode.php';
-		$target2 = $string;
+/**
+ * Check whether a config source contains the Expert Mode loader and paths.
+ *
+ * @param string $source      Config source.
+ * @param string $upload_dir  Plugin upload dir.
+ * @param string $runtime_dir Private runtime dir.
+ *
+ * @return bool
+ */
+function scm_expert_mode_snippet_matches( $source, $upload_dir, $runtime_dir ) {
+	$source = (string) $source;
 
-		if ( $file ) {
-			while ( $line = fgets( $file ) ) {
-				if ( strpos( $line, $target1 ) !== false ) {
-					$found1 = true;
-				}
-				if ( strpos( $line, $target2 ) !== false ) {
-					$found2 = true;
-				}
-			}
-			fclose( $file );
-		}
-	}
-
-	$result = array( $found1, $found2 );
-
-	return $result;
+	return false !== strpos( $source, 'expert-mode.php' )
+		&& false !== strpos( $source, wp_normalize_path( $upload_dir ) )
+		&& false !== strpos( $source, wp_normalize_path( $runtime_dir ) );
 }
 
 /**
@@ -899,10 +906,30 @@ function scm_search_expert_mode_code_snippet( $string ) {
  * @return bool
  */
 function scm_is_expert_mode_code_ready() {
-	$upload_result  = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_upload_dir() ) );
-	$runtime_result = scm_search_expert_mode_code_snippet( wp_normalize_path( scm_get_private_runtime_dir() ) );
+	$upload_dir  = wp_normalize_path( scm_get_upload_dir() );
+	$runtime_dir = wp_normalize_path( scm_get_private_runtime_dir() );
 
-	return $upload_result[0] && $upload_result[1] && $runtime_result[0] && $runtime_result[1];
+	if ( scm_expert_mode_snippet_matches( scm_get_wp_config_contents(), $upload_dir, $runtime_dir ) ) {
+		return true;
+	}
+
+	foreach ( array( 'WORDPRESS_CONFIG_EXTRA', 'WP_CONFIG_EXTRA' ) as $env_key ) {
+		$value = getenv( $env_key );
+
+		if ( false === $value && isset( $_ENV[ $env_key ] ) ) {
+			$value = $_ENV[ $env_key ];
+		}
+
+		if ( false === $value && isset( $_SERVER[ $env_key ] ) ) {
+			$value = $_SERVER[ $env_key ];
+		}
+
+		if ( is_string( $value ) && scm_expert_mode_snippet_matches( $value, $upload_dir, $runtime_dir ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
