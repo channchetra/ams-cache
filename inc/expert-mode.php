@@ -193,12 +193,12 @@ function scm_run_expert_mode( $args ) {
 				$cached_content .= $debug_message;
 			}
 
-			scm_variable_stack( 'now',  $date, 'after' );
-			scm_variable_stack( 'memory_usage',  $memory_usage, 'after' );
-			scm_variable_stack( 'sql_queries',  $sql_queries, 'after' );
-			scm_variable_stack( 'page_generation_time',  $page_speed, 'after' );
+			scm_set_view_variable( 'now',  $date, 'after' );
+			scm_set_view_variable( 'memory_usage',  $memory_usage, 'after' );
+			scm_set_view_variable( 'sql_queries',  $sql_queries, 'after' );
+			scm_set_view_variable( 'page_generation_time',  $page_speed, 'after' );
 
-			// This line must be at after scm_variable_stack.
+			// This line must be at after scm_set_view_variable.
 			$cached_content = str_replace(
 				'</body>',
 				"\n" . scm_javascript() . "\n" . '</body>',

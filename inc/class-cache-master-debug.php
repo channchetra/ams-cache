@@ -198,10 +198,10 @@ trait SCM_Cache_Master_Debug {
 		$date         = $this->get_date();
 		$stage        = ( $position === 'ob_start' ) ? 'after' : 'before';
 
-		scm_variable_stack( 'now',  $date, $stage );
-		scm_variable_stack( 'memory_usage',  $memory_usage, $stage );
-		scm_variable_stack( 'sql_queries',  $sql_queries, $stage );
-		scm_variable_stack( 'page_generation_time',  $timer_stop, $stage );
+		scm_set_view_variable( 'now',  $date, $stage );
+		scm_set_view_variable( 'memory_usage',  $memory_usage, $stage );
+		scm_set_view_variable( 'sql_queries',  $sql_queries, $stage );
+		scm_set_view_variable( 'page_generation_time',  $timer_stop, $stage );
 
 		if ( 'no' === get_option( 'scm_option_html_debug_comment' ) ) {
 			return '';

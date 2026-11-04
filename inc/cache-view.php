@@ -42,27 +42,51 @@ function scm_get_svg_icon( $type ) {
 }
 
 /**
- * The variable stack for JavaScript snippet.
+ * Read or write the page performance variable state.
  *
- * This function is also used in expert mode.
+ * Internal helper; use scm_set_view_variable() / scm_drain_view_variables().
  *
- * @param string      $key      The key of the field.
- * @param string|int  $value    The value of the field.
- * @param string      $poistion The position.
+ * @param string|null $key      Variable name, or null to drain.
+ * @param mixed       $value    Variable value.
+ * @param string      $position before|after.
  *
- * @return void
+ * @return string|null JSON when draining, null otherwise.
  */
-function scm_variable_stack( $key, $value = '', $poistion = 'before' ) {
+function scm_view_variable_state( $key = null, $value = '', $position = 'before' ) {
 	static $vars = array();
 
-	if ( is_null( $key ) ) {
+	if ( null === $key ) {
 		$output = $vars;
 		$vars   = array();
 
 		return json_encode( $output );
 	}
 
-	$vars[ $poistion ][ $key ] = $value;
+	$vars[ $position ][ $key ] = $value;
+
+	return null;
+}
+
+/**
+ * Add one value to the page performance variable state.
+ *
+ * @param string $key      Variable name.
+ * @param mixed  $value    Variable value.
+ * @param string $position before|after.
+ *
+ * @return void
+ */
+function scm_set_view_variable( $key, $value = '', $position = 'before' ) {
+	scm_view_variable_state( $key, $value, $position );
+}
+
+/**
+ * Drain the page performance variable state as JSON.
+ *
+ * @return string
+ */
+function scm_drain_view_variables() {
+	return (string) scm_view_variable_state( null );
 }
 
 /**
@@ -75,7 +99,7 @@ function scm_variable_stack( $key, $value = '', $poistion = 'before' ) {
 function scm_javascript() {
 	$script = '
 		<script id="ams-cache-plugin">
-			var cache_master = \'' . scm_variable_stack( null ) . '\';
+			var cache_master = \'' . scm_drain_view_variables() . '\';
 			var scm_report   = JSON.parse(cache_master);
 
 			var scm_text_cache_status = "";
