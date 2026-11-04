@@ -69,4 +69,12 @@ class SettingsBooleansTest extends WP_UnitTestCase {
 		$this->assertIsArray( $config['excluded_post_vars'] );
 		$this->assertIsArray( $config['excluded_cookie_vars'] );
 	}
+
+	public function test_benchmark_widget_registers_when_enabled() {
+		update_option( 'scm_option_benchmark_widget', 'yes' );
+
+		scm_add_benchmark_widget();
+
+		$this->assertNotFalse( has_action( 'widgets_init', 'scm_register_benchmark_widget' ) );
+	}
 }

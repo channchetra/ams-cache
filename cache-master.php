@@ -103,6 +103,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once SCM_PLUGIN_DIR . 'inc/lib/autoload.php';
 		// Post mutations can run through AJAX, REST, or frontend requests.
 		require_once SCM_PLUGIN_DIR . 'inc/admin/update-post.php';
+		// Benchmark widget registration must run on front-end and admin requests.
+		require_once SCM_PLUGIN_DIR . 'inc/admin/widgets.php';
 
 		// Full runtime is not needed during AJAX calls, but upload/offload hooks are.
 		if ( ! wp_doing_ajax() ) {
