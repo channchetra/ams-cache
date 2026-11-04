@@ -250,7 +250,7 @@ $smoke_options['scm_option_post_archives'] = array(
 	'author'   => 'yes',
 	'date'     => 'yes',
 );
-$critical_urls = scm_get_critical_preload_urls( 321, 25 );
+$critical_urls = scm_get_critical_preload_urls( 25, 321 );
 smoke_assert( in_array( home_url( '/' ), $critical_urls, true ), 'critical preload includes homepage' );
 smoke_assert( in_array( home_url( '/category/news/' ), $critical_urls, true ), 'critical preload keeps category after trash' );
 smoke_assert( in_array( home_url( '/tag/cache/' ), $critical_urls, true ), 'critical preload keeps tag after trash' );

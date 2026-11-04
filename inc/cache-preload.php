@@ -520,13 +520,13 @@ function scm_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
 /**
  * Build a short list of homepage and archive URLs to warm immediately.
  *
- * @param int $post_id Optional affected post ID for related archives.
  * @param int $limit   Maximum URLs.
+ * @param int $post_id Optional affected post ID for related archives.
  *
  * @return array
  */
-function scm_get_critical_preload_urls( $post_id = 0, $limit = 25 ) {
-	$limit = max( 1, min( 100, (int) $limit ) );
+function scm_get_critical_preload_urls( $limit = 25, $post_id = 0 ) {
+	$limit = scm_get_preload_limit( $limit );
 	$urls  = array();
 	$post  = $post_id ? get_post( $post_id ) : null;
 
@@ -658,7 +658,7 @@ function scm_preload_critical_urls( $post_id = 0, $delete_existing = true, $driv
 	}
 
 	$limit = (int) apply_filters( 'scm_critical_preload_limit', 25, $post_id );
-	$urls  = scm_get_critical_preload_urls( $post_id, $limit );
+	$urls  = scm_get_critical_preload_urls( $limit, $post_id );
 
 	if ( empty( $urls ) ) {
 		return array(
