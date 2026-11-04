@@ -302,22 +302,46 @@ function scm_normalize_cache_uri( $uri ) {
 }
 
 /**
- * Check whether current request carries WordPress auth cookies.
+ * Cookie prefixes that bypass the page cache.
+ *
+ * @return array
+ */
+function scm_get_cache_bypass_cookie_prefixes() {
+	return array(
+		'wordpress_logged_in_',
+		'wordpress_sec_',
+		'wp-postpass_',
+		'comment_author_',
+		'woocommerce_items_in_cart',
+		'woocommerce_cart_hash',
+		'wp_woocommerce_session_',
+	);
+}
+
+/**
+ * Check whether the current request carries a cache-bypass cookie.
  *
  * @return bool
  */
-function scm_request_has_auth_cookie() {
-	foreach ( $_COOKIE as $name => $value ) {
-		if (
-			0 === strpos( $name, 'wordpress_logged_in_' ) ||
-			0 === strpos( $name, 'wordpress_sec_' ) ||
-			0 === strpos( $name, 'wp-postpass_' )
-		) {
-			return true;
+function scm_request_has_cache_bypass_cookie() {
+	foreach ( array_keys( $_COOKIE ) as $name ) {
+		foreach ( scm_get_cache_bypass_cookie_prefixes() as $prefix ) {
+			if ( 0 === strpos( $name, $prefix ) ) {
+				return true;
+			}
 		}
 	}
 
 	return false;
+}
+
+/**
+ * Path segments/prefixes that bypass the page cache.
+ *
+ * @return array
+ */
+function scm_get_cache_bypass_paths() {
+	return array( 'wp-admin', 'wp-login.php', 'xmlrpc.php', 'wp-json', 'cart', 'checkout', 'my-account' );
 }
 
 /**
@@ -366,8 +390,10 @@ function scm_is_cache_tracking_query_var( $name ) {
 function scm_is_cacheable_document_path( $path ) {
 	$path = scm_normalize_cache_uri( $path );
 
-	if ( preg_match( '#/(?:wp-admin|wp-json)(?:/|$)|/(?:wp-login\.php|xmlrpc\.php)$#i', $path ) ) {
-		return false;
+	foreach ( scm_get_cache_bypass_paths() as $bypass_path ) {
+		if ( preg_match( '#(?:^|/)' . preg_quote( $bypass_path, '#' ) . '(?:/|$)#i', $path ) ) {
+			return false;
+		}
 	}
 
 	if ( preg_match( '#\.(?:css|js|map|json|xml|txt|ico|png|jpe?g|gif|webp|svg|woff2?|ttf|eot|otf|mp4|webm|mp3|m4a|pdf|zip)$#i', $path ) ) {
@@ -390,7 +416,7 @@ function scm_is_cacheable_request_uri( $request_uri = null ) {
 		return false;
 	}
 
-	if ( scm_request_has_auth_cookie() ) {
+	if ( scm_request_has_cache_bypass_cookie() ) {
 		return false;
 	}
 

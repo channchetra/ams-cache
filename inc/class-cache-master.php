@@ -372,7 +372,7 @@ class Cache_Master {
 			return false;
 		}
 
-		return ! scm_request_has_auth_cookie();
+		return ! scm_request_has_cache_bypass_cookie();
 	}
 
 	/**

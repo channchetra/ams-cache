@@ -57,6 +57,15 @@ function scm_get_nginx_direct_cache_snippet() {
 	$tracking_keys = '(?:' . implode( '|', $tracking_keys ) . ')';
 	$tracking_query_pattern = '^' . $tracking_keys . '(?:=[^&]*)?(?:&' . $tracking_keys . '(?:=[^&]*)?)*$';
 
+	$bypass_cookie_pattern = implode( '|', array_map( 'preg_quote', scm_get_cache_bypass_cookie_prefixes() ) );
+	$bypass_paths          = array_map(
+		function ( $path ) {
+			return '/' . preg_quote( $path, '/' ) . '(?:/|$|\\?)';
+		},
+		scm_get_cache_bypass_paths()
+	);
+	$bypass_path_pattern   = '(?:' . implode( '|', $bypass_paths ) . ')';
+
 	return trim(
 		"# AMS Cache direct static cache.\n" .
 		"# Put inside the Nginx server {} block. Merge the location / block with your existing WordPress config.\n" .
@@ -67,8 +76,8 @@ function scm_get_nginx_direct_cache_snippet() {
 		"if (\$args = \"\") { set \$ams_cache_query_safe 1; }\n" .
 		"if (\$args ~* \"" . $tracking_query_pattern . "\") { set \$ams_cache_query_safe 1; }\n" .
 		"if (\$ams_cache_query_safe = 0) { set \$ams_cache_skip 1; }\n" .
-		"if (\$http_cookie ~* \"wordpress_logged_in_|wordpress_sec_|comment_author_|woocommerce_items_in_cart|woocommerce_cart_hash|wp_woocommerce_session_\") { set \$ams_cache_skip 1; }\n" .
-		"if (\$request_uri ~* \"(/wp-admin/|/wp-login\\.php|/xmlrpc\\.php|/wp-json/|/cart/?|/checkout/?|/my-account/?)\") { set \$ams_cache_skip 1; }\n\n" .
+		"if (\$http_cookie ~* \"" . $bypass_cookie_pattern . "\") { set \$ams_cache_skip 1; }\n" .
+		"if (\$request_uri ~* \"" . $bypass_path_pattern . "\") { set \$ams_cache_skip 1; }\n\n" .
 		"if (\$ams_cache_skip = 0) { set \$ams_cache_file \"" . $relative_dir . "\$uri/index.html\"; }\n\n" .
 		"gzip on;\n" .
 		"gzip_vary on;\n" .
