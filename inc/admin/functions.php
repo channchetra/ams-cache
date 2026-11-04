@@ -699,81 +699,16 @@ function scm_dashboard_get_status_data() {
  */
 function scm_test_driver( $type = '' ) {
 
-	$advanced_settings        = array();
-	$advanced_connection_type = 'tcp';
-	$setting                  = array();
+	if ( '' === (string) $type ) {
+		return false;
+	}
 
-	switch ( $type ) {
-		case 'mysql':
-			$setting = array(
-				'host'    => DB_HOST,
-				'dbname'  => DB_NAME,
-				'user'    => DB_USER,
-				'pass'    => DB_PASSWORD,
-				'charset' => DB_CHARSET,
-			);
-			break;
+	$setting                  = scm_get_driver_setting( $type );
+	$advanced_settings        = scm_get_driver_advanced_settings( $type );
+	$advanced_connection_type = scm_get_driver_connection_type( $type );
 
-		case 'file':
-			$file_dir = scm_get_upload_dir() . '/file_driver';
-
-			if ( ! is_dir( $file_dir ) ) {
-				wp_mkdir_p( $file_dir );
-			}
-
-			$setting['storage'] = $file_dir;
-			break;
-
-		case 'sqlite':
-			$sqlite_dir       = scm_get_upload_dir() . '/sqlite_driver';
-			$sqlite_file_path = $sqlite_dir . '/cache.sqlite3';
-
-			if ( ! file_exists( $sqlite_file_path ) ) {
-				if ( ! is_dir( $sqlite_dir ) ) {
-					wp_mkdir_p( $sqlite_dir );
-				}
-			}
-
-			$setting['storage'] = $sqlite_dir;
-			break;
-
-		case 'redis':
-			$setting = array(
-				'host'     => '127.0.0.1',
-				'port'     => 6379,
-				'database' => 0,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'mongo':
-			$setting = array(
-				'host' => '127.0.0.1',
-				'port' => 27017,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'memcache':
-		case 'memcached':
-			$setting = array(
-				'host' => '127.0.0.1',
-				'port' => 11211,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'apc':
-		case 'apcu':
-		case 'wincache':
-			$setting = array();
-			break;
+	if ( in_array( $type, array( 'file', 'sqlite' ), true ) && ! empty( $setting['storage'] ) && ! is_dir( $setting['storage'] ) ) {
+		wp_mkdir_p( $setting['storage'] );
 	}
 
 	if ( ! empty( $advanced_settings ) ) {

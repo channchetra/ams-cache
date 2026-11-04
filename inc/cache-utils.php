@@ -1209,6 +1209,64 @@ function scm_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
 }
 
 /**
+ * Get the base connection settings for a cache driver.
+ *
+ * Pure defaults only; callers apply their own fallbacks and advanced settings.
+ *
+ * @param string $type Driver type.
+ *
+ * @return array
+ */
+function scm_get_driver_setting( $type ) {
+	switch ( $type ) {
+		case 'mysql':
+			return array(
+				'host'    => DB_HOST,
+				'dbname'  => DB_NAME,
+				'user'    => DB_USER,
+				'pass'    => DB_PASSWORD,
+				'charset' => DB_CHARSET,
+			);
+
+		case 'sqlite':
+			return array(
+				'storage' => scm_get_upload_dir() . '/sqlite_driver',
+			);
+
+		case 'redis':
+			return array(
+				'host'     => '127.0.0.1',
+				'port'     => 6379,
+				'database' => 0,
+			);
+
+		case 'mongo':
+			return array(
+				'host' => '127.0.0.1',
+				'port' => 27017,
+			);
+
+		case 'memcache':
+		case 'memcached':
+			return array(
+				'host' => '127.0.0.1',
+				'port' => 11211,
+			);
+
+		case 'apc':
+		case 'apcu':
+		case 'wincache':
+			return array();
+
+		case 'file':
+		default:
+			return array(
+				'storage' => scm_get_upload_dir() . '/file_driver',
+			);
+	}
+}
+
+/**
  * Get the cache driver instance.
  *
  * @param string $type The type of the driver.
@@ -1217,75 +1275,15 @@ function scm_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
  */
 function scm_driver_factory( $type ) {
 
-	$advanced_settings        = array();
-	$advanced_connection_type = 'tcp';
-	$setting                  = array();
+	$known_types = array( 'mysql', 'sqlite', 'redis', 'mongo', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'file' );
 
-	switch ( $type ) {
-		case 'mysql':
-			$setting = array(
-				'host'    => DB_HOST,
-				'dbname'  => DB_NAME,
-				'user'    => DB_USER,
-				'pass'    => DB_PASSWORD,
-				'charset' => DB_CHARSET,
-			);
-			break;
-
-		case 'sqlite':
-			$setting = array(
-				'storage' => scm_get_upload_dir() . '/sqlite_driver',
-			);
-			break;
-
-		case 'redis':
-			$setting = array(
-				'host'     => '127.0.0.1',
-				'port'     => 6379,
-				'database' => 0,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'mongo':
-			$setting = array(
-				'host' => '127.0.0.1',
-				'port' => 27017,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'memcache':
-		case 'memcached':
-			$setting = array(
-				'host' => '127.0.0.1',
-				'port' => 11211,
-			);
-
-			$advanced_settings        = scm_get_driver_advanced_settings( $type );
-			$advanced_connection_type = scm_get_driver_connection_type( $type );
-			break;
-
-		case 'apc':
-		case 'apcu':
-		case 'wincache':
-			$setting = array();
-			break;
-
-		case 'file':
-		default:
-			$type    = 'file';
-			$setting = array(
-				'storage' => scm_get_upload_dir() . '/file_driver',
-			);
-
-			$advanced_settings = scm_get_driver_advanced_settings( $type );
-			break;
+	if ( ! in_array( $type, $known_types, true ) ) {
+		$type = 'file';
 	}
+
+	$setting                  = scm_get_driver_setting( $type );
+	$advanced_settings        = scm_get_driver_advanced_settings( $type );
+	$advanced_connection_type = scm_get_driver_connection_type( $type );
 
 	if ( ! empty( $advanced_settings ) ) {
 		$setting = array_merge( $setting, scm_normalize_driver_settings( $advanced_settings, $advanced_connection_type ) );

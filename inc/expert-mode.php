@@ -156,46 +156,14 @@ function scm_run_expert_mode( $args ) {
 		// The cache key.
 		$key = md5( $cache_key_prefix . '|' . $request_path );
 
-		switch ( $driver_type )  {
-			case 'mysql':
-				$setting = array(
-					'host'    => DB_HOST,
-					'dbname'  => DB_NAME,
-					'user'    => DB_USER,
-					'pass'    => DB_PASSWORD,
-					'charset' => DB_CHARSET,
-				);
+		$setting = scm_get_driver_setting( $driver_type );
 
-				$sql_queries++;
-				break;
+		if ( 'mysql' === $driver_type ) {
+			$sql_queries++;
+		}
 
-			case 'sqlite':
-			case 'file':
-				$setting = array(
-					'storage' => $plugin_upload_dir . '/' . $driver_type . '_driver',
-				);
-				break;
-
-			case 'redis':
-				$setting = array(
-					'host'     => '127.0.0.1',
-					'port'     => 6379,
-					'database' => 0,
-				);
-
-				break;
-
-			case 'memcache':
-			case 'memcached':
-				$setting = array(
-					'host' => '127.0.0.1',
-					'port' =>  11211,
-				);
-				break;
-
-			default:
-				// apc, apcu, wincache
-				$setting = array();
+		if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
+			$setting['storage'] = $plugin_upload_dir . '/' . $driver_type . '_driver';
 		}
 
 		if ( ! empty( $advanced_settings ) ) {
