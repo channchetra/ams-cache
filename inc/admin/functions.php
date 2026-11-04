@@ -16,18 +16,13 @@ if ( ! defined( 'SCM_INC' ) ) {
  * Load view files.
  *
  * @param string $template_path The specific template's path.
- * @param array  $data          Data is being passed to.
  * @return string
  */
-function scm_load_view( $template_path, $data = array() ) {
+function scm_load_view( $template_path ) {
 	$template_path  = str_replace( '_', '-', $template_path );
 	$view_file_path = SCM_PLUGIN_DIR . 'inc/admin/views/' . $template_path . '.php';
 
 	if ( file_exists( $view_file_path ) ) {
-		if ( ! empty( $data ) ) {
-			extract( $data ); // phpcs:ignore
-		}
-
 		ob_start();
 		include $view_file_path;
 		$result = ob_get_contents();

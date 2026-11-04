@@ -346,7 +346,7 @@ function scm_store_optimized_css_asset( $css ) {
  *
  * @return string
  */
-function scm_apply_internal_local_ucss( $html, $settings ) {
+function scm_apply_local_ucss( $html, $settings ) {
 	if ( ! preg_match_all( '#<style\b([^>]*)>(.*?)</style>#is', $html, $matches, PREG_SET_ORDER ) ) {
 		return $html;
 	}
@@ -427,7 +427,7 @@ function scm_apply_internal_local_ucss( $html, $settings ) {
  *
  * @return string
  */
-function scm_apply_internal_external_ucss( $html, $settings ) {
+function scm_apply_external_ucss( $html, $settings ) {
 	if ( ! preg_match_all( '#<link\b[^>]*>#is', $html, $matches, PREG_SET_ORDER ) ) {
 		return $html;
 	}
@@ -532,17 +532,6 @@ function scm_apply_internal_external_ucss( $html, $settings ) {
 	return $html;
 }
 
-/**
- * Run PurgeCSS on inline style blocks.
- *
- * @param string $html     HTML content.
- * @param array  $settings Optimization settings.
- *
- * @return string
- */
-function scm_apply_local_ucss( $html, $settings ) {
-	return scm_apply_internal_local_ucss( $html, $settings );
-}
 
 /**
  * Check if a stylesheet link is safe for external UCSS.
@@ -664,17 +653,6 @@ function scm_rewrite_css_relative_urls( $css, $stylesheet_url ) {
 	);
 }
 
-/**
- * Run PurgeCSS on same-site stylesheet files and inline the optimized output.
- *
- * @param string $html     HTML content.
- * @param array  $settings Optimization settings.
- *
- * @return string
- */
-function scm_apply_external_ucss( $html, $settings ) {
-	return scm_apply_internal_external_ucss( $html, $settings );
-}
 
 /**
  * Analyze JavaScript source with conservative PHP heuristics.
@@ -715,7 +693,7 @@ function scm_analyze_javascript_source( $source ) {
  *
  * @return string
  */
-function scm_apply_internal_js_analysis( $html, $settings ) {
+function scm_apply_local_js_analysis( $html, $settings ) {
 	if ( ! preg_match( '#<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1[^>]*></script>#is', $html ) ) {
 		scm_set_page_optimization_runtime(
 			'js_analysis',
@@ -808,17 +786,6 @@ function scm_apply_internal_js_analysis( $html, $settings ) {
 	return $html;
 }
 
-/**
- * Run local PHP script analysis and defer safe local scripts.
- *
- * @param string $html     HTML content.
- * @param array  $settings Optimization settings.
- *
- * @return string
- */
-function scm_apply_local_js_analysis( $html, $settings ) {
-	return scm_apply_internal_js_analysis( $html, $settings );
-}
 
 /**
  * Optimize generated HTML before writing to cache.

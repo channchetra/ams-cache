@@ -49,7 +49,7 @@ function scm_option() {
 		__( 'Settings', 'ams-cache' ),
 		'manage_options',
 		'ams-cache-settings',
-		'scm_options_page'
+		'scm_dashboard_page'
 	);
 
 	add_submenu_page(
@@ -58,7 +58,7 @@ function scm_option() {
 		__( 'Expert Mode', 'ams-cache' ),
 		'manage_options',
 		'ams-cache-expert-mode',
-		'scm_expert_mode_page'
+		'scm_dashboard_page'
 	);
 
 	add_submenu_page(
@@ -67,7 +67,7 @@ function scm_option() {
 		__( 'Statistics', 'ams-cache' ),
 		'manage_options',
 		'ams-cache-statistics',
-		'scm_stats_page'
+		'scm_dashboard_page'
 	);
 
 	add_submenu_page(
@@ -76,7 +76,7 @@ function scm_option() {
 		__( 'About', 'ams-cache' ),
 		'manage_options',
 		'ams-cache-about',
-		'scm_about_page'
+		'scm_dashboard_page'
 	);
 }
 
@@ -89,53 +89,6 @@ function scm_dashboard_page() {
 	scm_show_settings_header();
 	echo scm_load_view( 'page_dashboard' );
 	scm_show_settings_footer();
-}
-
-/**
- * Output the setting page.
- *
- * @return void
- */
-function scm_options_page() {
-	scm_dashboard_page();
-}
-
-/**
- * Output the expert mode page.
- *
- * @return void
- */
-function scm_expert_mode_page() {
-	scm_dashboard_page();
-}
-
-/**
- * Output the stats page.
- *
- * @return void
- */
-function scm_stats_page() {
-	scm_dashboard_page();
-}
-
-/**
- * Output the banchmark setting page.
- *
- * @return void
- */
-function scm_benchmark_settings_page() {
-	scm_show_settings_header();
-	echo scm_load_view( 'page_benchmark_settings' );
-	scm_show_settings_footer();
-}
-
-/**
- * Output the about page.
- *
- * @return void
- */
-function scm_about_page() {
-	scm_dashboard_page();
 }
 
 /**

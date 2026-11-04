@@ -27,3 +27,6 @@ economy*.json
 .ua/
 .php-version
 .desloppify/
+
+# Desloppify generated scorecard
+scorecard.png

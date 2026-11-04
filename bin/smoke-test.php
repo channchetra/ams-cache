@@ -204,7 +204,7 @@ smoke_assert( false !== strpos( $purged, 'body{' ), 'used element selector prese
 smoke_assert( false !== strpos( $purged, '.menu:hover' ), 'dynamic selector preserved' );
 smoke_assert( false !== strpos( $purged, '@font-face' ), 'font-face preserved' );
 
-$optimized_inline = scm_apply_internal_local_ucss(
+$optimized_inline = scm_apply_local_ucss(
 	'<style>' . $css . '</style>' . $html,
 	array(
 		'ucss_safelist'          => 'open',
