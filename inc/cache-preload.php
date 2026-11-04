@@ -849,6 +849,69 @@ function scm_preload_cache( $limit = null ) {
 }
 
 /**
+ * Merge URLs into the preload queue and schedule a background batch.
+ *
+ * @param array $urls URLs to queue.
+ *
+ * @return int Number of new URLs queued.
+ */
+function scm_queue_preload_urls( $urls ) {
+	$urls = array_values( array_unique( array_filter( array_map( 'strval', (array) $urls ) ) ) );
+
+	if ( empty( $urls ) ) {
+		return 0;
+	}
+
+	$queue = get_transient( 'scm_preload_queue' );
+	$queue = is_array( $queue ) ? $queue : array();
+	$before = count( $queue );
+	$queue = array_values( array_unique( array_merge( $queue, $urls ) ) );
+
+	set_transient( 'scm_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
+	update_option( 'scm_preload_queue_remaining', count( $queue ) );
+	scm_schedule_preload_queue();
+
+	return count( $queue ) - $before;
+}
+
+/**
+ * Purge and queue the critical URLs affected by a post change.
+ *
+ * @param int                             $post_id Post ID.
+ * @param \Shieldon\SimpleCache\Cache|null $driver  Optional cache driver.
+ *
+ * @return int Number of URLs queued.
+ */
+function scm_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
+	$urls = scm_get_critical_preload_urls( 25, $post_id );
+
+	if ( $post_id > 0 ) {
+		$post_url = get_permalink( $post_id );
+
+		if ( $post_url ) {
+			$urls[] = $post_url;
+		}
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+	if ( empty( $urls ) ) {
+		return 0;
+	}
+
+	if ( $driver ) {
+		foreach ( $urls as $url ) {
+			$path = parse_url( $url, PHP_URL_PATH );
+			$path = empty( $path ) ? '/' : $path;
+
+			scm_purge_cache_uri( $path, $driver );
+		}
+	}
+
+	return scm_queue_preload_urls( $urls );
+}
+
+/**
  * Process one preload queue batch.
  *
  * @return int Number of dispatched URLs.

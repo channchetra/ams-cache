@@ -56,8 +56,7 @@ function scm_update_post( $post_ID, $post, $update ) {
 		}
 
 		scm_purge_permalink( $post_url, $driver );
-		scm_preload_critical_urls( $post_ID, true, $driver );
-		scm_preload_url( $post_url );
+		scm_queue_critical_preload_urls( $post_ID, $driver );
 	}
 }
 
@@ -97,7 +96,7 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 			scm_purge_permalink( $post_url, $driver );
 		}
 
-		scm_preload_critical_urls( $post->ID, true, $driver );
+		scm_queue_critical_preload_urls( $post->ID, $driver );
 		return;
 	}
 
@@ -111,11 +110,7 @@ function scm_update_post_status( $new_status, $old_status, $post ) {
 		scm_purge_permalink( $post_url, $driver );
 	}
 
-	scm_preload_critical_urls( $post->ID, true, $driver );
-
-	if ( $post_url ) {
-		scm_preload_url( $post_url );
-	}
+	scm_queue_critical_preload_urls( $post->ID, $driver );
 }
 
 /**
@@ -187,7 +182,7 @@ function scm_delete_post( $post_ID, $post = null ) {
 		scm_purge_permalink( $post_url, $driver );
 	}
 
-	scm_preload_critical_urls( $post_ID, true, $driver );
+	scm_queue_critical_preload_urls( $post_ID, $driver );
 }
 
 /**
