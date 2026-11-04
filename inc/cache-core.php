@@ -198,6 +198,28 @@ function scm_get_config_path() {
 }
 
 /**
+ * Merge a stored config over the canonical defaults.
+ *
+ * @param array $config Raw config.
+ *
+ * @return array
+ */
+function scm_normalize_config( $config ) {
+	$defaults = scm_get_default_config();
+	$config   = is_array( $config ) ? $config : array();
+	$config   = array_merge( $defaults, $config );
+
+	foreach ( array( 'preload', 'woocommerce', 'exclusion' ) as $section ) {
+		$config[ $section ] = array_merge(
+			$defaults[ $section ],
+			isset( $config[ $section ] ) && is_array( $config[ $section ] ) ? $config[ $section ] : array()
+		);
+	}
+
+	return $config;
+}
+
+/**
  * Get configuration data.
  *
  * @return array
@@ -210,14 +232,14 @@ function scm_get_config_data() {
 		$config = json_decode( $content, true );
 
 		if ( is_array( $config ) ) {
-			return $config;
+			return scm_normalize_config( $config );
 		}
 	}
 
 	$option_config = get_option( 'scm_config', array() );
 
 	if ( is_array( $option_config ) && ! empty( $option_config ) ) {
-		return $option_config;
+		return scm_normalize_config( $option_config );
 	}
 
 	return scm_get_default_config();
@@ -520,6 +542,7 @@ function scm_get_default_config() {
 		'nginx_direct_cache'       => false,
 		'html_debug_comment'       => true,
 		'driver_advanced_settings' => array(),
+		'driver_connection_type'   => 'tcp',
 		'site_url'                 => '',
 		'preload'                  => array(
 			'enable'               => false,

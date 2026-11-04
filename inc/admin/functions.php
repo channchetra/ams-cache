@@ -1037,19 +1037,13 @@ function scm_get_runtime_exclusion_config() {
 }
 
 function scm_update_config( $setting ) {
+	$config = scm_get_config_data();
 
-	$config  = get_option( 'scm_config', array() );
-	$default = scm_get_default_config();
-
-	foreach ( $default as $key => $value ) {
-		if ( isset( $setting[ $key ] ) ) {
-			$config[ $key ] = $setting[ $key ];
-		}
-
-		if ( ! isset( $config[ $key ] ) ) {
-			$config[ $key ] = $value;
-		}
+	if ( is_array( $setting ) ) {
+		$config = array_merge( $config, $setting );
 	}
+
+	$config = scm_normalize_config( $config );
 
 	if ( empty( $config['site_url'] ) ) {
 		$config['site_url'] = rtrim( get_site_url(), '/' );
@@ -1057,14 +1051,6 @@ function scm_update_config( $setting ) {
 
 	if ( empty( $config['cache_key_prefix'] ) ) {
 		$config['cache_key_prefix'] = scm_get_cache_key_prefix();
-	}
-
-	if ( empty( $config['preload'] ) ) {
-		$config['preload'] = array(
-			'enable'               => scm_is_preload_enabled(),
-			'limit'                => (int) get_option( 'scm_option_preload_limit', 50 ),
-			'crawl_homepage_links' => 'yes' === get_option( 'scm_option_preload_homepage_links', 'yes' ),
-		);
 	}
 
 	update_option( 'scm_config', $config );
