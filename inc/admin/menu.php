@@ -10,6 +10,25 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
+add_filter( 'admin_body_class', 'khse_admin_body_class' );
+
+/**
+ * Add a full-width app class on KH Speed Engine admin pages.
+ *
+ * @param string $classes Body classes.
+ *
+ * @return string
+ */
+function khse_admin_body_class( $classes ) {
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+
+	if ( 0 === strpos( $page, 'kh-speed-engine' ) ) {
+		$classes .= ' khse-admin-app';
+	}
+
+	return $classes;
+}
+
 add_action( 'admin_menu', 'khse_option' );
 add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_scripts' );
 add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_styles' );
@@ -310,11 +329,18 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 				'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),
 				'view'    => khse_get_admin_console_view(),
 				'status'  => khse_dashboard_get_status_data(),
+				'user'    => array(
+					'name'   => wp_get_current_user()->display_name,
+					'role'   => ! empty( wp_get_current_user()->roles ) ? translate_user_role( ucfirst( wp_get_current_user()->roles[0] ) ) : __( 'Administrator', 'kh-speed-engine' ),
+					'avatar' => get_avatar_url( get_current_user_id(), array( 'size' => 64 ) ),
+				),
+				'logoutUrl' => wp_logout_url( admin_url() ),
 				'i18n'    => array(
 					'loading' => __( 'Working...', 'kh-speed-engine' ),
 					'failed'  => __( 'Request failed.', 'kh-speed-engine' ),
 					'saving'  => __( 'Saving...', 'kh-speed-engine' ),
 					'saved'   => __( 'Settings saved.', 'kh-speed-engine' ),
+					'logout'  => __( 'Log out', 'kh-speed-engine' ),
 					'saveFail'=> __( 'Settings could not be saved.', 'kh-speed-engine' ),
 					'yes'     => __( 'Yes', 'kh-speed-engine' ),
 					'no'      => __( 'No', 'kh-speed-engine' ),

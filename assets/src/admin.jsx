@@ -3,7 +3,6 @@ import './admin.css';
 import React, {useEffect, useMemo, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {
-	Card,
 	Input,
 	Label,
 	ListBox,
@@ -25,12 +24,12 @@ import {
 	Home,
 	Info,
 	Link2,
+	LogOut,
+	Menu,
 	Play,
 	RefreshCcw,
 	Save,
-	Settings,
 	ShoppingCart,
-	SlidersHorizontal,
 	Trash2,
 	WandSparkles,
 	X,
@@ -41,22 +40,49 @@ const boot = window.khseDashboard || {};
 const i18n = boot.i18n || {};
 
 const NAV = [
-	{key: 'overview', label: 'Overview', icon: Gauge},
-	{key: 'cache', label: 'Cache', icon: Database},
-	{key: 'preload', label: 'Preload', icon: Zap},
-	{key: 'performance', label: 'Performance', icon: Activity},
-	{key: 'rules', label: 'Rules', icon: Filter},
-	{key: 'statistics', label: 'Statistics', icon: BarChart3},
-	{key: 'expert', label: 'Expert Mode', icon: Code2},
-	{key: 'benchmark', label: 'Benchmark', icon: WandSparkles},
-	{key: 'woocommerce', label: 'WooCommerce', icon: ShoppingCart},
-	{key: 'about', label: 'About', icon: Info}
+	{key: 'overview', label: 'Overview', icon: Gauge, group: 'Home'},
+	{key: 'cache', label: 'Cache', icon: Database, group: 'Cache'},
+	{key: 'preload', label: 'Preload', icon: Zap, group: 'Cache'},
+	{key: 'rules', label: 'Rules', icon: Filter, group: 'Cache'},
+	{key: 'performance', label: 'Performance', icon: Activity, group: 'Insights'},
+	{key: 'statistics', label: 'Statistics', icon: BarChart3, group: 'Insights'},
+	{key: 'expert', label: 'Expert Mode', icon: Code2, group: 'Tools'},
+	{key: 'benchmark', label: 'Benchmark', icon: WandSparkles, group: 'Tools'},
+	{key: 'woocommerce', label: 'WooCommerce', icon: ShoppingCart, group: 'Tools'},
+	{key: 'about', label: 'About', icon: Info, group: 'About'}
 ];
+
+const NAV_GROUPS = NAV.reduce((groups, item) => {
+	const current = groups[groups.length - 1];
+
+	if (current && current.label === item.group) {
+		current.items.push(item);
+	} else {
+		groups.push({label: item.group, items: [item]});
+	}
+
+	return groups;
+}, []);
+
+const SUBTITLES = {
+	cache: 'Driver, TTL, visibility, and expert controls.',
+	preload: 'Queue, crawl, and priority warming.',
+	performance: 'HTML, CSS, and JavaScript optimization.',
+	rules: 'Exclusion rules for requests, cookies, and variables.',
+	statistics: 'Cache footprint and per-type storage.',
+	expert: 'Early runtime config for advanced hosts.',
+	benchmark: 'Frontend benchmark widget and footer.',
+	woocommerce: 'Cart and checkout cache rules.',
+	about: 'About KH Speed Engine.'
+};
+
+const DONUT_COLORS = ['#4f7cff', '#21c7a8', '#f5a623', '#f36c6c', '#8b7cf6'];
+const DONUT_EMPTY_COLOR = '#e3ebf7';
+const RING_RADIUS = 52;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 const SAVE_VIEWS = new Set(['cache', 'preload', 'performance', 'rules', 'statistics', 'expert', 'benchmark', 'woocommerce']);
 
-const boolYes = (value) => value === true || value === 'yes' || value === 'enable';
-const yesNo = (value) => (boolYes(value) ? (i18n.yes || 'Yes') : (i18n.no || 'No'));
 const percent = (value) => `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
 const clone = (value) => JSON.parse(JSON.stringify(value || {}));
 const humanStatus = (value) => {
@@ -107,31 +133,66 @@ function Pill({tone = 'info', children}) {
 	return <span className={`khse-pill khse-pill--${tone}`}>{humanStatus(children)}</span>;
 }
 
-function StatCard({icon: Icon, title, value, detail, progress = 0}) {
+function StatCard({icon: Icon, title, value, detail, progress = null, tone = 'blue'}) {
 	return (
-		<Card className="khse-card khse-stat-card">
-			<Card.Content>
-				<div className="khse-card-title">
-					<span className="khse-icon-badge"><Icon size={18} /></span>
-					<span>{title}</span>
-				</div>
-				<strong>{value}</strong>
-				<small>{detail}</small>
+		<div className="khse-stat-card" data-tone={tone}>
+			<span className="khse-stat-icon" aria-hidden="true"><Icon size={19} /></span>
+			<span className="khse-stat-label">{title}</span>
+			<strong className="khse-stat-value">{value}</strong>
+			<small className="khse-stat-detail">{detail}</small>
+			{progress === null || progress === undefined ? null : (
 				<div className="khse-progress"><span style={{width: percent(progress)}} /></div>
-			</Card.Content>
-		</Card>
+			)}
+		</div>
 	);
 }
 
 function Panel({title, action, children, className = ''}) {
 	return (
-		<Card className={`khse-card khse-panel ${className}`.trim()}>
-			<Card.Header className="khse-panel-header">
-				<Card.Title className="khse-panel-title">{title}</Card.Title>
+		<section className={`khse-card khse-panel ${className}`.trim()}>
+			<header className="khse-panel-header">
+				<h2 className="khse-panel-title">{title}</h2>
 				{action ? <div className="khse-panel-action">{action}</div> : null}
-			</Card.Header>
-			<Card.Content className="khse-panel-content">{children}</Card.Content>
-		</Card>
+			</header>
+			<div className="khse-panel-content">{children}</div>
+		</section>
+	);
+}
+
+function UserAvatar({size = 38, className = ''}) {
+	const user = boot.user || {};
+	const initial = String(user.name || 'K').trim().charAt(0).toUpperCase() || 'K';
+
+	if (user.avatar) {
+		return <img className={`khse-avatar ${className}`.trim()} src={user.avatar} alt="" width={size} height={size} loading="lazy" />;
+	}
+
+	return (
+		<span className={`khse-avatar khse-avatar--fallback ${className}`.trim()} style={{width: size, height: size}} aria-hidden="true">
+			{initial}
+		</span>
+	);
+}
+
+function PageHeader({viewLabel, subtitle, busy, actions}) {
+	return (
+		<header className="khse-page-header">
+			<div className="khse-page-heading">
+				<nav className="khse-breadcrumb" aria-label="Breadcrumb">
+					<span>KH Speed</span>
+					<span className="khse-breadcrumb-sep" aria-hidden="true">/</span>
+					<span aria-current="page">{viewLabel}</span>
+				</nav>
+				<h1>{viewLabel}</h1>
+				<p>{subtitle}</p>
+			</div>
+			<div className="khse-toolbar-actions">
+				<AmsButton icon={RefreshCcw} busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
+				<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
+				<AmsButton icon={Home} busy={busy} onPress={actions.purgeHomepage}>Purge Homepage</AmsButton>
+				<AmsButton icon={Trash2} tone="danger" busy={busy} onPress={actions.clearAll}>Clear All Cache</AmsButton>
+			</div>
+		</header>
 	);
 }
 
@@ -359,50 +420,164 @@ function SaveBar({isBusy, onSave, global = false}) {
 	);
 }
 
+function CacheActivityChart({stats, go}) {
+	const rows = stats.rows || [];
+	const chartRows = rows.slice(0, 8);
+	const maxRows = Math.max(1, ...chartRows.map((row) => Number(row.rows) || 0));
+	const totalRows = Number(stats.totalRows) || 0;
+	const hasEntries = chartRows.some((row) => (Number(row.rows) || 0) > 0);
+	const chartLabel = chartRows.map((row) => `${row.label}: ${Number(row.rows) || 0}`).join(', ');
+
+	return (
+		<Panel
+			className="khse-span-2"
+			title="Cache Activity"
+			action={(
+				<div className="khse-panel-action-group">
+					<span className="khse-panel-meta">{totalRows} rows | {stats.totalSizeLabel || '0 B'}</span>
+					<AmsButton size="sm" onPress={() => go('statistics')}>View Full Report</AmsButton>
+				</div>
+			)}
+		>
+			<div className="khse-chart">
+				<div className="khse-chart-grid" aria-hidden="true">
+					<span /><span /><span /><span />
+				</div>
+				<div className="khse-chart-bars" role="img" aria-label={chartRows.length ? `Cached entries by type. ${chartLabel}.` : 'No cached entries by type.'}>
+					{chartRows.map((row) => {
+						const count = Number(row.rows) || 0;
+						const height = count > 0 ? Math.max(2, Math.round((count / maxRows) * 100)) : 0;
+
+						return (
+							<div className="khse-chart-col" key={row.type}>
+								<div className="khse-chart-track">
+									<span
+										className="khse-chart-bar"
+										style={{height: `${height}%`}}
+										title={`${row.label}: ${count} entries`}
+									/>
+								</div>
+								<span className="khse-chart-label" title={row.label}>{row.label}</span>
+							</div>
+						);
+					})}
+				</div>
+				{hasEntries ? null : <p className="khse-chart-empty">No cached pages yet</p>}
+			</div>
+		</Panel>
+	);
+}
+
+function CacheTypesDonut({stats}) {
+	const rows = stats.rows || [];
+	const chartRows = rows.slice(0, 8);
+	const totalRows = Number(stats.totalRows) || 0;
+	const donutRows = chartRows.filter((row) => (Number(row.rows) || 0) > 0).slice(0, 5);
+	const donutTotal = donutRows.reduce((sum, row) => sum + (Number(row.rows) || 0), 0);
+	let cursor = 0;
+	const segments = donutRows.length
+		? donutRows.map((row, index) => {
+			const value = Number(row.rows) || 0;
+			const start = (cursor / donutTotal) * 100;
+			cursor += value;
+
+			return {
+				key: row.type,
+				label: row.label,
+				value,
+				color: DONUT_COLORS[index % DONUT_COLORS.length],
+				start,
+				end: (cursor / donutTotal) * 100
+			};
+		})
+		: [{key: 'empty', label: 'No entries', value: 0, color: DONUT_EMPTY_COLOR, start: 0, end: 100}];
+	const gradient = `conic-gradient(${segments.map((segment) => `${segment.color} ${segment.start}% ${segment.end}%`).join(', ')})`;
+
+	return (
+		<Panel title="Cache Types">
+			<div className="khse-donut-wrap">
+				<div className="khse-donut" style={{backgroundImage: gradient}} role="img" aria-label={`${donutTotal} cached entries across ${donutRows.length} cache types.`}>
+					<div className="khse-donut-center">
+						<strong>{totalRows}</strong>
+						<span>entries</span>
+					</div>
+				</div>
+				<ul className="khse-donut-legend">
+					{segments.map((segment) => (
+						<li key={segment.key}>
+							<span className="khse-legend-dot" style={{background: segment.color}} aria-hidden="true" />
+							<span className="khse-legend-label">{segment.label}</span>
+							<strong className="khse-legend-value">{segment.value}</strong>
+						</li>
+					))}
+				</ul>
+			</div>
+		</Panel>
+	);
+}
+
+function PreloadQueue({preload, go}) {
+	const queueTotal = Number(preload.queueTotal) || 0;
+	const queueProcessed = Number(preload.queueProcessed) || 0;
+	const progress = queueTotal > 0 ? Math.min(100, Math.round((queueProcessed / queueTotal) * 100)) : 0;
+	const dash = (progress / 100) * RING_CIRCUMFERENCE;
+
+	return (
+		<Panel title="Preload Queue" action={<AmsButton size="sm" onPress={() => go('preload')}>Manage</AmsButton>}>
+			<div className="khse-queue">
+				<div className="khse-ring">
+					<svg viewBox="0 0 120 120" aria-hidden="true">
+						<circle className="khse-ring-track" cx="60" cy="60" r={RING_RADIUS} />
+						<circle
+							className="khse-ring-value"
+							cx="60"
+							cy="60"
+							r={RING_RADIUS}
+							strokeDasharray={`${dash} ${RING_CIRCUMFERENCE}`}
+						/>
+					</svg>
+					<div className="khse-ring-label">
+						<strong>{progress}%</strong>
+						<span>{queueProcessed} / {queueTotal}</span>
+					</div>
+				</div>
+				<FactList items={[
+					{label: 'Remaining', value: preload.queueRemaining || 0},
+					{label: 'Priority URLs', value: preload.priorityCount || 0},
+					{label: 'Critical URLs', value: preload.criticalCount || 0},
+					{label: 'Last Run', value: preload.lastRun || 'Never'}
+				]} />
+			</div>
+		</Panel>
+	);
+}
+
 function Overview({data, go, actions}) {
 	const cache = data.cache || {};
 	const optimization = data.optimization || {};
 	const preload = data.preload || {};
 	const stats = data.stats || {};
+	const entries = Number(stats.totalRows) || 0;
+	const cacheTypes = (stats.rows || []).length;
 
 	return (
 		<>
-			<div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
-				<StatCard icon={Database} title="Page Cache" value={cache.enabled ? 'Enabled' : 'Disabled'} detail={`${cache.driver || 'file'} | TTL ${cache.ttl || 0}`} progress={cache.progress} />
-				<StatCard icon={WandSparkles} title="Optimization" value={optimization.enabled ? 'Active' : 'Inactive'} detail={`${optimization.enabledCount || 0} / ${optimization.totalCount || 0} features`} progress={optimization.progress} />
-				<StatCard icon={Activity} title="Requirements" value={`${optimization.reqPassed || 0} / ${optimization.reqTotal || 0}`} detail="checks passed" progress={optimization.reqProgress} />
-				<StatCard icon={Zap} title="Preload" value={preload.enabled ? 'Enabled' : 'Disabled'} detail={`${preload.queueProcessed || 0} / ${preload.queueTotal || preload.limit || 0} processed`} progress={preload.progress} />
+			<div className="khse-stat-grid">
+				<StatCard icon={Database} tone="blue" title="Page Cache" value={cache.enabled ? 'Enabled' : 'Disabled'} detail={`${cache.driver || 'file'} | TTL ${cache.ttl || 0}`} progress={cache.progress} />
+				<StatCard icon={WandSparkles} tone="amber" title="Optimization" value={optimization.enabled ? 'Active' : 'Inactive'} detail={`${optimization.enabledCount || 0} / ${optimization.totalCount || 0} features`} progress={optimization.progress} />
+				<StatCard icon={CheckCircle2} tone="mint" title="Requirements" value={`${optimization.reqPassed || 0} / ${optimization.reqTotal || 0}`} detail="checks passed" progress={optimization.reqProgress} />
+				<StatCard icon={Zap} tone="cyan" title="Preload" value={preload.enabled ? 'Enabled' : 'Disabled'} detail={`${preload.queueProcessed || 0} / ${preload.queueTotal || preload.limit || 0} processed`} progress={preload.progress} />
+				<StatCard icon={BarChart3} tone="lavender" title="Cache Entries" value={entries} detail={`${cacheTypes} cache types`} />
+				<StatCard icon={HardDrive} tone="coral" title="Cache Size" value={stats.totalSizeLabel || '0 B'} detail="stored cache footprint" />
 			</div>
-			<div className="grid w-full grid-cols-1 gap-4 items-stretch auto-rows-fr 2xl:grid-cols-2">
-				<Panel title="Cache Store" action={<AmsButton size="sm" icon={Settings} onPress={() => go('cache')}>Settings</AmsButton>}>
-					<FactList items={[
-						{label: 'Driver', value: cache.driver || 'file'},
-						{label: 'Key Prefix', value: cache.keyPrefix || ''},
-						{label: 'Max Entries', value: cache.maxEntries || 0},
-						{label: 'Nginx Direct', value: yesNo(cache.nginxDirect)},
-						{label: 'Expert Mode', value: `${cache.expertMode ? 'Enabled' : 'Disabled'} | ${cache.expertReady ? 'Ready' : 'Not ready'}`}
-					]} />
-				</Panel>
-				<Panel title="Preload Queue" action={<AmsButton size="sm" icon={Settings} onPress={() => go('preload')}>Settings</AmsButton>}>
-					<FactList items={[
-						{label: 'Limit', value: preload.limit || 0},
-						{label: 'Homepage Crawl', value: yesNo(preload.crawlHomepage)},
-						{label: 'Priority URLs', value: preload.priorityCount || 0},
-						{label: 'Critical URLs', value: preload.criticalCount || 0},
-						{label: 'Queue Remaining', value: preload.queueRemaining || 0},
-						{label: 'Last Run', value: preload.lastRun || 'Never'}
-					]} />
-				</Panel>
-			</div>
-			<div className="grid w-full grid-cols-1 gap-4 items-stretch auto-rows-fr 2xl:grid-cols-2">
-				<Panel title="Optimization Checks" action={<AmsButton size="sm" icon={Activity} onPress={() => go('performance')}>Performance</AmsButton>}>
+			<div className="khse-dashboard-grid">
+				<CacheActivityChart stats={stats} go={go} />
+				<CacheTypesDonut stats={stats} />
+				<PreloadQueue preload={preload} go={go} />
+				<Panel title="Optimization Checks" action={<AmsButton size="sm" onPress={() => go('performance')}>Details</AmsButton>}>
 					<StatusList items={optimization.requirements || []} />
 				</Panel>
-				<Panel title="Cache Footprint" action={<AmsButton size="sm" icon={BarChart3} onPress={() => go('statistics')}>Statistics</AmsButton>}>
-					<div className="khse-footprint">
-						<strong>{stats.totalRows || 0}<span>rows</span></strong>
-						<strong>{stats.totalSizeLabel || '0 B'}<span>stored</span></strong>
-					</div>
+				<Panel title="Cache Footprint" action={<Pill tone="info">{entries} rows</Pill>}>
 					<CacheRows rows={(stats.rows || []).slice(0, 8)} clearType={actions.clearType} />
 				</Panel>
 			</div>
@@ -832,8 +1007,34 @@ function App() {
 	const [view, setView] = useState(boot.view || 'overview');
 	const [busy, setBusy] = useState(false);
 	const [notice, setNotice] = useState(null);
+	const [navOpen, setNavOpen] = useState(false);
 
 	const viewLabel = useMemo(() => (i18n.views && i18n.views[view]) || NAV.find((item) => item.key === view)?.label || 'Overview', [view]);
+	const subtitle = useMemo(() => (
+		view === 'overview'
+			? `Live cache controls and page optimization state. Updated: ${data.generatedAt || '—'}`
+			: (SUBTITLES[view] || '')
+	), [view, data.generatedAt]);
+
+	useEffect(() => {
+		if (!navOpen) {
+			return undefined;
+		}
+
+		const onKeyDown = (event) => {
+			if (event.key === 'Escape') {
+				setNavOpen(false);
+			}
+		};
+
+		document.addEventListener('keydown', onKeyDown);
+		return () => document.removeEventListener('keydown', onKeyDown);
+	}, [navOpen]);
+
+	const selectView = (key) => {
+		setView(key);
+		setNavOpen(false);
+	};
 
 	const setStatus = (status) => {
 		if (!status) {
@@ -906,57 +1107,109 @@ function App() {
 	};
 
 	return (
-		<div className="khse-admin">
-			<aside className="khse-sidebar" aria-label="KH Speed Engine 3.1.5">
-				<div className="khse-logo">KHSE</div>
-				{NAV.map(({key, label, icon: Icon}) => (
-					<button key={key} type="button" className={view === key ? 'is-active' : ''} onClick={() => setView(key)} title={label} aria-label={label} aria-current={view === key ? 'page' : undefined}>
-						<Icon size={19} aria-hidden="true" />
-						<span className="khse-nav-label">{label}</span>
-					</button>
-				))}
+		<div className={`khse-admin ${navOpen ? 'is-nav-open' : ''}`.trim()}>
+			<button
+				type="button"
+				className="khse-nav-backdrop"
+				aria-label="Close navigation"
+				tabIndex={-1}
+				onClick={() => setNavOpen(false)}
+			/>
+			<aside className="khse-sidebar" id="khse-sidebar" aria-label="KH Speed Engine">
+				<div className="khse-brand">
+					<span className="khse-brand-mark"><Zap size={19} aria-hidden="true" /></span>
+					<span className="khse-brand-text">
+						<strong>KH Speed</strong>
+						<small>ENGINE</small>
+					</span>
+				</div>
+				<nav className="khse-nav" aria-label="Dashboard sections">
+					{NAV_GROUPS.map((group) => (
+						<div className="khse-sidebar-group" key={group.label}>
+							<p className="khse-sidebar-group-label">{group.label}</p>
+							{group.items.map(({key, label, icon: Icon}) => (
+								<button
+									key={key}
+									type="button"
+									className={`khse-nav-item ${view === key ? 'is-active' : ''}`.trim()}
+									onClick={() => selectView(key)}
+									title={label}
+									aria-current={view === key ? 'page' : undefined}
+								>
+									<Icon size={18} aria-hidden="true" />
+									<span>{label}</span>
+								</button>
+							))}
+						</div>
+					))}
+				</nav>
+				<div className="khse-sidebar-footer">
+					<UserAvatar />
+					<div className="khse-user">
+						<strong>{boot.user?.name || 'KH Speed'}</strong>
+						<span>{boot.user?.role || ''}</span>
+					</div>
+					<a className="khse-logout" href={boot.logoutUrl || '#'} aria-label={i18n.logout || 'Log out'} title={i18n.logout || 'Log out'}>
+						<LogOut size={17} aria-hidden="true" />
+					</a>
+				</div>
 			</aside>
 			<main className="khse-main">
 				<header className="khse-topbar">
-					<div>
-						<h1>{viewLabel}</h1>
-						<p>Live cache controls and page optimization state. <strong>Updated:</strong> {data.generatedAt}</p>
+					<div className="khse-topbar-left">
+						<button
+							type="button"
+							className="khse-menu-toggle"
+							aria-label="Open navigation"
+							aria-expanded={navOpen}
+							aria-controls="khse-sidebar"
+							onClick={() => setNavOpen(true)}
+						>
+							<Menu size={20} aria-hidden="true" />
+						</button>
+						<nav className="khse-breadcrumb" aria-label="Breadcrumb">
+							<span>KH Speed</span>
+							<span className="khse-breadcrumb-sep" aria-hidden="true">/</span>
+							<strong aria-current="page">{viewLabel}</strong>
+						</nav>
 					</div>
-					<div className="khse-toolbar-actions">
-						<AmsButton icon={RefreshCcw} busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
-						<AmsButton icon={Play} tone="primary" busy={busy} onPress={actions.runPreload}>Run Preload</AmsButton>
-						<AmsButton icon={Home} onPress={actions.purgeHomepage}>Purge Homepage</AmsButton>
-						<AmsButton icon={Trash2} tone="danger" onPress={actions.clearAll}>Clear All Cache</AmsButton>
+					<div className="khse-topbar-right">
+						<span className="khse-live"><span className="khse-live-dot" aria-hidden="true" />Live</span>
+						<AmsButton icon={RefreshCcw} iconOnly size="sm" busy={busy} onPress={actions.refresh}>Refresh</AmsButton>
+						<UserAvatar size={34} />
 					</div>
 				</header>
-				{notice ? (
-					<div className={`khse-notice khse-notice--${notice.type}`} role="status" aria-live="polite">
-						<span>{notice.text}</span>
-						<button type="button" className="khse-notice__close" onClick={() => setNotice(null)} aria-label="Clear notification">
-							<X size={16} aria-hidden="true" />
-						</button>
-					</div>
-				) : null}
-				<section className="khse-view">
-					{view === 'overview' ? <Overview data={data} go={setView} actions={actions} /> : null}
-					{view === 'cache' ? <CacheSettings settings={settings} update={update} save={save} isBusy={busy} testDriver={actions.testDriver} /> : null}
-					{view === 'preload' ? <PreloadSettings data={data} settings={settings} update={update} save={save} isBusy={busy} runPreload={actions.runPreload} purgeHomepage={actions.purgeHomepage} /> : null}
-					{view === 'performance' ? <PerformanceSettings data={data} settings={settings} updatePerformance={updatePerformance} save={save} isBusy={busy} loadReports={loadReports} /> : null}
-					{view === 'rules' ? <RulesSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
-					{view === 'statistics' ? <StatisticsSettings data={data} settings={settings} update={update} save={save} isBusy={busy} clearType={actions.clearType} /> : null}
-					{view === 'expert' ? <ExpertSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
-					{view === 'benchmark' ? <BenchmarkSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
-					{view === 'woocommerce' ? (
-						<SimpleTogglePage title="WooCommerce">
-							{settings.woocommerce?.active ? null : <Pill tone="warning">WooCommerce is not active</Pill>}
-							<SwitchRow label="WooCommerce cache rules" checked={Boolean(settings.woocommerce?.enabled)} onChange={(checked) => update('woocommerce', 'enabled', checked)} />
-							<SwitchRow label="Clear after payment complete" checked={Boolean(settings.woocommerce?.paymentComplete)} onChange={(checked) => update('woocommerce', 'paymentComplete', checked)} />
-						</SimpleTogglePage>
+				<div className="khse-page">
+					<PageHeader viewLabel={viewLabel} subtitle={subtitle} busy={busy} actions={actions} />
+					{notice ? (
+						<div className={`khse-notice khse-notice--${notice.type}`} role="status" aria-live="polite">
+							<span>{notice.text}</span>
+							<button type="button" className="khse-notice__close" onClick={() => setNotice(null)} aria-label="Clear notification">
+								<X size={16} aria-hidden="true" />
+							</button>
+						</div>
 					) : null}
-					{view === 'about' ? <AboutPage data={data} /> : null}
-				</section>
-				{SAVE_VIEWS.has(view) ? <div className="khse-page-spacer" aria-hidden="true" /> : null}
-				{SAVE_VIEWS.has(view) ? <SaveBar isBusy={busy} onSave={save} global /> : null}
+					<section className="khse-view">
+						{view === 'overview' ? <Overview data={data} go={selectView} actions={actions} /> : null}
+						{view === 'cache' ? <CacheSettings settings={settings} update={update} save={save} isBusy={busy} testDriver={actions.testDriver} /> : null}
+						{view === 'preload' ? <PreloadSettings data={data} settings={settings} update={update} save={save} isBusy={busy} runPreload={actions.runPreload} purgeHomepage={actions.purgeHomepage} /> : null}
+						{view === 'performance' ? <PerformanceSettings data={data} settings={settings} updatePerformance={updatePerformance} save={save} isBusy={busy} loadReports={loadReports} /> : null}
+						{view === 'rules' ? <RulesSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
+						{view === 'statistics' ? <StatisticsSettings data={data} settings={settings} update={update} save={save} isBusy={busy} clearType={actions.clearType} /> : null}
+						{view === 'expert' ? <ExpertSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
+						{view === 'benchmark' ? <BenchmarkSettings settings={settings} update={update} save={save} isBusy={busy} /> : null}
+						{view === 'woocommerce' ? (
+							<SimpleTogglePage title="WooCommerce">
+								{settings.woocommerce?.active ? null : <Pill tone="warning">WooCommerce is not active</Pill>}
+								<SwitchRow label="WooCommerce cache rules" checked={Boolean(settings.woocommerce?.enabled)} onChange={(checked) => update('woocommerce', 'enabled', checked)} />
+								<SwitchRow label="Clear after payment complete" checked={Boolean(settings.woocommerce?.paymentComplete)} onChange={(checked) => update('woocommerce', 'paymentComplete', checked)} />
+							</SimpleTogglePage>
+						) : null}
+						{view === 'about' ? <AboutPage data={data} /> : null}
+					</section>
+					{SAVE_VIEWS.has(view) ? <div className="khse-page-spacer" aria-hidden="true" /> : null}
+					{SAVE_VIEWS.has(view) ? <SaveBar isBusy={busy} onSave={save} global /> : null}
+				</div>
 			</main>
 		</div>
 	);
