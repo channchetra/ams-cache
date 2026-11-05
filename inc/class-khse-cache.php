@@ -95,9 +95,11 @@ class KHSE_Cache {
 
 		$this->cache_key = khse_get_cache_key( $uri );
 
-		add_action( 'plugins_loaded', array( $this, 'ob_start' ), 5 );
-		add_action( 'shutdown', array( $this, 'ob_stop' ), 0 );
+		// `init()` runs from `plugins_loaded`, so the buffer must attach to a
+		// hook that fires later. `template_redirect` runs before the template
+		// is included and after `wp` has resolved the request conditionals.
 		add_action( 'wp', array( $this, 'resolve_post_cache_state' ), 0 );
+		add_action( 'template_redirect', array( $this, 'ob_start' ), 0 );
 	}
 
 	/**
@@ -245,6 +247,10 @@ class KHSE_Cache {
 		}
 
 		$this->wp_ob_start();
+
+		// Pair the buffer start with its shutdown handler so a request that
+		// never starts buffering can never stop another component's buffer.
+		add_action( 'shutdown', array( $this, 'ob_stop' ), 0 );
 	}
 
 	/**

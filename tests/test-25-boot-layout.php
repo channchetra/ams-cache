@@ -40,6 +40,18 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/cache-nginx.php' );
 	}
 
+	public function test_cache_buffer_attaches_to_a_hook_after_runtime_boot() {
+		$this->assertNotFalse( has_action( 'plugins_loaded', 'khse_boot_cache_runtime' ) );
+
+		$_SERVER['REQUEST_URI'] = '/';
+
+		$cache = new KHSE_Cache();
+		$cache->init();
+
+		$this->assertFalse( has_action( 'plugins_loaded', array( $cache, 'ob_start' ) ), 'The buffer must not attach to an already-fired hook.' );
+		$this->assertNotFalse( has_action( 'template_redirect', array( $cache, 'ob_start' ) ) );
+	}
+
 	public function test_runtime_config_helpers_live_in_core() {
 		foreach ( array( 'khse_get_runtime_exclusion_config', 'khse_update_config', 'khse_sync_expert_mode_runtime' ) as $function ) {
 			$reflection = new ReflectionFunction( $function );

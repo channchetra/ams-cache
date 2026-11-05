@@ -234,8 +234,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 
 		// Assert.
 		$this->assertFalse(
-			has_action( 'plugins_loaded', array( $cm, 'ob_start' ) ),
-			'plugins_loaded/ob_start must not be registered for /?p=123.'
+			has_action( 'template_redirect', array( $cm, 'ob_start' ) ),
+			'template_redirect/ob_start must not be registered for /?p=123.'
 		);
 		$this->assertFalse(
 			has_action( 'wp', array( $cm, 'resolve_post_cache_state' ) ),
@@ -243,7 +243,7 @@ class CacheIdentityTest extends WP_UnitTestCase {
 		);
 		$this->assertFalse(
 			has_action( 'shutdown', array( $cm, 'ob_stop' ) ),
-			'shutdown/ob_stop must not be registered for /?p=123.'
+			'shutdown/ob_stop must not be registered before buffering starts.'
 		);
 	}
 
@@ -262,8 +262,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 
 		// Assert.
 		$this->assertFalse(
-			has_action( 'plugins_loaded', array( $cm, 'ob_start' ) ),
-			'plugins_loaded/ob_start must not be registered for //?p=1.'
+			has_action( 'template_redirect', array( $cm, 'ob_start' ) ),
+			'template_redirect/ob_start must not be registered for //?p=1.'
 		);
 	}
 
@@ -282,8 +282,8 @@ class CacheIdentityTest extends WP_UnitTestCase {
 
 		// Assert.
 		$this->assertFalse(
-			has_action( 'plugins_loaded', array( $cm, 'ob_start' ) ),
-			'plugins_loaded/ob_start must not be registered for /index.php?utm_source=newsletter.'
+			has_action( 'template_redirect', array( $cm, 'ob_start' ) ),
+			'template_redirect/ob_start must not be registered for /index.php?utm_source=newsletter.'
 		);
 	}
 
@@ -302,17 +302,18 @@ class CacheIdentityTest extends WP_UnitTestCase {
 
 		// Assert.
 		$this->assertNotFalse(
-			has_action( 'plugins_loaded', array( $cm, 'ob_start' ) ),
-			'plugins_loaded/ob_start must be registered for /?utm_source=newsletter.'
+			has_action( 'template_redirect', array( $cm, 'ob_start' ) ),
+			'template_redirect/ob_start must be registered for /?utm_source=newsletter.'
 		);
 		$this->assertNotFalse(
 			has_action( 'wp', array( $cm, 'resolve_post_cache_state' ) ),
 			'wp/resolve_post_cache_state must be registered for /?utm_source=newsletter.'
 		);
-		$this->assertNotFalse(
+		$this->assertFalse(
 			has_action( 'shutdown', array( $cm, 'ob_stop' ) ),
-			'shutdown/ob_stop must be registered for /?utm_source=newsletter.'
+			'shutdown/ob_stop must only be registered once buffering starts.'
 		);
+		$this->assertSame( 0, did_action( 'template_redirect' ), 'The buffer hook must still be in the future.' );
 	}
 
 	/**
