@@ -43,7 +43,7 @@ function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $d
 
 		$stats = khse_read_stats_file( $file->getPathname() );
 
-		if ( empty( $stats['uri'] ) || khse_normalize_cache_uri( $stats['uri'] ) !== $target_uri ) {
+		if ( ! is_array( $stats ) || empty( $stats['uri'] ) || khse_normalize_cache_uri( $stats['uri'] ) !== $target_uri ) {
 			continue;
 		}
 

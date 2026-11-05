@@ -62,6 +62,10 @@ function khse_enforce_cache_entry_limit( $driver = null ) {
 
 		$stats = khse_read_stats_file( $file->getPathname() );
 
+		if ( ! is_array( $stats ) ) {
+			continue;
+		}
+
 		$entries[] = array(
 			'key'  => $key,
 			'path' => $file->getPathname(),

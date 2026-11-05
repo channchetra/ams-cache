@@ -237,15 +237,28 @@ function khse_build_page_optimization_report( $before, $after, $settings, $uri =
 function khse_write_page_optimization_report( $uri, $report ) {
 	$dir = khse_get_page_optimization_report_dir();
 
-	if ( ! is_dir( $dir ) ) {
-		wp_mkdir_p( $dir );
+	if ( ! is_dir( $dir ) && ! wp_mkdir_p( $dir ) ) {
+		return false;
 	}
 
 	$key  = md5( khse_normalize_cache_uri( $uri ) );
 	$file = trailingslashit( $dir ) . $key . '.json';
+	$json = wp_json_encode( $report );
 
-	file_put_contents( $file, wp_json_encode( $report ) );
+	if ( false === $json ) {
+		return false;
+	}
+
+	$written = @file_put_contents( $file, $json, LOCK_EX );
+
+	if ( false === $written ) {
+		error_log( '[KH Speed Engine] Could not write optimization report: ' . $file );
+		return false;
+	}
+
 	khse_prune_page_optimization_reports();
+
+	return true;
 }
 
 /**

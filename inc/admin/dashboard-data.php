@@ -72,6 +72,10 @@ function khse_dashboard_get_stats_for_type( $type ) {
 
 			$stats = khse_read_stats_file( $file->getPathname() );
 
+			if ( ! is_array( $stats ) ) {
+				continue;
+			}
+
 			if ( 'homepage' === $type && ! empty( $stats['uri'] ) && ! khse_is_homepage_uri( $stats['uri'] ) ) {
 				continue;
 			}

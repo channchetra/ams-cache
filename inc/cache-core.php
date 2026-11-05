@@ -1116,20 +1116,24 @@ function khse_get_default_config() {
 	);
 }
 
+/**
+ * Read one stats row.
+ *
+ * @param string $path Stats JSON path.
+ *
+ * @return array{size:int,uri:string}|null Null when the file is missing or corrupt.
+ */
 function khse_read_stats_file( $path ) {
 	$content = file_exists( $path ) ? file_get_contents( $path ) : '';
-	$data    = json_decode( $content, true );
+	$data    = json_decode( (string) $content, true );
 
-	if ( is_array( $data ) ) {
-		return array(
-			'size' => isset( $data['size'] ) ? (int) $data['size'] : 0,
-			'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
-		);
+	if ( ! is_array( $data ) ) {
+		return null;
 	}
 
 	return array(
-		'size' => (int) $content,
-		'uri'  => '',
+		'size' => isset( $data['size'] ) ? (int) $data['size'] : 0,
+		'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
 	);
 }
 

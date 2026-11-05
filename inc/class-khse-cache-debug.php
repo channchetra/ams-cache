@@ -349,15 +349,20 @@ trait KHSE_Cache_Debug {
 
 		khse_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->driver );
 
-		file_put_contents(
+		$written = @file_put_contents(
 			$file,
 			wp_json_encode(
 				array(
 					'size' => $size,
 					'uri'  => $this->get_request_uri(),
 				)
-			)
+			),
+			LOCK_EX
 		);
+
+		if ( false === $written ) {
+			error_log( '[KH Speed Engine] Could not write cache stats row: ' . $file );
+		}
 
 		khse_enforce_cache_entry_limit( $this->driver );
 	}

@@ -85,6 +85,18 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		delete_option( 'khse_option_cache_max_entries' );
 	}
 
+	public function test_corrupt_stats_file_is_ignored() {
+		$stats_dir = khse_get_stats_dir( 'post' );
+		wp_mkdir_p( $stats_dir );
+		$file = $stats_dir . '/corrupt.json';
+		file_put_contents( $file, '{broken' );
+
+		$this->assertNull( khse_read_stats_file( $file ) );
+		$this->assertSame( 0, khse_dashboard_get_stats_for_type( 'post' )['rows'] );
+
+		@unlink( $file );
+	}
+
 	public function test_purge_skips_non_document_paths() {
 		$result = khse_purge_cache_uri( '/assets/app.css', new class() {
 			public function delete( $key ) {
