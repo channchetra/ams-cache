@@ -24,7 +24,7 @@ KH Speed Engine is an extremely lightweight, high-performance cache plugin that 
 
 ## Modular Architecture
 
-As of v3.0.8, the plugin's helper functions have been split from a single monolithic `helpers.php` (179 KB) into focused modules, each loaded via `helpers.php` bootstrap:
+As of v3.0.8, the plugin's helper functions have been split from a single monolithic `helpers.php` (179 KB) into focused modules, each loaded via the `bootstrap.php` manifest:
 
 | Module | Purpose |
 |--------|---------|
@@ -36,6 +36,9 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `cache-purger.php` | Cache statistics + purge operations |
 | `page-optimizer.php` | HTML/CSS minification, lazy loading, UCSS, media optimization, reports |
 | `cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
+| `brand-migration.php` | One-time legacy option and storage migration |
+| `cache-url-policy.php` | Cache eligibility checks for the admin URL tester |
+| `widgets.php` | Benchmark widget registration |
 
 ## Nginx Direct Static Cache
 

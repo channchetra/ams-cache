@@ -30,7 +30,7 @@ class BenchmarkMarkupTest extends WP_UnitTestCase {
 	}
 
 	public function test_renderers_do_not_duplicate_field_classes() {
-		foreach ( array( 'inc/class-khse-cache-debug.php', 'inc/admin/class-khse-benchmark-widget.php' ) as $file ) {
+		foreach ( array( 'inc/class-khse-cache-debug.php', 'inc/class-khse-benchmark-widget.php' ) as $file ) {
 			$source = file_get_contents( KHSE_PLUGIN_DIR . $file );
 
 			$this->assertStringNotContainsString( 'khse-field-', $source, $file );

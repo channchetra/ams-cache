@@ -27,7 +27,7 @@ class ConventionsTest extends WP_UnitTestCase {
 	}
 
 	public function test_benchmark_widget_title_uses_text_domain() {
-		$widget = file_get_contents( KHSE_PLUGIN_DIR . 'inc/admin/class-khse-benchmark-widget.php' );
+		$widget = file_get_contents( KHSE_PLUGIN_DIR . 'inc/class-khse-benchmark-widget.php' );
 
 		$this->assertStringContainsString( "_e( 'Title:', 'kh-speed-engine' )", $widget );
 	}

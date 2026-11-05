@@ -6,7 +6,7 @@
  * @license GPLv3 (or later)
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 

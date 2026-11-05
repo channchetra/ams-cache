@@ -10,7 +10,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-require_once KHSE_PLUGIN_DIR . 'inc/helpers.php';
+require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 require_once KHSE_PLUGIN_DIR . 'inc/admin/functions.php';
 require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
 

@@ -10,7 +10,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-require_once __DIR__ . '/option-schema.php';
+require_once dirname( __DIR__ ) . '/option-schema.php';
 
 /**
  * Remove WooCommerce options left over from earlier versions.

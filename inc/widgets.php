@@ -25,6 +25,6 @@ function khse_add_benchmark_widget() {
  * Register banchmark widget. Trigged by khse_add_benchmark_widget
  */
 function khse_register_benchmark_widget() {
-	require_once KHSE_PLUGIN_DIR . 'inc/admin/class-khse-benchmark-widget.php';
+	require_once KHSE_PLUGIN_DIR . 'inc/class-khse-benchmark-widget.php';
 	register_widget( 'KHSE_Benchmark_Widget' );
 }

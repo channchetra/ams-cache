@@ -69,10 +69,9 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			'update-setting',
 			'functions',
 			'ajax-action',
-			'widgets',
 		);
 
-		require_once KHSE_PLUGIN_DIR . 'inc/helpers.php';
+		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 		khse_maybe_migrate_legacy_brand();
 		// Composer's autoloader prepends itself to the SPL stack, so it must be
 		// loaded first and the local library loader registered afterwards to win.
@@ -81,6 +80,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
+		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
 
 		foreach ( $required_files as $file ) {
 			require_once KHSE_PLUGIN_DIR . 'inc/admin/' . $file . '.php';
@@ -96,14 +96,14 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 	} else {
 
-		require_once KHSE_PLUGIN_DIR . 'inc/helpers.php';
+		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 		khse_maybe_migrate_legacy_brand();
 		require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
 		// Post mutations can run through AJAX, REST, or frontend requests.
 		require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
 		// Benchmark widget registration must run on front-end and admin requests.
-		require_once KHSE_PLUGIN_DIR . 'inc/admin/widgets.php';
+		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
 
 		// Full runtime is not needed during AJAX calls, but upload/offload hooks are.
 		if ( ! wp_doing_ajax() ) {

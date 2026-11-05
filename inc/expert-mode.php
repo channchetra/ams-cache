@@ -82,7 +82,7 @@ function khse_run_expert_mode( $args ) {
 	}
 
 	include_once( $plugin_dir . '/inc/lib/autoload.php' );
-	include_once( $plugin_dir . '/inc/helpers.php' );
+	include_once( $plugin_dir . '/inc/bootstrap.php' );
 
 	if ( ! isset( $config['cache_enabled'] ) ) {
 		$config['cache_enabled'] = true;
