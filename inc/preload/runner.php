@@ -66,11 +66,25 @@ function khse_preload_should_verify_ssl( $url ) {
 	$verify    = (bool) apply_filters( 'khse_preload_should_verify_ssl', true );
 	$url_parts = parse_url( $url );
 
-	if ( $verify && ! empty( $url_parts['host'] ) && 'https' === strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) && khse_preload_host_is_loopback( $url_parts['host'] ) ) {
+	if ( ! $verify || empty( $url_parts['host'] ) || 'https' !== strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) ) {
+		return $verify;
+	}
+
+	if ( khse_preload_host_is_loopback( $url_parts['host'] ) ) {
 		return false;
 	}
 
-	return $verify;
+	// Internal container/proxy hostnames often use a self-signed certificate.
+	$resolved = gethostbyname( $url_parts['host'] );
+
+	if (
+		filter_var( $resolved, FILTER_VALIDATE_IP ) &&
+		! filter_var( $resolved, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE )
+	) {
+		return false;
+	}
+
+	return true;
 }
 
 /**
