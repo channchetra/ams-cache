@@ -1187,3 +1187,52 @@ function khse_get_cache_type_list( $get_key = false ) {
 
 	return $list;
 }
+
+/**
+ * Get newline-separated option as list.
+ *
+ * @param string $value Raw textarea value.
+ *
+ * @return array
+ */
+function khse_get_lines_from_textarea( $value ) {
+	$lines = preg_split( '/\r\n|\r|\n/', (string) $value );
+	$lines = array_map( 'trim', $lines );
+
+	return array_values( array_filter( $lines ) );
+}
+
+/**
+ * Merge textarea lines while preserving user order.
+ *
+ * @param string|array $value Existing value.
+ * @param array        $extra Extra protected lines.
+ *
+ * @return string
+ */
+function khse_merge_textarea_lines( $value, $extra ) {
+	$lines = is_array( $value ) ? $value : khse_get_lines_from_textarea( $value );
+
+	foreach ( $extra as $line ) {
+		$line = trim( (string) $line );
+
+		if ( '' === $line ) {
+			continue;
+		}
+
+		$exists = false;
+
+		foreach ( $lines as $existing ) {
+			if ( 0 === strcasecmp( (string) $existing, $line ) ) {
+				$exists = true;
+				break;
+			}
+		}
+
+		if ( ! $exists ) {
+			$lines[] = $line;
+		}
+	}
+
+	return implode( "\n", array_values( array_filter( array_map( 'trim', $lines ) ) ) );
+}

@@ -11,6 +11,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
+require_once KHSE_PLUGIN_DIR . 'inc/admin/url-policy.php';
 require_once KHSE_PLUGIN_DIR . 'inc/admin/driver-tools.php';
 require_once KHSE_PLUGIN_DIR . 'inc/admin/expert-mode-snippet.php';
 require_once KHSE_PLUGIN_DIR . 'inc/admin/dashboard-data.php';
