@@ -296,8 +296,7 @@ function khse_ajax_dashboard_test_url_callback() {
 		);
 	}
 
-	$config              = khse_get_config_from_schema();
-	$config['exclusion'] = khse_build_runtime_exclusion_config();
+	$config = khse_build_runtime_config();
 
 	wp_send_json_success( khse_evaluate_cache_url_policy( $url, $config ) );
 }

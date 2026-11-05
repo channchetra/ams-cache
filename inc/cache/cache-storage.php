@@ -219,6 +219,10 @@ function khse_get_config_data() {
  * @return bool True when the runtime config file was written.
  */
 function khse_update_config( $setting ) {
+	if ( khse_settings_batch_active() ) {
+		return true;
+	}
+
 	$config = khse_get_config_data();
 
 	if ( is_array( $setting ) ) {
@@ -284,6 +288,28 @@ function khse_update_config( $setting ) {
 }
 
 /**
+ * Build the complete runtime config from live settings.
+ *
+ * @return array
+ */
+function khse_build_runtime_config() {
+	$driver_type     = khse_get_setting( 'cache', 'driver' );
+	$connection_type = khse_get_driver_connection_type( $driver_type );
+
+	$config = khse_get_config_from_schema();
+
+	$config['site_url']                 = rtrim( get_site_url(), '/' );
+	$config['driver_advanced_settings'] = khse_normalize_driver_settings(
+		khse_get_driver_advanced_settings( $driver_type ),
+		$connection_type
+	);
+	$config['driver_connection_type']   = $connection_type;
+	$config['exclusion']                = khse_build_runtime_exclusion_config();
+
+	return khse_normalize_config( $config );
+}
+
+/**
  * Sync runtime config and Expert Mode lock file.
  *
  * @return bool True when config (and the lock, if enabled) was written.
@@ -293,21 +319,7 @@ function khse_sync_expert_mode_runtime() {
 		return true;
 	}
 
-	$driver_type      = khse_get_setting( 'cache', 'driver' );
-	$connection_type  = khse_get_driver_connection_type( $driver_type );
-	$advanced_setting = khse_normalize_driver_settings(
-		khse_get_driver_advanced_settings( $driver_type ),
-		$connection_type
-	);
-
-	$setting = khse_get_config_from_schema();
-
-	$setting['site_url']                 = rtrim( get_site_url(), '/' );
-	$setting['driver_advanced_settings'] = $advanced_setting;
-	$setting['driver_connection_type']   = $connection_type;
-	$setting['exclusion']                = khse_build_runtime_exclusion_config();
-
-	$config_written = khse_update_config( $setting );
+	$config_written = khse_update_config( khse_build_runtime_config() );
 	$checkpoint     = khse_get_expert_lock_path();
 
 	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {

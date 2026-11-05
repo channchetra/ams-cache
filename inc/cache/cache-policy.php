@@ -49,7 +49,11 @@ function khse_find_excluded_path( $path, $excluded_list ) {
  * @return array
  */
 function khse_get_runtime_config() {
-	$config = khse_get_config_data();
+	$config = array_merge(
+		khse_get_default_config(),
+		khse_get_config_data(),
+		khse_build_runtime_config()
+	);
 
 	$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
 	$config['cache_key_prefix']   = khse_get_cache_key_prefix();
@@ -131,6 +135,18 @@ function khse_build_served_debug_message( $config, $expert = false, $start_time 
 	$message .= "\n//-->\n";
 
 	return $message;
+}
+
+/**
+ * Whether a string is a complete, cacheable HTML payload.
+ *
+ * @param string $content Payload.
+ * @param int    $minimum Minimum bytes.
+ *
+ * @return bool
+ */
+function khse_is_valid_cache_payload( $content, $minimum = 1024 ) {
+	return ! empty( $content ) && false !== strpos( $content, '</body>' ) && strlen( $content ) >= (int) $minimum;
 }
 
 /**
@@ -231,7 +247,7 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 		return null;
 	}
 
-	if ( empty( $cached_content ) || false === strpos( $cached_content, '</body>' ) || strlen( $cached_content ) < 1024 ) {
+	if ( ! khse_is_valid_cache_payload( $cached_content ) ) {
 		return null;
 	}
 

@@ -288,7 +288,7 @@ class KHSE_Cache {
 			return false;
 		}
 
-		if ( empty( $content ) || strpos( $content, '</body>' ) === false || strlen( $content ) < 1024 ) {
+		if ( ! khse_is_valid_cache_payload( $content ) ) {
 			return false;
 		}
 
@@ -342,7 +342,7 @@ class KHSE_Cache {
 			$optimized           = khse_optimize_html( $content );
 
 			// Guard: optimization must never produce empty/invalid HTML.
-			if ( ! empty( $optimized ) && strpos( $optimized, '</body>' ) !== false && strlen( $optimized ) >= 1024 ) {
+			if ( khse_is_valid_cache_payload( $optimized ) ) {
 				$content             = $optimized;
 				$optimization_report = khse_build_page_optimization_report(
 					$before_optimization,

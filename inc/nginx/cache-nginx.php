@@ -110,7 +110,7 @@ function khse_write_nginx_static_cache( $uri, $content ) {
 		return false;
 	}
 
-	if ( isset( $_SERVER['REQUEST_URI'] ) && ! khse_is_cacheable_request_uri( $_SERVER['REQUEST_URI'] ) ) {
+	if ( ! khse_is_cacheable_request_uri( $uri ) ) {
 		return false;
 	}
 
