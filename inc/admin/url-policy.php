@@ -10,45 +10,9 @@ if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
-/**
- * Guest visibility check.
- *
- * @return array
- */
-function khse_cache_policy_visibility_check() {
-	$enabled = 'yes' === get_option( 'khse_option_visibility_guest', 'yes' );
 
-	return khse_cache_policy_check(
-		'visibility',
-		__( 'Guest visibility', 'kh-speed-engine' ),
-		$enabled ? 'pass' : 'fail',
-		$enabled
-			? __( 'Guest page caching is enabled.', 'kh-speed-engine' )
-			: __( 'Guest page caching is disabled in settings.', 'kh-speed-engine' )
-	);
-}
 
-/**
- * Homepage caching check.
- *
- * @param string $path Normalized path.
- *
- * @return array
- */
-function khse_cache_policy_homepage_check( $path ) {
-	if ( '/' !== $path ) {
-		return khse_cache_policy_check( 'homepage', __( 'Homepage caching', 'kh-speed-engine' ), 'note', __( 'Not the homepage.', 'kh-speed-engine' ) );
-	}
 
-	$enabled = 'yes' === get_option( 'khse_option_post_homepage', 'yes' );
-
-	return khse_cache_policy_check(
-		'homepage',
-		__( 'Homepage caching', 'kh-speed-engine' ),
-		$enabled ? 'pass' : 'fail',
-		$enabled ? __( 'Homepage caching is enabled.', 'kh-speed-engine' ) : __( 'Homepage caching is disabled in settings.', 'kh-speed-engine' )
-	);
-}
 
 /**
  * Post-type caching check.
@@ -300,7 +264,7 @@ function khse_cache_policy_driver_check( $config ) {
  * @return array
  */
 function khse_cache_policy_url_check( $url ) {
-	$cacheable = khse_is_cacheable_uri( $url );
+	$cacheable = khse_is_cacheable_uri( $url ) && khse_is_cacheable_settings_path( khse_normalize_cache_uri( $url ), false );
 
 	return khse_cache_policy_check(
 		'url',
@@ -551,8 +515,6 @@ function khse_evaluate_cache_url_policy( $url, $config = array() ) {
 		khse_cache_policy_permalink_check(),
 		khse_cache_policy_driver_check( $config ),
 		khse_cache_policy_url_check( $resolved['url'] ),
-		khse_cache_policy_visibility_check(),
-		khse_cache_policy_homepage_check( $path ),
 		khse_cache_policy_post_type_check( $resolved['url'] ),
 		khse_cache_policy_exclusion_path_check( $path, $exclusion, $rules_enabled ),
 		khse_cache_policy_exclusion_get_check( $query_vars, $exclusion, $rules_enabled ),

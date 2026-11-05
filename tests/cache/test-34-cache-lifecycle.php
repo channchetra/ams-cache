@@ -132,6 +132,54 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		delete_option( 'khse_option_statistics_status' );
 	}
 
+	public function test_finalize_output_persists_and_returns_the_document() {
+		$_SERVER['REQUEST_URI']    = '/finalize-output/';
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		update_option( 'khse_option_statistics_status', 'enable' );
+		delete_option( 'khse_option_benchmark_footer_text' );
+
+		$driver = new class() {
+			public $stored = array();
+
+			public function set( $key, $value, $ttl = null ) {
+				$this->stored[ $key ] = $value;
+				return true;
+			}
+
+			public function get( $key ) {
+				return isset( $this->stored[ $key ] ) ? $this->stored[ $key ] : false;
+			}
+
+			public function delete( $key ) {
+				unset( $this->stored[ $key ] );
+				return true;
+			}
+		};
+
+		$cache      = new KHSE_Cache();
+		$reflection = new ReflectionClass( $cache );
+		$property   = $reflection->getProperty( 'driver' );
+		$property->setAccessible( true );
+		$property->setValue( $cache, $driver );
+		$resolved = $reflection->getProperty( 'driver_resolved' );
+		$resolved->setAccessible( true );
+		$resolved->setValue( $cache, true );
+
+		$cache->is_cacheable = true;
+		$cache->cache_key    = 'finalize-output';
+		$cache->data_type    = 'post';
+
+		$payload = '<html><body>' . str_repeat( 'x', 1100 ) . '</body></html>';
+		$result  = $cache->finalize_output( $payload );
+
+		$this->assertStringContainsString( '</body>', $result );
+		$this->assertArrayHasKey( 'finalize-output', $driver->stored );
+
+		$stats = khse_get_stats_dir( 'post' ) . '/finalize-output.json';
+		@unlink( $stats );
+		delete_option( 'khse_option_statistics_status' );
+	}
+
 	public function test_cached_response_respects_guest_visibility() {
 		$_SERVER['REQUEST_URI']    = '/gated-page/';
 		$_SERVER['REQUEST_METHOD'] = 'GET';

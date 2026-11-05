@@ -75,6 +75,8 @@ function khse_boot_cache_runtime() {
 	$cache->init();
 }
 
+add_action( 'init', 'khse_load_textdomain', 0 );
+
 // The minimum supported version of PHP.
 if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
@@ -94,7 +96,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		register_activation_hook( __FILE__, 'khse_activation' );
 		register_deactivation_hook( __FILE__, 'khse_deactivation' );
 
-		add_action( 'init', 'khse_load_textdomain', 0 );
 
 		add_action( 'plugins_loaded', 'khse_boot_cache_runtime' );
 
@@ -111,7 +112,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			register_activation_hook( __FILE__, 'khse_activation' );
 			register_deactivation_hook( __FILE__, 'khse_deactivation' );
 
-			add_action( 'init', 'khse_load_textdomain', 0 );
 
 			if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 				khse_load_admin_modules();

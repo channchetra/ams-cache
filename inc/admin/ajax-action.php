@@ -366,7 +366,6 @@ function khse_ajax_dashboard_save_toggle_map( $items, $option_key ) {
  */
 function khse_ajax_dashboard_save_settings_callback() {
 	khse_ajax_dashboard_guard();
-	khse_settings_batch_active( false );
 
 	$raw      = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
 	$settings = json_decode( (string) $raw, true );
@@ -379,10 +378,8 @@ function khse_ajax_dashboard_save_settings_callback() {
 		);
 	}
 
-	khse_settings_batch_active( true );
 	khse_apply_dashboard_settings( $settings );
 	khse_ensure_permalink_structure();
-	khse_settings_batch_active( false );
 	$runtime_synced = khse_sync_expert_mode_runtime();
 	khse_clear_all_cache( false );
 

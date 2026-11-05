@@ -63,7 +63,7 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		$this->assertSame( 'pass', $this->check( $result, 'request' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'caching' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'permalink' )['status'] );
-		$this->assertCount( 12, $result['checks'] );
+		$this->assertCount( 10, $result['checks'] );
 	}
 
 	public function test_fragment_url_is_rejected() {

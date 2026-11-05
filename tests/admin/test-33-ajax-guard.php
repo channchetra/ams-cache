@@ -51,7 +51,7 @@ class AjaxGuardTest extends WP_Ajax_UnitTestCase {
 		$this->assertTrue( $response['success'] );
 		$this->assertArrayHasKey( 'cacheable', $response['data'] );
 		$this->assertArrayHasKey( 'checks', $response['data'] );
-		$this->assertCount( 12, $response['data']['checks'] );
+		$this->assertCount( 10, $response['data']['checks'] );
 	}
 
 	public function test_test_url_rejects_a_subscriber() {

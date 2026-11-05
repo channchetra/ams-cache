@@ -317,16 +317,30 @@ class KHSE_Cache {
 	 * @return void
 	 */
 	public function ob_stop() {
-
 		$this->wp_ob_end_flush_all();
 
 		$content = ob_get_contents();
 
-		// Make sure that the page has valid HTML content.
 		if ( empty( $content ) || strpos( $content, '</body>' ) === false ) {
 			return;
 		}
 
+		$content = $this->finalize_output( $content );
+
+		ob_end_clean();
+		ob_start();
+
+		echo $content;
+	}
+
+	/**
+	 * Finalize a captured page and persist it when cacheable.
+	 *
+	 * @param string $content Captured HTML.
+	 *
+	 * @return string Final HTML.
+	 */
+	public function finalize_output( $content ) {
 		if ( 'yes' === get_option( 'khse_option_benchmark_footer_text') ) {
 			$content = str_replace(
 				'</body>',
@@ -359,16 +373,11 @@ class KHSE_Cache {
 
 		$this->persist_cache_payload( $cache_content . $debug_message );
 
-		$content = str_replace(
+		return str_replace(
 			'</body>',
 			"\n" . khse_javascript() . "\n" . '</body>',
 			$content
 		);
-
-		ob_end_clean();
-		ob_start();
-
-		echo $content;
 	}
 
 	/**

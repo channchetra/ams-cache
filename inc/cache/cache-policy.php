@@ -94,6 +94,30 @@ function khse_is_cache_request_excluded( $config ) {
 }
 
 /**
+ * Apply the cache visibility and homepage settings to a path.
+ *
+ * @param string $path      Normalized path.
+ * @param bool   $logged_in Whether the requester is logged in.
+ *
+ * @return bool
+ */
+function khse_is_cacheable_settings_path( $path, $logged_in = false ) {
+	if ( $logged_in && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
+		return false;
+	}
+
+	if ( ! $logged_in && 'yes' !== get_option( 'khse_option_visibility_guest', 'yes' ) ) {
+		return false;
+	}
+
+	if ( khse_is_homepage_uri( $path ) && 'yes' !== get_option( 'khse_option_post_homepage', 'yes' ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Build the debug block appended to a cached response.
  *
  * @param array      $config     Runtime config.
@@ -196,14 +220,6 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 
 	$is_logged_in = function_exists( 'is_user_logged_in' ) && is_user_logged_in();
 
-	if ( $is_logged_in && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
-		return null;
-	}
-
-	if ( ! $is_logged_in && 'yes' !== get_option( 'khse_option_visibility_guest', 'yes' ) ) {
-		return null;
-	}
-
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
 
 	if ( ! khse_is_cacheable_request_uri( $request_uri ) ) {
@@ -216,7 +232,7 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 
 	$path = khse_normalize_cache_uri( $request_uri );
 
-	if ( khse_is_homepage_uri( $path ) && 'yes' !== get_option( 'khse_option_post_homepage', 'yes' ) ) {
+	if ( ! khse_is_cacheable_settings_path( $path, $is_logged_in ) ) {
 		return null;
 	}
 
