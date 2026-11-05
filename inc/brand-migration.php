@@ -76,8 +76,12 @@ function khse_maybe_migrate_legacy_brand() {
 		}
 	}
 
-	$old_runtime = rtrim( sys_get_temp_dir(), '/\\' ) . '/ams-cache';
-	$new_runtime = rtrim( sys_get_temp_dir(), '/\\' ) . '/kh-speed-engine';
+	$runtime_base = function_exists( 'khse_get_runtime_base_dir' )
+		? khse_get_runtime_base_dir()
+		: rtrim( sys_get_temp_dir(), '/\\' );
+
+	$old_runtime = $runtime_base . '/ams-cache';
+	$new_runtime = $runtime_base . '/kh-speed-engine';
 
 	if ( ! is_dir( $new_runtime ) && is_dir( $old_runtime ) ) {
 		if ( ! @rename( $old_runtime, $new_runtime ) ) {

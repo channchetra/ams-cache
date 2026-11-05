@@ -55,16 +55,6 @@ function khse_is_cache_request_excluded( $config ) {
  *
  * @return string
  */
-
-/**
- * Build the debug block appended to a cached response.
- *
- * @param array      $config     Runtime config.
- * @param bool       $expert     Whether Expert Mode served the response.
- * @param float|null $start_time Request start time for pre-WP contexts.
- *
- * @return string
- */
 function khse_build_served_debug_message( $config, $expert = false, $start_time = null ) {
 	$translate = function ( $text ) {
 		return function_exists( '__' ) ? __( $text, 'kh-speed-engine' ) : $text;
@@ -107,15 +97,6 @@ function khse_build_served_debug_message( $config, $expert = false, $start_time 
  *
  * @return void
  */
-
-/**
- * Log a cache read failure once per request without leaking credentials.
- *
- * @param string     $driver_type Cache driver key.
- * @param \Throwable $error       Caught exception.
- *
- * @return void
- */
 function khse_log_cache_read_failure( $driver_type, $error ) {
 	static $logged = false;
 
@@ -137,18 +118,6 @@ function khse_log_cache_read_failure( $driver_type, $error ) {
 		)
 	);
 }
-
-/**
- * Serve a cached response for the current request.
- *
- * @param array                            $config       Runtime config.
- * @param \Shieldon\SimpleCache\Cache|null $driver       Existing driver, or null to create one.
- * @param string                           $storage_base Optional file/sqlite storage base.
- * @param bool                             $expert       Whether this is the pre-WP Expert Mode path.
- * @param float|null                       $start_time   Request start time for pre-WP metrics.
- *
- * @return string|null Cached HTML, or null when no valid cache entry should be served.
- */
 
 /**
  * Serve a cached response for the current request.
@@ -241,20 +210,6 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
  *     @type array $excluded_cookie_vars Excluded cookie variables.
  * }
  */
-
-/**
- * Build the runtime exclusion configuration from the stored settings.
- *
- * Persists the normalized path list to khse_option_excluded_list_filtered.
- *
- * @return array {
- *     @type bool  $enable               Whether exclusion rules are enabled.
- *     @type array $excluded_list        Normalized excluded paths.
- *     @type array $excluded_get_vars    Excluded GET variables.
- *     @type array $excluded_post_vars   Excluded POST variables.
- *     @type array $excluded_cookie_vars Excluded cookie variables.
- * }
- */
 function khse_get_runtime_exclusion_config() {
 	$list = array();
 
@@ -296,13 +251,7 @@ function khse_get_runtime_exclusion_config() {
 	);
 }
 
-/**
- * Save the settings into the JSON runtime config.
- *
- * @param array $setting The setting.
- *
- * @return bool True when the runtime config file was written.
- */
+
 
 /**
  * Normalize a request URI before using it as a cache identity.
@@ -337,12 +286,6 @@ function khse_normalize_cache_uri( $uri ) {
  *
  * @return array
  */
-
-/**
- * Cookie prefixes that bypass the page cache.
- *
- * @return array
- */
 function khse_get_cache_bypass_cookie_prefixes() {
 	return array(
 		'wordpress_logged_in_',
@@ -351,12 +294,6 @@ function khse_get_cache_bypass_cookie_prefixes() {
 		'comment_author_',
 	);
 }
-
-/**
- * Check whether the current request carries a cache-bypass cookie.
- *
- * @return bool
- */
 
 /**
  * Check whether the current request carries a cache-bypass cookie.
@@ -380,21 +317,9 @@ function khse_request_has_cache_bypass_cookie() {
  *
  * @return array
  */
-
-/**
- * Path segments/prefixes that bypass the page cache.
- *
- * @return array
- */
 function khse_get_cache_bypass_paths() {
 	return array( 'wp-admin', 'wp-login.php', 'xmlrpc.php', 'wp-json', 'cart', 'checkout', 'my-account' );
 }
-
-/**
- * Return query variables that only carry external campaign attribution.
- *
- * @return array
- */
 
 /**
  * Return query variables that only carry external campaign attribution.
@@ -426,30 +351,11 @@ function khse_get_cache_tracking_query_vars() {
  *
  * @return bool
  */
-
-/**
- * Check whether a query variable is safe to ignore for page-cache identity.
- *
- * @param string $name Query variable name.
- *
- * @return bool
- */
 function khse_is_cache_tracking_query_var( $name ) {
 	$name = strtolower( trim( (string) $name ) );
 
 	return in_array( $name, khse_get_cache_tracking_query_vars(), true );
 }
-
-/**
- * Check whether a query string can share a page-cache identity.
- *
- * Only tracking variables are ignored by the cache key; any other query
- * variable changes the response and must not be treated as the same page.
- *
- * @param string $query Query string without the leading "?".
- *
- * @return bool
- */
 
 /**
  * Check whether a query string can share a page-cache identity.
@@ -485,14 +391,6 @@ function khse_is_cacheable_query_string( $query ) {
  *
  * @return bool
  */
-
-/**
- * Check if a path looks like a frontend HTML document.
- *
- * @param string $path Request path.
- *
- * @return bool
- */
 function khse_is_cacheable_document_path( $path ) {
 	$path = khse_normalize_cache_uri( $path );
 
@@ -508,15 +406,6 @@ function khse_is_cacheable_document_path( $path ) {
 
 	return true;
 }
-
-/**
- * Check if a full request URI can be treated as a cacheable HTML document request.
- *
- * @param string|null $request_uri Full request URI including the query string.
- *                                  Pass null to read $_SERVER['REQUEST_URI'].
- *
- * @return bool
- */
 
 /**
  * Check if a full request URI can be treated as a cacheable HTML document request.
@@ -571,14 +460,6 @@ function khse_is_cacheable_request_uri( $request_uri = null ) {
  *
  * @return bool
  */
-
-/**
- * Check if URI is the canonical homepage path.
- *
- * @param string $uri Request URI, URL, or path.
- *
- * @return bool
- */
 function khse_is_homepage_uri( $uri ) {
 	$home_path = '/';
 
@@ -588,15 +469,6 @@ function khse_is_homepage_uri( $uri ) {
 
 	return khse_normalize_cache_uri( $uri ) === $home_path;
 }
-
-/**
- * Build a cache key from an explicit prefix and URI.
- *
- * @param string $prefix Cache key prefix.
- * @param string $uri    Request URI or path.
- *
- * @return string
- */
 
 /**
  * Build a cache key from an explicit prefix and URI.
@@ -617,22 +489,8 @@ function khse_build_cache_key( $prefix, $uri ) {
  *
  * @return string
  */
-
-/**
- * Build the cache key for a request URI using the stored prefix.
- *
- * @param string $uri Request URI or path.
- *
- * @return string
- */
 function khse_get_cache_key( $uri ) {
 	return khse_build_cache_key( khse_get_cache_key_prefix(), $uri );
 }
 
-/**
- * Get default configuation.
- *
- * This function is also used in expert mode.
- *
- * @return array
- */
+

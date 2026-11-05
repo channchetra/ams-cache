@@ -26,17 +26,6 @@ function khse_load_textdomain() {
  *
  * @return bool
  */
-
-/**
- * Track whether a batched settings save is applying option values.
- *
- * Option hooks cannot receive a deferral flag, so the save entry point
- * toggles this guard while it writes the payload.
- *
- * @param bool|null $active Pass a value to set the state; null to read it.
- *
- * @return bool
- */
 function khse_settings_batch_active( $active = null ) {
 	static $is_active = false;
 
@@ -47,14 +36,7 @@ function khse_settings_batch_active( $active = null ) {
 	return $is_active;
 }
 
-/**
- * Return the site directory hash.
- *
- * Pure: returns the persisted hash or a deterministic fallback without
- * writing. Use khse_ensure_dir_hash() when the value must be persisted.
- *
- * @return string
- */
+
 
 /**
  * Check whether an option is enabled across yes/no and enable/disable vocabularies.
@@ -88,16 +70,6 @@ function khse_option_is_enabled( $key, $default = 'no' ) {
  *
  * @return void
  */
-
-/**
- * Set an option using its stored vocabulary.
- *
- * @param string $key     Option name, with or without the khse_option_ prefix.
- * @param bool   $enabled Whether the option is enabled.
- * @param string $format  yes_no|enable_disable.
- *
- * @return void
- */
 function khse_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
 	$option = 0 === strpos( $key, 'khse_' ) ? $key : 'khse_option_' . $key;
 	$value  = 'enable_disable' === $format
@@ -106,15 +78,6 @@ function khse_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
 
 	update_option( $option, $value );
 }
-
-/**
- * Return the canonical settings schema.
- *
- * Each field maps a dashboard payload key to its option, default, sanitizer,
- * read shape, and optional Expert Mode config mapping.
- *
- * @return array
- */
 
 /**
  * Return the canonical settings schema.
@@ -171,28 +134,11 @@ function khse_get_settings_schema() {
  *
  * @return array
  */
-
-/**
- * Return one settings schema section.
- *
- * @param string $section Section name.
- *
- * @return array
- */
 function khse_get_settings_section_schema( $section ) {
 	$schema = khse_get_settings_schema();
 
 	return isset( $schema[ $section ] ) && is_array( $schema[ $section ] ) ? $schema[ $section ] : array();
 }
-
-/**
- * Read one setting using the canonical schema.
- *
- * @param string $section Section name.
- * @param string $field   Field name.
- *
- * @return mixed
- */
 
 /**
  * Read one setting using the canonical schema.
@@ -236,12 +182,6 @@ function khse_get_setting( $section, $field ) {
  *
  * @return array
  */
-
-/**
- * Build the runtime config from the canonical settings schema.
- *
- * @return array
- */
 function khse_get_config_from_schema() {
 	$config = array();
 
@@ -278,11 +218,7 @@ function khse_get_config_from_schema() {
 	return $config;
 }
 
-/**
- * Ensure caching is disabled when permalinks are plain.
- *
- * @return void
- */
+
 
 /**
  * Get default configuation.
@@ -319,13 +255,7 @@ function khse_get_default_config() {
 	);
 }
 
-/**
- * Read one stats row.
- *
- * @param string $path Stats JSON path.
- *
- * @return array{size:int,uri:string}|null Null when the file is missing or corrupt.
- */
+
 
 /**
  * Get newline-separated option as list.
@@ -340,15 +270,6 @@ function khse_get_lines_from_textarea( $value ) {
 
 	return array_values( array_filter( $lines ) );
 }
-
-/**
- * Merge textarea lines while preserving user order.
- *
- * @param string|array $value Existing value.
- * @param array        $extra Extra protected lines.
- *
- * @return string
- */
 
 /**
  * Merge textarea lines while preserving user order.

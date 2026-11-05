@@ -40,7 +40,7 @@ function khse_enforce_cache_entry_limit( $driver = null ) {
 		return 0;
 	}
 
-	$stats_root = khse_get_upload_dir() . '/stats';
+	$stats_root = khse_get_stats_root();
 
 	if ( ! is_dir( $stats_root ) ) {
 		return 0;

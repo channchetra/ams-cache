@@ -35,12 +35,6 @@ function khse_get_dir_hash() {
  *
  * @return string
  */
-
-/**
- * Generate a deterministic directory hash for this site.
- *
- * @return string
- */
 function khse_generate_dir_hash() {
 	$salt = defined( 'AUTH_SALT' ) ? AUTH_SALT : '';
 	$site = defined( 'WP_HOME' ) ? WP_HOME : ( defined( 'ABSPATH' ) ? ABSPATH : __DIR__ );
@@ -51,12 +45,6 @@ function khse_generate_dir_hash() {
 
 	return substr( hash( 'sha256', $site . '|' . $salt ), 0, 8 );
 }
-
-/**
- * Persist and return the site directory hash.
- *
- * @return string
- */
 
 /**
  * Persist and return the site directory hash.
@@ -74,14 +62,7 @@ function khse_ensure_dir_hash() {
 	return $hash;
 }
 
-/**
- * Check whether an option is enabled across yes/no and enable/disable vocabularies.
- *
- * @param string $key     Option name, with or without the khse_option_ prefix.
- * @param string $default Default when the option is missing.
- *
- * @return bool
- */
+
 
 /**
  * Ensure caching is disabled when permalinks are plain.
@@ -102,26 +83,11 @@ function khse_ensure_permalink_structure() {
  *
  * @return string
  */
-
-/**
- * Return the site upload directory.
- *
- * Pure: does not migrate or create directories. Use
- * khse_ensure_upload_dir() before writing.
- *
- * @return string
- */
 function khse_get_upload_dir() {
 	$base_dir = WP_CONTENT_DIR . '/uploads/kh-speed-engine';
 
 	return $base_dir . '/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
 }
-
-/**
- * Ensure the upload directory exists, migrating the legacy directory.
- *
- * @return string
- */
 
 /**
  * Ensure the upload directory exists, migrating the legacy directory.
@@ -150,23 +116,14 @@ function khse_ensure_upload_dir() {
 }
 
 /**
- * Get a private runtime directory for config, locks, and temporary workspaces.
+ * Get the base directory for private runtime data.
  *
  * Never place control files below the public WordPress document root. Hosts may
  * not run Apache, so filesystem permissions alone are not a sufficient guard.
  *
  * @return string
  */
-
-/**
- * Get a private runtime directory for config, locks, and temporary workspaces.
- *
- * Never place control files below the public WordPress document root. Hosts may
- * not run Apache, so filesystem permissions alone are not a sufficient guard.
- *
- * @return string
- */
-function khse_get_private_runtime_dir() {
+function khse_get_runtime_base_dir() {
 	$candidates = array();
 
 	if ( defined( 'WP_TEMP_DIR' ) && WP_TEMP_DIR ) {
@@ -217,18 +174,21 @@ function khse_get_private_runtime_dir() {
 		}
 
 		if ( ! $is_public ) {
-			return $candidate . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
+			return $candidate;
 		}
 	}
 
-	return rtrim( sys_get_temp_dir(), '/\\' ) . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
+	return rtrim( sys_get_temp_dir(), '/\\' );
 }
 
 /**
- * Get the private Expert Mode lock path.
+ * Get a private runtime directory for config, locks, and temporary workspaces.
  *
  * @return string
  */
+function khse_get_private_runtime_dir() {
+	return khse_get_runtime_base_dir() . '/kh-speed-engine/' . khse_get_blog_id() . '_' . khse_get_dir_hash();
+}
 
 /**
  * Get the private Expert Mode lock path.
@@ -244,23 +204,9 @@ function khse_get_expert_lock_path() {
  *
  * @return string
  */
-
-/**
- * Get configuration file's path.
- *
- * @return string
- */
 function khse_get_config_path() {
 	return khse_get_private_runtime_dir() . '/config.json';
 }
-
-/**
- * Merge a stored config over the canonical defaults.
- *
- * @param array $config Raw config.
- *
- * @return array
- */
 
 /**
  * Merge a stored config over the canonical defaults.
@@ -292,12 +238,6 @@ function khse_normalize_config( $config ) {
  *
  * @return array
  */
-
-/**
- * Get configuration data.
- *
- * @return array
- */
 function khse_get_config_data() {
 	$file = khse_get_config_path();
 
@@ -319,13 +259,7 @@ function khse_get_config_data() {
 	return khse_get_default_config();
 }
 
-/**
- * Check whether the current request is excluded from the page cache.
- *
- * @param array $config Runtime config.
- *
- * @return bool
- */
+
 
 /**
  * Save the settings into the JSON runtime config.
@@ -404,12 +338,6 @@ function khse_update_config( $setting ) {
  *
  * @return bool True when config (and the lock, if enabled) was written.
  */
-
-/**
- * Sync runtime config and Expert Mode lock file.
- *
- * @return bool True when config (and the lock, if enabled) was written.
- */
 function khse_sync_expert_mode_runtime() {
 	if ( khse_settings_batch_active() ) {
 		return true;
@@ -460,21 +388,9 @@ function khse_sync_expert_mode_runtime() {
  *
  * @return void
  */
-
-/**
- * Set channel Id.
- *
- * @return void
- */
 function khse_set_blog_id() {
 	update_option( 'khse_blog_id', get_current_blog_id() );
 }
-
-/**
- * Get channel Id.
- *
- * @return string
- */
 
 /**
  * Get channel Id.
@@ -486,12 +402,13 @@ function khse_get_blog_id() {
 }
 
 /**
- * Get the path of statistics directory.
- *
- * @param string $cache_type
+ * Get the cache stats root directory.
  *
  * @return string
  */
+function khse_get_stats_root() {
+	return khse_get_upload_dir() . '/stats';
+}
 
 /**
  * Get the path of statistics directory.
@@ -501,14 +418,8 @@ function khse_get_blog_id() {
  * @return string
  */
 function khse_get_stats_dir( $cache_type = 'post' ) {
-	return khse_get_upload_dir() . '/stats/' . $cache_type;
+	return khse_get_stats_root() . '/' . $cache_type;
 }
-
-/**
- * Get the cache key prefix used to isolate shared cache stores.
- *
- * @return string
- */
 
 /**
  * Get the cache key prefix used to isolate shared cache stores.
@@ -531,13 +442,7 @@ function khse_get_cache_key_prefix() {
 	return rtrim( $prefix, '._-' ) . '_';
 }
 
-/**
- * Normalize a request URI before using it as a cache identity.
- *
- * @param string $uri Request URI, URL, or path.
- *
- * @return string
- */
+
 
 /**
  * Read one stats row.
@@ -559,12 +464,6 @@ function khse_read_stats_file( $path ) {
 		'uri'  => isset( $data['uri'] ) ? (string) $data['uri'] : '',
 	);
 }
-
-/**
- * Get the cache type list.
- *
- * @return array
- */
 
 /**
  * Get the cache type list.
@@ -625,10 +524,4 @@ function khse_get_cache_type_list( $get_key = false ) {
 	return $list;
 }
 
-/**
- * Get newline-separated option as list.
- *
- * @param string $value Raw textarea value.
- *
- * @return array
- */
+

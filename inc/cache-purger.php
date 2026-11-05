@@ -71,7 +71,7 @@ function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $d
  * @return int
  */
 function khse_delete_cache_stats_by_key( $key ) {
-	$stats_root = khse_get_upload_dir() . '/stats';
+	$stats_root = khse_get_stats_root();
 
 	if ( empty( $key ) || ! is_dir( $stats_root ) ) {
 		return 0;
@@ -135,7 +135,7 @@ function khse_purge_cache_uri( $uri, $driver = null ) {
 	$removed += khse_delete_cache_stats_by_key( $key );
 
 	// Remove stale entries written under an older cache key prefix too.
-	$stats_root = khse_get_upload_dir() . '/stats';
+	$stats_root = khse_get_stats_root();
 
 	if ( is_dir( $stats_root ) ) {
 		foreach ( new DirectoryIterator( $stats_root ) as $type_dir ) {
