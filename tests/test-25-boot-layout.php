@@ -63,7 +63,7 @@ class BootLayoutTest extends WP_UnitTestCase {
 			'khse_get_cache_key_prefix'         => 'inc/cache-settings.php',
 			'khse_get_blog_id'                  => 'inc/cache-identity.php',
 			'khse_get_dir_hash'                 => 'inc/cache-identity.php',
-			'khse_get_runtime_exclusion_config' => 'inc/cache-storage.php',
+			'khse_build_runtime_exclusion_config' => 'inc/cache-storage.php',
 			'khse_serve_cached_response'        => 'inc/cache-policy.php',
 			'khse_get_cache_key'                => 'inc/cache-policy.php',
 			'khse_update_config'                => 'inc/cache-storage.php',

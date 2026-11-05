@@ -29,7 +29,7 @@ function khse_admin_body_class( $classes ) {
 	return $classes;
 }
 
-add_action( 'admin_menu', 'khse_option' );
+add_action( 'admin_menu', 'khse_register_admin_pages' );
 add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_scripts' );
 add_action( 'admin_enqueue_scripts', 'khse_admin_enqueue_styles' );
 add_filter( 'plugin_action_links_' . KHSE_PLUGIN_NAME, 'khse_plugin_action_links', 10, 5 );
@@ -40,7 +40,7 @@ add_filter( 'plugin_row_meta', 'khse_plugin_extend_links', 10, 2 );
  *
  * @return void
  */
-function khse_option() {
+function khse_register_admin_pages() {
 
 	add_menu_page(
 		__( 'KH Speed Engine', 'kh-speed-engine' ),

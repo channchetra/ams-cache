@@ -132,7 +132,7 @@ class KHSE_Cache {
 	public function front_enqueue_styles() {
 		wp_register_style( 'kh-speed-engine-style', false );
 		wp_enqueue_style( 'kh-speed-engine-style' );
-		wp_add_inline_style( 'kh-speed-engine-style', $this->get_front_enqueue_styles() );
+		wp_add_inline_style( 'kh-speed-engine-style', $this->get_front_inline_css() );
 	}
 
 	/**

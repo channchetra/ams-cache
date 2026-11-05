@@ -211,6 +211,46 @@ function khse_purge_permalink( $url, $driver = null ) {
 }
 
 /**
+ * Delete cache-index rows for one or more cache types.
+ *
+ * @param array                            $cache_types Cache type keys.
+ * @param \Shieldon\SimpleCache\Cache $driver      Active driver.
+ *
+ * @return int Removed row count.
+ */
+function khse_clear_cache_stats_rows( $cache_types, $driver ) {
+	$removed = 0;
+
+	foreach ( (array) $cache_types as $cache_type ) {
+		$dir = khse_get_stats_dir( $cache_type );
+
+		if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
+			continue;
+		}
+
+		foreach ( new DirectoryIterator( $dir ) as $file ) {
+			if ( ! $file->isFile() || 'json' !== $file->getExtension() ) {
+				continue;
+			}
+
+			$key = strstr( $file->getFilename(), '.', true );
+
+			try {
+				$driver->delete( $key );
+			} catch ( \Throwable $e ) {
+				error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
+			}
+
+			if ( @unlink( $file->getPathname() ) ) {
+				$removed++;
+			}
+		}
+	}
+
+	return $removed;
+}
+
+/**
  * Clear all cache.
  *
  * @param bool $sync Whether to refresh the Expert Mode runtime config first.
@@ -245,30 +285,7 @@ function khse_clear_all_cache( $sync = true ) {
 		}
 	}
 
-	$i = 0;
-
-	foreach ( $list as $cache_type ) {
-		$dir = khse_get_stats_dir( $cache_type );
-
-		if ( is_dir( $dir ) && is_readable( $dir ) ) {
-			foreach ( new DirectoryIterator( $dir ) as $file ) {
-				if ( $file->isFile() && $file->getExtension() === 'json' ) {
-					$filename = $file->getFilename();
-					$key      = strstr( $filename, '.', true );
-
-					try {
-						$driver->delete( $key );
-					} catch ( \Throwable $e ) {
-						error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
-					}
-
-					if ( @unlink( $file->getPathname() ) ) {
-						$i++;
-					}
-				}
-			}
-		}
-	}
+	$i = khse_clear_cache_stats_rows( $list, $driver );
 
 	khse_clear_nginx_static_cache();
 	do_action( 'khse_cache_cleared' );
@@ -291,27 +308,7 @@ function khse_clear_cache_type( $cache_type ) {
 		return 0;
 	}
 
-	$rows = 0;
-	$dir  = khse_get_stats_dir( $cache_type );
-
-	if ( is_dir( $dir ) && is_readable( $dir ) ) {
-		foreach ( new DirectoryIterator( $dir ) as $file ) {
-			if ( $file->isFile() && $file->getExtension() === 'json' ) {
-				$filename = $file->getFilename();
-				$key      = strstr( $filename, '.', true );
-
-				try {
-					$driver->delete( $key );
-				} catch ( \Throwable $e ) {
-					error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
-				}
-
-				if ( @unlink( $file->getPathname() ) ) {
-					$rows++;
-				}
-			}
-		}
-	}
+	$rows = khse_clear_cache_stats_rows( array( $cache_type ), $driver );
 
 	khse_clear_nginx_static_cache();
 	do_action( 'khse_cache_cleared' );

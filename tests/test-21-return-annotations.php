@@ -15,7 +15,7 @@ class ReturnAnnotationsTest extends WP_UnitTestCase {
 	public function test_debug_trait_return_annotations() {
 		$trait    = new ReflectionClass( KHSE_Cache_Debug::class );
 		$expected = array(
-			'get_front_enqueue_styles' => 'string',
+			'get_front_inline_css' => 'string',
 			'debug_message'            => 'string',
 			'msg'                      => 'string|null',
 			'wp_ob_start'              => 'void',

@@ -85,6 +85,12 @@ function khse_run_expert_mode( $args ) {
 	include_once( $plugin_dir . '/inc/lib/autoload.php' );
 	include_once( $plugin_dir . '/inc/bootstrap.php' );
 
+	// Expert Mode runs before plugins_loaded, so the normal migration hook
+	// cannot fire. Run the idempotent migration directly instead.
+	if ( function_exists( 'khse_maybe_migrate_legacy_brand' ) ) {
+		khse_maybe_migrate_legacy_brand();
+	}
+
 	if ( ! isset( $config['cache_enabled'] ) ) {
 		$config['cache_enabled'] = true;
 	}

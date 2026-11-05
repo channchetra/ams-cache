@@ -55,7 +55,7 @@ class SettingsBooleansTest extends WP_UnitTestCase {
 	}
 
 	public function test_runtime_exclusion_config_shape() {
-		$config = khse_get_runtime_exclusion_config();
+		$config = khse_build_runtime_exclusion_config();
 
 		foreach ( array( 'enable', 'excluded_list', 'excluded_get_vars', 'excluded_post_vars', 'excluded_cookie_vars' ) as $key ) {
 			$this->assertArrayHasKey( $key, $config );

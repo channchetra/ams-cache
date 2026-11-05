@@ -79,6 +79,42 @@ function khse_purge_post_cache_once( $post_id, $post, $driver = null ) {
 }
 
 /**
+ * Resolve eligibility, driver, and purge work for one post change.
+ *
+ * @param int          $post_id Post ID.
+ * @param WP_Post|null $post    Optional post object.
+ *
+ * @return bool True when this call performed the purge.
+ */
+function khse_purge_post_after_change( $post_id, $post = null ) {
+	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		return false;
+	}
+
+	if ( ! $post ) {
+		$post = get_post( $post_id );
+	}
+
+	if ( ! $post ) {
+		return false;
+	}
+
+	$post_type = get_post_type_object( $post->post_type );
+
+	if ( ! $post_type || ! $post_type->public ) {
+		return false;
+	}
+
+	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
+	return khse_purge_post_cache_once( $post_id, $post, $driver );
+}
+
+/**
  * Delete the cache of the post that is just updated.
  *
  * @return void
@@ -96,20 +132,7 @@ function khse_update_post( $post_ID, $post, $update ) {
 			return;
 		}
 
-		$post_type = get_post_type_object( $post->post_type );
-
-		if ( ! $post_type || ! $post_type->public ) {
-			return;
-		}
-
-		$driver_type = get_option( 'khse_option_driver' );
-		$driver      = khse_driver_factory( $driver_type );
-
-		if ( is_wp_error( $driver ) ) {
-			$driver = null;
-		}
-
-		khse_purge_post_cache_once( $post_ID, $post, $driver );
+		khse_purge_post_after_change( $post_ID, $post );
 	}
 }
 
@@ -131,20 +154,8 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 		return;
 	}
 
-	$post_type = get_post_type_object( $post->post_type );
-
-	if ( ! $post_type || ! $post_type->public ) {
-		return;
-	}
-
-	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
-
-	if ( is_wp_error( $driver ) ) {
-		$driver = null;
-	}
-
 	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
-		khse_purge_post_cache_once( $post->ID, $post, $driver );
+		khse_purge_post_after_change( $post->ID, $post );
 		return;
 	}
 
@@ -152,7 +163,7 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 		return;
 	}
 
-	khse_purge_post_cache_once( $post->ID, $post, $driver );
+	khse_purge_post_after_change( $post->ID, $post );
 }
 
 /**
@@ -173,14 +184,7 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 		return;
 	}
 
-	$post   = get_post( $post_ID );
-	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
-
-	if ( is_wp_error( $driver ) ) {
-		$driver = null;
-	}
-
-	khse_purge_post_cache_once( $post_ID, $post, $driver );
+	khse_purge_post_after_change( $post_ID );
 }
 
 /**
@@ -192,31 +196,7 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
  * @return void
  */
 function khse_delete_post( $post_ID, $post = null ) {
-	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
-		return;
-	}
-
-	if ( ! $post ) {
-		$post = get_post( $post_ID );
-	}
-
-	if ( ! $post ) {
-		return;
-	}
-
-	$post_type = get_post_type_object( $post->post_type );
-
-	if ( ! $post_type || ! $post_type->public ) {
-		return;
-	}
-
-	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
-
-	if ( is_wp_error( $driver ) ) {
-		$driver = null;
-	}
-
-	khse_purge_post_cache_once( $post_ID, $post, $driver );
+	khse_purge_post_after_change( $post_ID, $post );
 }
 
 /**
@@ -245,19 +225,7 @@ function khse_update_post_terms( $object_id, $terms, $tt_ids, $taxonomy, $append
 		return;
 	}
 
-	$post_type = get_post_type_object( $post->post_type );
-
-	if ( ! $post_type || ! $post_type->public ) {
-		return;
-	}
-
-	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
-
-	if ( is_wp_error( $driver ) ) {
-		$driver = null;
-	}
-
-	khse_purge_post_cache_once( $object_id, $post, $driver );
+	khse_purge_post_after_change( $object_id, $post );
 }
 
 /**

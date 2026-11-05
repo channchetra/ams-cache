@@ -15,6 +15,15 @@ function khse_is_preload_enabled() {
 }
 
 /**
+ * Whether preload may run for the current settings.
+ *
+ * @return bool
+ */
+function khse_is_preload_runnable() {
+	return khse_is_preload_enabled() && 'enable' === get_option( 'khse_option_caching_status', 'disable' );
+}
+
+/**
  * Get the configured preload URL limit.
  *
  * @param int|null $limit Optional limit override.
@@ -48,7 +57,7 @@ function khse_get_preload_batch_size() {
  * @return void
  */
 function khse_schedule_preload_cache( $force = false ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_runnable() ) {
 		return;
 	}
 
@@ -69,7 +78,7 @@ function khse_schedule_preload_cache( $force = false ) {
  * @return void
  */
 function khse_schedule_preload_queue( $delay = 15 ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_runnable() ) {
 		return;
 	}
 
@@ -168,7 +177,7 @@ function khse_get_preload_queue_status() {
  * @return void
  */
 function khse_maybe_schedule_preload_cache() {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! khse_is_preload_runnable() ) {
 		if ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
 			khse_reset_preload_queue_state();
 		}
@@ -263,8 +272,8 @@ function khse_preload_host_is_loopback( $host ) {
  *
  * @return bool
  */
-function khse_preload_sslverify( $url ) {
-	$verify    = (bool) apply_filters( 'khse_preload_sslverify', true );
+function khse_preload_should_verify_ssl( $url ) {
+	$verify    = (bool) apply_filters( 'khse_preload_should_verify_ssl', true );
 	$url_parts = parse_url( $url );
 
 	if ( $verify && ! empty( $url_parts['host'] ) && 'https' === strtolower( isset( $url_parts['scheme'] ) ? $url_parts['scheme'] : '' ) && khse_preload_host_is_loopback( $url_parts['host'] ) ) {
@@ -307,7 +316,7 @@ function khse_preload_url( $url, $blocking = true, $timeout = 8 ) {
 			'blocking'    => (bool) $blocking,
 			'timeout'     => max( 1, (int) $timeout ),
 			'redirection' => 2,
-			'sslverify'   => khse_preload_sslverify( $url ),
+			'sslverify'   => khse_preload_should_verify_ssl( $url ),
 			'user-agent'  => 'KH Speed Engine Preloader/' . KHSE_PLUGIN_VERSION,
 		)
 	);
@@ -336,6 +345,19 @@ function khse_get_preload_post_types() {
 	}
 
 	return apply_filters( 'khse_preload_post_types', $post_types );
+}
+
+/**
+ * Persist an empty homepage discovery result and return an empty URL list.
+ *
+ * @param int $limit Discovery limit.
+ *
+ * @return array
+ */
+function khse_empty_homepage_discovery( $limit ) {
+	set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
+
+	return array();
 }
 
 /**
@@ -405,7 +427,7 @@ function khse_normalize_homepage_link_url( $href, $base_url ) {
  *
  * @return array
  */
-function khse_get_homepage_discovered_urls( $limit = 100 ) {
+function khse_crawl_homepage_discovered_urls( $limit = 100 ) {
 	if ( ! function_exists( 'wp_remote_get' ) ) {
 		return array();
 	}
@@ -424,35 +446,31 @@ function khse_get_homepage_discovered_urls( $limit = 100 ) {
 			'blocking'    => true,
 			'timeout'     => 8,
 			'redirection' => 3,
-			'sslverify'   => khse_preload_sslverify( $home_url ),
+			'sslverify'   => khse_preload_should_verify_ssl( $home_url ),
 			'user-agent'  => 'KH Speed Engine Preload Crawler/' . KHSE_PLUGIN_VERSION,
 		)
 	);
 
 	if ( is_wp_error( $result ) ) {
-		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
-		return array();
+		return khse_empty_homepage_discovery( $limit );
 	}
 
 	$status = (int) wp_remote_retrieve_response_code( $result );
 
 	if ( $status < 200 || $status >= 400 ) {
-		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
-		return array();
+		return khse_empty_homepage_discovery( $limit );
 	}
 
 	$html = wp_remote_retrieve_body( $result );
 
 	if ( empty( $html ) ) {
-		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
-		return array();
+		return khse_empty_homepage_discovery( $limit );
 	}
 
 	preg_match_all( '/<a\b[^>]*\shref\s*=\s*(["\'])(.*?)\1/i', $html, $matches );
 
 	if ( empty( $matches[2] ) ) {
-		set_transient( 'khse_homepage_discovered_urls', array( 'urls' => array(), 'limit' => $limit ), MINUTE_IN_SECONDS );
-		return array();
+		return khse_empty_homepage_discovery( $limit );
 	}
 
 	$urls = array();
@@ -553,7 +571,7 @@ function khse_get_homepage_priority_preload_urls( $limit = null ) {
 	}
 
 	if ( 'yes' === get_option( 'khse_option_preload_homepage_links', 'yes' ) && count( $urls ) < $limit ) {
-		$discovered_urls = khse_get_homepage_discovered_urls( $limit - count( $urls ) );
+		$discovered_urls = khse_crawl_homepage_discovered_urls( $limit - count( $urls ) );
 
 		foreach ( $discovered_urls as $url ) {
 			$urls[] = $url;
@@ -590,7 +608,7 @@ function khse_get_homepage_priority_preload_urls( $limit = null ) {
  * @return int
  */
 function khse_preload_homepage_priority_urls( $limit = null, $blocking = true ) {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! khse_is_preload_runnable() ) {
 		return 0;
 	}
 
@@ -882,7 +900,7 @@ function khse_get_preload_urls( $limit = null, $priority_urls = null ) {
  * @return int Number of queued URLs.
  */
 function khse_preload_cache( $limit = null ) {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! khse_is_preload_runnable() ) {
 		khse_reset_preload_queue_state();
 		return 0;
 	}
@@ -931,7 +949,7 @@ function khse_preload_cache( $limit = null ) {
  * @return int Number of new URLs queued.
  */
 function khse_queue_preload_urls( $urls ) {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! khse_is_preload_runnable() ) {
 		return 0;
 	}
 
@@ -1017,7 +1035,7 @@ function khse_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
  * @return int Number of dispatched URLs.
  */
 function khse_process_preload_queue() {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+	if ( ! khse_is_preload_runnable() ) {
 		khse_reset_preload_queue_state();
 		return 0;
 	}

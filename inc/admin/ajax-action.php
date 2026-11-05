@@ -281,7 +281,7 @@ function khse_ajax_dashboard_test_url_callback() {
 	}
 
 	$config              = khse_get_config_from_schema();
-	$config['exclusion'] = khse_get_runtime_exclusion_config();
+	$config['exclusion'] = khse_build_runtime_exclusion_config();
 
 	wp_send_json_success( khse_evaluate_cache_url_policy( $url, $config ) );
 }
@@ -450,6 +450,7 @@ function khse_ajax_dashboard_apply_option_schema( $incoming, $schema ) {
  */
 function khse_ajax_dashboard_save_settings_callback() {
 	khse_ajax_dashboard_guard();
+	khse_settings_batch_active( false );
 
 	$raw      = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
 	$settings = json_decode( (string) $raw, true );
@@ -537,19 +538,7 @@ function khse_ajax_dashboard_save_settings_callback() {
 		$incoming = $settings['performance'];
 		$current  = khse_get_page_optimization_settings();
 		$defaults = khse_get_default_page_optimization_settings();
-		$boolean_keys = array(
-			'status',
-			'minify_html',
-			'remove_comments',
-			'minify_inline_css',
-			'lazy_media',
-			'critical_images',
-			'preconnect_fonts',
-			'defer_js',
-			'external_ucss',
-			'local_ucss',
-			'js_analysis',
-		);
+		$boolean_keys = khse_get_page_optimization_toggle_keys();
 
 		foreach ( $boolean_keys as $key ) {
 			if ( array_key_exists( $key, $incoming ) ) {

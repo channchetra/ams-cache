@@ -19,7 +19,7 @@ class CacheMasterDebugTest extends WP_UnitTestCase {
 		update_option( 'khse_option_benchmark_footer_text', 'yes' );
 
 		$cm  = new KHSE_Cache();
-		$css = $cm->get_front_enqueue_styles();
+		$css = $cm->get_front_inline_css();
 
 		$this->assertIsString( $css );
 		$this->assertNotSame( '', trim( $css ) );

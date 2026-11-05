@@ -343,7 +343,7 @@ function khse_dashboard_get_preload_options_data() {
 function khse_dashboard_get_settings_data() {
 	$optimization = khse_get_page_optimization_settings();
 
-	foreach ( array( 'status', 'minify_html', 'remove_comments', 'minify_inline_css', 'lazy_media', 'critical_images', 'preconnect_fonts', 'defer_js', 'external_ucss', 'local_ucss', 'js_analysis' ) as $toggle_key ) {
+	foreach ( khse_get_page_optimization_toggle_keys() as $toggle_key ) {
 		$optimization[ $toggle_key ] = 'yes' === $optimization[ $toggle_key ] || true === $optimization[ $toggle_key ] || 'enable' === $optimization[ $toggle_key ];
 	}
 
@@ -435,18 +435,7 @@ function khse_dashboard_get_status_data() {
 		$planned_priority = count( khse_get_homepage_priority_preload_urls( $preload_limit ) );
 	}
 
-	$feature_keys = array(
-		'minify_html',
-		'remove_comments',
-		'minify_inline_css',
-		'lazy_media',
-		'critical_images',
-		'preconnect_fonts',
-		'defer_js',
-		'external_ucss',
-		'local_ucss',
-		'js_analysis',
-	);
+	$feature_keys = khse_get_page_optimization_feature_keys();
 
 	$enabled_features = 0;
 

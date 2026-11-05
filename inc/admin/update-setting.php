@@ -232,7 +232,7 @@ function khse_update_khse_option_clear_cache() {
  */
 function khse_update_exclusion() {
 	$setting              = array();
-	$setting['exclusion'] = khse_get_runtime_exclusion_config();
+	$setting['exclusion'] = khse_build_runtime_exclusion_config();
 
 	khse_update_config( $setting );
 }

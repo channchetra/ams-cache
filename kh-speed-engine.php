@@ -86,9 +86,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once KHSE_PLUGIN_DIR . 'vendor/autoload.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
-		require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
-		require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
-		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
+		khse_load_request_modules();
 
 		khse_load_admin_modules();
 		require_once KHSE_PLUGIN_DIR . 'inc/admin/ajax-action.php';
@@ -104,11 +102,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
-		// Post mutations can run through AJAX, REST, or frontend requests.
-		require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
-		require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
-		// Benchmark widget registration must run on front-end and admin requests.
-		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
+		// Post mutations, admin bar, and widgets load on every non-AJAX request.
+		khse_load_request_modules();
 
 		// AJAX requests load the shared runtime plus the smaller AJAX admin subset.
 		if ( ! wp_doing_ajax() ) {

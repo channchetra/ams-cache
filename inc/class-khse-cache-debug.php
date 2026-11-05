@@ -19,7 +19,7 @@ trait KHSE_Cache_Debug {
 	 *
 	 * @return string
 	 */
-	public function get_front_enqueue_styles() {
+	public function get_front_inline_css() {
 		$custom_css = '';
 
 		$is_widget = ( 'yes' === get_option( 'khse_option_benchmark_widget' ) );

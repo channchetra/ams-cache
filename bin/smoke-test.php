@@ -172,20 +172,7 @@ function get_month_link( $year, $month ) {
 	return home_url( '/' . $year . '/' . str_pad( $month, 2, '0', STR_PAD_LEFT ) . '/' );
 }
 
-require_once dirname( __DIR__ ) . '/inc/cache-core.php';
-require_once dirname( __DIR__ ) . '/inc/nginx/cache-nginx.php';
-require_once dirname( __DIR__ ) . '/inc/nginx/cache-nginx-config.php';
-require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
-require_once dirname( __DIR__ ) . '/inc/preload/cache-preload.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/settings.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/report.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/dom.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/html.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/css.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/js.php';
-require_once dirname( __DIR__ ) . '/inc/optimizer/pipeline.php';
-require_once dirname( __DIR__ ) . '/inc/cache-driver.php';
-require_once dirname( __DIR__ ) . '/inc/cache-view.php';
+require_once dirname( __DIR__ ) . '/inc/bootstrap.php';
 
 function smoke_assert( $condition, $message ) {
 	if ( ! $condition ) {
@@ -249,8 +236,8 @@ $preload_response = khse_preload_url( home_url( '/deleted/' ) );
 smoke_assert( is_array( $preload_response ), 'preload keeps same-site URLs working' );
 smoke_assert( true === $preload_response['args']['blocking'], 'preload waits for cache write' );
 smoke_assert( 8 === $preload_response['args']['timeout'], 'preload allows page generation time' );
-smoke_assert( false === khse_preload_sslverify( 'https://127.0.0.1/' ), 'local HTTPS preload permits loopback certificate' );
-smoke_assert( true === khse_preload_sslverify( 'https://example.test/' ), 'external HTTPS preload keeps certificate verification' );
+smoke_assert( false === khse_preload_should_verify_ssl( 'https://127.0.0.1/' ), 'local HTTPS preload permits loopback certificate' );
+smoke_assert( true === khse_preload_should_verify_ssl( 'https://example.test/' ), 'external HTTPS preload keeps certificate verification' );
 
 $smoke_post = (object) array(
 	'ID'          => 321,
@@ -297,11 +284,11 @@ smoke_assert( isset( $requirements['server_gzip'], $requirements['work_dir'] ), 
 smoke_assert( ! isset( $requirements['purgecss'] ) && ! isset( $requirements['bun'] ), 'dashboard does not require runtime CLI tools' );
 
 $plugin_source = file_get_contents( dirname( __DIR__ ) . '/kh-speed-engine.php' );
-smoke_assert( false !== strpos( $plugin_source, "require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
+smoke_assert( false !== strpos( $plugin_source, 'khse_load_request_modules();' ), 'post purge hooks load outside admin-only branch' );
 $post_hooks_source = file_get_contents( dirname( __DIR__ ) . '/inc/update-post.php' );
 smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post', 'khse_purge_post_before_trash', 10, 2 );" ), 'trash purge hook runs before status change' );
 smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post_id );' ), 'status changes warm related post archives' );
-smoke_assert( false !== strpos( $post_hooks_source, 'khse_purge_post_cache_once( $post->ID, $post, $driver );' ), 'new and updated posts warm their own page' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_purge_post_after_change' ), 'new and updated posts warm their own page' );
 smoke_assert( false !== strpos( $post_hooks_source, 'khse_post_cache_purge_guard' ), 'overlapping post hooks share one purge guard' );
 $cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-khse-cache.php' );
 smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );

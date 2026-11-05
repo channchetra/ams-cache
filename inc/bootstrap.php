@@ -45,6 +45,17 @@ foreach ( khse_get_runtime_module_files() as $khse_module ) {
 unset( $khse_module );
 
 /**
+ * Load request hooks shared by production and test boots.
+ *
+ * @return void
+ */
+function khse_load_request_modules() {
+	require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
+	require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
+	require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
+}
+
+/**
  * Admin module manifest.
  *
  * Loaded for admin, WP-CLI, and unit-test requests. AJAX requests load the

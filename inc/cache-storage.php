@@ -307,7 +307,7 @@ function khse_sync_expert_mode_runtime() {
 	$setting['site_url']                 = rtrim( get_site_url(), '/' );
 	$setting['driver_advanced_settings'] = $advanced_setting;
 	$setting['driver_connection_type']   = $connection_type;
-	$setting['exclusion']                = khse_get_runtime_exclusion_config();
+	$setting['exclusion']                = khse_build_runtime_exclusion_config();
 
 	$config_written = khse_update_config( $setting );
 	$checkpoint     = khse_get_expert_lock_path();
@@ -631,7 +631,7 @@ function khse_get_driver_settings( $type, $advanced_settings = null, $connection
  *     @type array $excluded_cookie_vars Excluded cookie variables.
  * }
  */
-function khse_get_runtime_exclusion_config() {
+function khse_build_runtime_exclusion_config() {
 	$list = array();
 
 	foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_list', '' ) ) as $item ) {
@@ -660,8 +660,6 @@ function khse_get_runtime_exclusion_config() {
 			}
 		}
 	}
-
-	update_option( 'khse_option_excluded_list_filtered', implode( "\n", $list ) );
 
 	return array(
 		'enable'               => 'yes' === get_option( 'khse_option_exclusion_status', 'no' ),

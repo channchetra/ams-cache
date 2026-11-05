@@ -10,6 +10,36 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
+/**
+ * Return the optimization toggle keys shown in the dashboard.
+ *
+ * @return array
+ */
+function khse_get_page_optimization_toggle_keys() {
+	return array(
+		'status',
+		'minify_html',
+		'remove_comments',
+		'minify_inline_css',
+		'lazy_media',
+		'critical_images',
+		'preconnect_fonts',
+		'defer_js',
+		'external_ucss',
+		'local_ucss',
+		'js_analysis',
+	);
+}
+
+/**
+ * Return the optimization feature keys (everything except the master switch).
+ *
+ * @return array
+ */
+function khse_get_page_optimization_feature_keys() {
+	return array_values( array_diff( khse_get_page_optimization_toggle_keys(), array( 'status' ) ) );
+}
+
 function khse_get_default_page_optimization_settings() {
 	return array(
 		'status'               => 'no',
