@@ -1,0 +1,367 @@
+<?php
+/**
+ * KH Speed Engine — preload/queue.php
+ *
+ * Queue state, locks, scheduling, and batch processing.
+ *
+ * @package   KH Speed Engine
+ * @license   GPLv3 (or later)
+ */
+
+if ( ! defined( 'KHSE_INC' ) ) {
+    die;
+}
+
+function khse_is_preload_enabled() {
+	return 'yes' === get_option( 'khse_option_preload_cache', 'no' );
+}
+
+/**
+ * Whether preload may run for the current settings.
+ *
+ * @return bool
+ */
+function khse_is_preload_runnable() {
+	return khse_is_preload_enabled() && 'enable' === get_option( 'khse_option_caching_status', 'disable' );
+}
+
+/**
+ * Get the configured preload URL limit.
+ *
+ * @param int|null $limit Optional limit override.
+ *
+ * @return int
+ */
+function khse_get_preload_limit( $limit = null ) {
+	$limit     = is_null( $limit ) ? (int) get_option( 'khse_option_preload_limit', 50 ) : (int) $limit;
+	$max_limit = (int) apply_filters( 'khse_preload_max_limit', 1000 );
+	$max_limit = max( 1, min( 5000, $max_limit ) );
+
+	return max( 1, min( $max_limit, $limit ) );
+}
+
+/**
+ * Get the number of URLs to dispatch per preload batch.
+ *
+ * @return int
+ */
+function khse_get_preload_batch_size() {
+	$batch_size = (int) apply_filters( 'khse_preload_batch_size', 25 );
+
+	return max( 1, min( 100, $batch_size ) );
+}
+
+/**
+ * Schedule a background cache preload.
+ *
+ * @param bool $force Replace an existing scheduled preload.
+ *
+ * @return void
+ */
+function khse_schedule_preload_cache( $force = false ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_runnable() ) {
+		return;
+	}
+
+	if ( $force && function_exists( 'wp_clear_scheduled_hook' ) ) {
+		wp_clear_scheduled_hook( 'khse_preload_cache_event' );
+	}
+
+	if ( $force || ! wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		wp_schedule_single_event( time() + 5, 'khse_preload_cache_event' );
+	}
+}
+
+/**
+ * Schedule the next preload queue batch.
+ *
+ * @param int $delay Delay in seconds.
+ *
+ * @return void
+ */
+function khse_schedule_preload_queue( $delay = 15 ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_runnable() ) {
+		return;
+	}
+
+	if ( ! wp_next_scheduled( 'khse_preload_queue_event' ) ) {
+		wp_schedule_single_event( time() + max( 1, (int) $delay ), 'khse_preload_queue_event' );
+	}
+}
+
+/**
+ * Acquire the preload queue lock.
+ *
+ * WordPress cron can overlap with an admin request that enqueues URLs.
+ * The lock is stored as an option so every PHP worker sees it.
+ *
+ * @param int $ttl Seconds before an abandoned lock can be reclaimed.
+ *
+ * @return bool
+ */
+function khse_acquire_preload_lock( $ttl = 300 ) {
+	if ( ! function_exists( 'add_option' ) || ! function_exists( 'delete_option' ) ) {
+		return true;
+	}
+
+	$lock = (int) get_option( 'khse_preload_queue_lock', 0 );
+
+	if ( $lock > 0 && ( time() - $lock ) > (int) $ttl ) {
+		delete_option( 'khse_preload_queue_lock' );
+	}
+
+	return (bool) add_option( 'khse_preload_queue_lock', time(), '', false );
+}
+
+/**
+ * Release the preload queue lock.
+ *
+ * @return void
+ */
+function khse_release_preload_lock() {
+	if ( function_exists( 'delete_option' ) ) {
+		delete_option( 'khse_preload_queue_lock' );
+	}
+}
+
+/**
+ * Clear stale queue state when preload cannot run.
+ *
+ * @return void
+ */
+function khse_reset_preload_queue_state() {
+	delete_transient( 'khse_preload_queue' );
+	update_option( 'khse_preload_queue_total', 0 );
+	update_option( 'khse_preload_queue_processed', 0 );
+	update_option( 'khse_preload_queue_failed', 0 );
+	update_option( 'khse_preload_queue_remaining', 0 );
+}
+
+/**
+ * Return the current preload queue counters.
+ *
+ * Keeps the stale-state cleanup and the denominator rule inside the preload
+ * subsystem so the dashboard does not own queue state.
+ *
+ * @return array{total:int,processed:int,failed:int,remaining:int}
+ */
+function khse_get_preload_queue_status() {
+	$queue     = get_transient( 'khse_preload_queue' );
+	$remaining = is_array( $queue ) ? count( $queue ) : 0;
+	$total     = (int) get_option( 'khse_preload_queue_total', 0 );
+	$processed = (int) get_option( 'khse_preload_queue_processed', 0 );
+	$failed    = (int) get_option( 'khse_preload_queue_failed', 0 );
+
+	if ( ! is_array( $queue ) ) {
+		if ( $total > 0 || $processed > 0 || $failed > 0 || (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
+		}
+
+		return array(
+			'total'     => 0,
+			'processed' => 0,
+			'failed'    => 0,
+			'remaining' => 0,
+		);
+	}
+
+	return array(
+		'total'     => $processed + $failed + $remaining,
+		'processed' => $processed,
+		'failed'    => $failed,
+		'remaining' => $remaining,
+	);
+}
+
+/**
+ * Bootstrap preload once after a plugin deployment.
+ *
+ * @return void
+ */
+function khse_maybe_schedule_preload_cache() {
+	if ( ! khse_is_preload_runnable() ) {
+		if ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
+		}
+
+		return;
+	}
+
+	if ( ! function_exists( 'wp_next_scheduled' ) ) {
+		return;
+	}
+
+	// Resume a stalled queue whose cron event was lost (object cache flush, deploy mid-run).
+	// Cheap in-memory cron check first; queue transient (DB query) fetched only when the event is missing.
+	if ( ! wp_next_scheduled( 'khse_preload_queue_event' ) ) {
+		$queue = get_transient( 'khse_preload_queue' );
+
+		if ( ! empty( $queue ) && is_array( $queue ) ) {
+			khse_schedule_preload_queue();
+		} elseif ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
+		}
+	}
+
+	$signature = defined( 'KHSE_PLUGIN_VERSION' ) ? (string) KHSE_PLUGIN_VERSION : 'kh-speed-engine';
+
+	if ( wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		if ( $signature !== get_option( 'khse_preload_bootstrap_version', '' ) ) {
+			update_option( 'khse_preload_bootstrap_version', $signature );
+		}
+
+		return;
+	}
+
+	if ( $signature === get_option( 'khse_preload_bootstrap_version', '' ) ) {
+		return;
+	}
+
+	khse_schedule_preload_cache();
+
+	if ( wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+		update_option( 'khse_preload_bootstrap_version', $signature );
+	}
+}
+
+/**
+ * Merge URLs into the preload queue and schedule a background batch.
+ *
+ * @param array $urls URLs to queue.
+ *
+ * @return int Number of new URLs queued.
+ */
+function khse_queue_preload_urls( $urls ) {
+	if ( ! khse_is_preload_runnable() ) {
+		return 0;
+	}
+
+	$urls = array_values( array_unique( array_filter( array_map( 'strval', (array) $urls ) ) ) );
+
+	if ( empty( $urls ) ) {
+		return 0;
+	}
+
+	$acquired = khse_acquire_preload_lock();
+
+	for ( $attempt = 0; ! $acquired && $attempt < 5; $attempt++ ) {
+		usleep( 20000 );
+		$acquired = khse_acquire_preload_lock();
+	}
+
+	if ( ! $acquired ) {
+		error_log( '[KH Speed Engine] Preload queue is locked; could not enqueue URLs.' );
+		return 0;
+	}
+
+	try {
+		$queue  = get_transient( 'khse_preload_queue' );
+		$queue  = is_array( $queue ) ? $queue : array();
+		$before = count( $queue );
+		$queue  = array_values( array_unique( array_merge( $queue, $urls ) ) );
+
+		set_transient( 'khse_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
+
+		$processed = (int) get_option( 'khse_preload_queue_processed', 0 );
+		$failed    = (int) get_option( 'khse_preload_queue_failed', 0 );
+
+		update_option( 'khse_preload_queue_total', $processed + $failed + count( $queue ) );
+		update_option( 'khse_preload_queue_remaining', count( $queue ) );
+		khse_schedule_preload_queue();
+
+		return count( $queue ) - $before;
+	} finally {
+		khse_release_preload_lock();
+	}
+}
+
+/**
+ * Process one preload queue batch.
+ *
+ * @return int Number of dispatched URLs.
+ */
+function khse_process_preload_queue() {
+	if ( ! khse_is_preload_runnable() ) {
+		khse_reset_preload_queue_state();
+		return 0;
+	}
+
+	if ( ! khse_acquire_preload_lock() ) {
+		return 0;
+	}
+
+	try {
+		$queue = get_transient( 'khse_preload_queue' );
+
+		if ( empty( $queue ) || ! is_array( $queue ) ) {
+			delete_transient( 'khse_preload_queue' );
+			update_option( 'khse_preload_queue_remaining', 0 );
+			return 0;
+		}
+
+		return khse_process_preload_batch( $queue );
+	} finally {
+		khse_release_preload_lock();
+	}
+}
+
+/**
+ * Process one batch of preload URLs. Caller must hold the queue lock.
+ *
+ * @param array $queue Queued URLs.
+ *
+ * @return int Number of dispatched URLs.
+ */
+function khse_process_preload_batch( $queue ) {
+	$queue      = array_values( array_unique( array_filter( $queue ) ) );
+	$batch_size = khse_get_preload_batch_size();
+	$batch      = array_slice( $queue, 0, $batch_size );
+	$remaining  = array_slice( $queue, count( $batch ) );
+	$processed  = (int) get_option( 'khse_preload_queue_processed', 0 );
+	$failed     = (int) get_option( 'khse_preload_queue_failed', 0 );
+
+	foreach ( $batch as $url ) {
+		$response = khse_preload_url( $url, true, 8 );
+		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+		$body     = is_wp_error( $response ) ? '' : wp_remote_retrieve_body( $response );
+
+		if ( $status < 200 || $status >= 400 || empty( $body ) || false === strpos( $body, '</body>' ) || strlen( $body ) < 1024 ) {
+			$failed++;
+			continue;
+		}
+
+		$processed++;
+	}
+
+	update_option( 'khse_preload_queue_processed', $processed );
+	update_option( 'khse_preload_queue_failed', $failed );
+	update_option( 'khse_preload_queue_remaining', count( $remaining ) );
+	update_option( 'khse_preload_queue_total', $processed + $failed + count( $remaining ) );
+
+	if ( empty( $remaining ) ) {
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_finished_time', time() );
+		return count( $batch );
+	}
+
+	set_transient( 'khse_preload_queue', $remaining, 12 * HOUR_IN_SECONDS );
+	khse_schedule_preload_queue();
+
+	return count( $batch );
+}
+
+if ( function_exists( 'add_action' ) ) {
+	// Recover the preload event after deployments that keep the option enabled.
+	add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );
+	// Cache clears ask preload to warm the site again without purger knowing
+	// anything about the preload subsystem.
+	add_action( 'khse_cache_cleared', 'khse_schedule_preload_cache' );
+	add_action( 'khse_preload_cache_event', 'khse_preload_cache' );
+	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
+}
+
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );
+	add_action( 'khse_cache_cleared', 'khse_schedule_preload_cache' );
+	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
+}
