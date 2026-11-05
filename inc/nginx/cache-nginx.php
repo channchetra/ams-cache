@@ -23,6 +23,13 @@ function khse_is_nginx_direct_cache_enabled() {
  * @return string
  */
 function khse_get_nginx_static_cache_relative_dir() {
+	$absolute = wp_normalize_path( khse_get_nginx_static_cache_dir() );
+	$root     = rtrim( wp_normalize_path( ABSPATH ), '/' );
+
+	if ( 0 === strpos( $absolute . '/', $root . '/' ) ) {
+		return trim( substr( $absolute, strlen( $root ) ), '/' );
+	}
+
 	$base_path = wp_parse_url( content_url( '/uploads' ), PHP_URL_PATH );
 	$base_path = is_string( $base_path ) && '' !== $base_path ? $base_path : '/wp-content/uploads';
 

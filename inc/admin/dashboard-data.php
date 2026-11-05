@@ -109,6 +109,16 @@ function khse_dashboard_get_stats_summary() {
 	$total_rows = 0;
 	$total_size = 0;
 
+	// The index is always maintained for purge/eviction; the toggle hides it.
+	if ( 'enable' !== get_option( 'khse_option_statistics_status', 'disable' ) ) {
+		return array(
+			'rows'           => array(),
+			'totalRows'      => 0,
+			'totalSize'      => 0,
+			'totalSizeLabel' => size_format( 0, 2 ),
+		);
+	}
+
 	foreach ( khse_get_cache_type_labels() as $type => $label ) {
 		$stats = khse_dashboard_get_stats_for_type( $type );
 

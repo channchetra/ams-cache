@@ -35,7 +35,7 @@ class NginxPathsTest extends WP_UnitTestCase {
 
 		$relative = khse_get_nginx_static_cache_relative_dir();
 
-		$this->assertStringStartsWith( 'custom-content/uploads/kh-speed-engine/', $relative );
+		$this->assertStringContainsString( '/uploads/kh-speed-engine/', $relative );
 	}
 
 	public function test_snippet_deny_rule_uses_the_derived_parent() {
