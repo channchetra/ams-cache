@@ -18,7 +18,12 @@ require_once __DIR__ . '/cache-nginx.php';
 require_once __DIR__ . '/cache-url-policy.php';
 require_once __DIR__ . '/cache-purger.php';
 require_once __DIR__ . '/cache-nginx-config.php';
-require_once __DIR__ . '/page-optimizer.php';
+require_once __DIR__ . '/optimizer/settings.php';
+require_once __DIR__ . '/optimizer/report.php';
+require_once __DIR__ . '/optimizer/html.php';
+require_once __DIR__ . '/optimizer/css.php';
+require_once __DIR__ . '/optimizer/js.php';
+require_once __DIR__ . '/optimizer/pipeline.php';
 require_once __DIR__ . '/cache-preload.php';
 
 // Migrate legacy brand data before the cache runtime creates its storage tree.

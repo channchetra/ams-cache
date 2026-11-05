@@ -177,7 +177,12 @@ require_once dirname( __DIR__ ) . '/inc/cache-nginx.php';
 require_once dirname( __DIR__ ) . '/inc/cache-nginx-config.php';
 require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
 require_once dirname( __DIR__ ) . '/inc/cache-preload.php';
-require_once dirname( __DIR__ ) . '/inc/page-optimizer.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/settings.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/report.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/html.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/css.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/js.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/pipeline.php';
 require_once dirname( __DIR__ ) . '/inc/cache-driver.php';
 require_once dirname( __DIR__ ) . '/inc/cache-view.php';
 

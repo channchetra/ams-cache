@@ -34,7 +34,12 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `cache-nginx.php` | Nginx static cache write/delete/clear |
 | `cache-nginx-config.php` | Nginx requirements check + config snippet generation |
 | `cache-purger.php` | Cache statistics + purge operations |
-| `page-optimizer.php` | HTML/CSS minification, lazy loading, UCSS, media optimization, reports |
+| `optimizer/settings.php` | Optimization defaults, runtime state, workspace helpers |
+| `optimizer/report.php` | Optimization report build, storage, pruning, and summaries |
+| `optimizer/html.php` | HTML minification, media/LCP tags, font preconnect, deferral |
+| `optimizer/css.php` | CSS minify, conservative purge, local/external UCSS |
+| `optimizer/js.php` | JavaScript safety analysis and deferral |
+| `optimizer/pipeline.php` | Pipeline orchestration and requirement checks |
 | `cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
 | `brand-migration.php` | One-time legacy option and storage migration |
 | `cache-url-policy.php` | Cache eligibility checks for the admin URL tester |
