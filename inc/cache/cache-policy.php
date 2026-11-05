@@ -195,7 +195,7 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 		return null;
 	}
 
-	if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) {
+	if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
 		return null;
 	}
 

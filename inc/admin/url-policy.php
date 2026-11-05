@@ -11,6 +11,76 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 /**
+ * Guest visibility check.
+ *
+ * @return array
+ */
+function khse_cache_policy_visibility_check() {
+	$enabled = 'yes' === get_option( 'khse_option_visibility_guest', 'yes' );
+
+	return khse_cache_policy_check(
+		'visibility',
+		__( 'Guest visibility', 'kh-speed-engine' ),
+		$enabled ? 'pass' : 'fail',
+		$enabled
+			? __( 'Guest page caching is enabled.', 'kh-speed-engine' )
+			: __( 'Guest page caching is disabled in settings.', 'kh-speed-engine' )
+	);
+}
+
+/**
+ * Homepage caching check.
+ *
+ * @param string $path Normalized path.
+ *
+ * @return array
+ */
+function khse_cache_policy_homepage_check( $path ) {
+	if ( '/' !== $path ) {
+		return khse_cache_policy_check( 'homepage', __( 'Homepage caching', 'kh-speed-engine' ), 'note', __( 'Not the homepage.', 'kh-speed-engine' ) );
+	}
+
+	$enabled = 'yes' === get_option( 'khse_option_post_homepage', 'yes' );
+
+	return khse_cache_policy_check(
+		'homepage',
+		__( 'Homepage caching', 'kh-speed-engine' ),
+		$enabled ? 'pass' : 'fail',
+		$enabled ? __( 'Homepage caching is enabled.', 'kh-speed-engine' ) : __( 'Homepage caching is disabled in settings.', 'kh-speed-engine' )
+	);
+}
+
+/**
+ * Post-type caching check.
+ *
+ * @param string $url Resolved URL.
+ *
+ * @return array
+ */
+function khse_cache_policy_post_type_check( $url ) {
+	$post_id = function_exists( 'url_to_postid' ) ? (int) url_to_postid( $url ) : 0;
+
+	if ( $post_id <= 0 ) {
+		return khse_cache_policy_check( 'post_type', __( 'Post type', 'kh-speed-engine' ), 'note', __( 'No singular post resolved for this URL.', 'kh-speed-engine' ) );
+	}
+
+	$type    = get_post_type( $post_id );
+	$enabled = (array) get_option( 'khse_option_post_types', array() );
+
+	if ( isset( $enabled[ $type ] ) ) {
+		return khse_cache_policy_check( 'post_type', __( 'Post type', 'kh-speed-engine' ), 'pass', __( 'This post type is cached.', 'kh-speed-engine' ) );
+	}
+
+	return khse_cache_policy_check(
+		'post_type',
+		__( 'Post type', 'kh-speed-engine' ),
+		'fail',
+		/* translators: %s: post type key. */
+		sprintf( __( 'Post type "%s" is not enabled for caching.', 'kh-speed-engine' ), $type )
+	);
+}
+
+/**
  * Build one policy check entry.
  *
  * @param string $key    Check key.
@@ -560,6 +630,9 @@ function khse_evaluate_cache_url_policy( $url, $config = array() ) {
 		khse_cache_policy_bypass_check( $path ),
 		khse_cache_policy_document_check( $path ),
 		khse_cache_policy_query_check( $query, $query_vars ),
+		khse_cache_policy_visibility_check(),
+		khse_cache_policy_homepage_check( $path ),
+		khse_cache_policy_post_type_check( $resolved['url'] ),
 		khse_cache_policy_exclusion_path_check( $path, $exclusion, $rules_enabled ),
 		khse_cache_policy_exclusion_get_check( $query_vars, $exclusion, $rules_enabled ),
 		khse_cache_policy_cookie_note(),
