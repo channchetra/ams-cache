@@ -89,10 +89,10 @@ function khse_boot_cache_runtime() {
 	$cache->init();
 }
 
-add_action( 'init', 'khse_load_textdomain', 0 );
-
 // The minimum supported version of PHP.
 if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
+
+	add_action( 'init', 'khse_load_textdomain', 0 );
 
 	// This section is for unit testing.
 	if ( defined( 'KHSE_PLUGIN_UNIT_TEST' ) ) {

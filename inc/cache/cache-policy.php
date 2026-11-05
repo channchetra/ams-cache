@@ -98,6 +98,12 @@ function khse_is_cache_request_excluded( $config ) {
  * @return bool
  */
 function khse_is_cacheable_settings_path( $path, $logged_in = false ) {
+	// Expert Mode runs before WordPress; its config file already carries
+	// the effective visibility settings.
+	if ( ! function_exists( 'get_option' ) ) {
+		return true;
+	}
+
 	if ( $logged_in && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
 		return false;
 	}
