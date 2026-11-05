@@ -1128,3 +1128,62 @@ function khse_read_stats_file( $path ) {
 		'uri'  => '',
 	);
 }
+
+/**
+ * Get the cache type list.
+ *
+ * @return array
+ */
+function khse_get_cache_type_list( $get_key = false ) {
+	$archive_note     = ' <small class="khse-badge">' . __( 'Archive', 'kh-speed-engine' ) . '</small>';
+
+	$list = array(
+		'homepage' => __( 'Homepage', 'kh-speed-engine' ),
+		'post'     => __( 'Post', 'kh-speed-engine' ),
+		'page'     => __( 'Page', 'kh-speed-engine' ),
+	);
+
+	$custom_post_types = get_post_types(
+		array(
+			'public'   => true,
+			'_builtin' => false,
+		),
+		'objects',
+		'and'
+	);
+
+	foreach ( $custom_post_types as $post_type ) {
+		$list[ $post_type->name ] = $post_type->labels->singular_name;
+	}
+
+	$list['category'] = __( 'Category', 'kh-speed-engine' ) . $archive_note;
+	$list['tag']      = __( 'Tag', 'kh-speed-engine' ) . $archive_note;
+	$list['date']     = __( 'Date', 'kh-speed-engine' ) . $archive_note;
+	$list['author']   = __( 'Author', 'kh-speed-engine' ) . $archive_note;
+
+	$custom_post_type_archives = get_post_types(
+		array(
+			'public'      => true,
+			'has_archive' => true,
+			'_builtin'    => false,
+		),
+		'objects',
+		'and'
+	);
+
+	foreach ( $custom_post_type_archives as $post_type ) {
+		$list[ 'archive_' . $post_type->name ] = sprintf(
+			/* translators: %s is the post type singular label. */
+			__( 'Archive for %s', 'kh-speed-engine' ),
+			$post_type->labels->singular_name
+		) . $archive_note;
+	}
+
+	$list['uncategorised'] = __( 'Uncategorised', 'kh-speed-engine' );
+
+	if ( $get_key ) {
+		return array_keys( $list );
+	}
+
+	return $list;
+}

@@ -170,3 +170,90 @@ function khse_purge_permalink( $url, $driver = null ) {
 
 	return khse_purge_cache_uri( $path, $driver );
 }
+
+/**
+ * Clear all cache.
+ *
+ * @return int
+ */
+function khse_clear_all_cache() {
+	khse_sync_expert_mode_runtime();
+
+	$driver_type = get_option( 'khse_option_driver' );
+	$driver      = khse_driver_factory( $driver_type );
+
+	if ( ! $driver || is_wp_error( $driver ) ) {
+		return 0;
+	}
+
+	$list = khse_get_cache_type_list( true );
+
+	if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
+		$driver->clear();
+	}
+
+	$i = 0;
+
+	foreach ( $list as $cache_type ) {
+		$dir = khse_get_stats_dir( $cache_type );
+
+		if ( is_dir( $dir ) ) {
+			foreach ( new DirectoryIterator( $dir ) as $file ) {
+				if ( $file->isFile() && $file->getExtension() === 'json' ) {
+					$filename = $file->getFilename();
+					$key      = strstr( $filename, '.', true );
+
+					$driver->delete( $key );
+
+					if ( @unlink( $file->getPathname() ) ) {
+						$i++;
+					}
+				}
+			}
+		}
+	}
+
+	khse_clear_nginx_static_cache();
+	khse_schedule_preload_cache();
+
+	return $i;
+}
+
+/**
+ * Clear cache rows for one cache type.
+ *
+ * @param string $cache_type Cache type.
+ *
+ * @return int
+ */
+function khse_clear_cache_type( $cache_type ) {
+	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
+	$list   = khse_get_cache_type_list( true );
+
+	if ( ! $driver || is_wp_error( $driver ) || ! in_array( $cache_type, $list, true ) ) {
+		return 0;
+	}
+
+	$rows = 0;
+	$dir  = khse_get_stats_dir( $cache_type );
+
+	if ( is_dir( $dir ) ) {
+		foreach ( new DirectoryIterator( $dir ) as $file ) {
+			if ( $file->isFile() && $file->getExtension() === 'json' ) {
+				$filename = $file->getFilename();
+				$key      = strstr( $filename, '.', true );
+
+				$driver->delete( $key );
+
+				if ( @unlink( $file->getPathname() ) ) {
+					$rows++;
+				}
+			}
+		}
+	}
+
+	khse_clear_nginx_static_cache();
+	khse_schedule_preload_cache();
+
+	return $rows;
+}

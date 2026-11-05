@@ -43,7 +43,7 @@ $register_clear_cache_action = array(
 );
 
 foreach ( $register_clear_cache_action as $option ) {
-	// `khse_clear_all_cache` is defined in functions.php
+	// `khse_clear_all_cache` is defined in cache-purger.php
 	add_action( 'update_option_' . $option, 'khse_clear_all_cache' );
 }
 
