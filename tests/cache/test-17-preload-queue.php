@@ -55,7 +55,7 @@ class PreloadQueueTest extends WP_UnitTestCase {
 			if ( $url === $home ) {
 				return array(
 					'headers'  => array(),
-					'body'     => '<a href="/one/">One</a><a href="/two/">Two</a>',
+					'body'     => '<a href="#skip-link">Skip</a><a href="/one/">One</a><a href="/two/">Two</a>',
 					'response' => array( 'code' => 200, 'message' => 'OK' ),
 					'cookies'  => array(),
 					'filename' => null,
@@ -72,6 +72,7 @@ class PreloadQueueTest extends WP_UnitTestCase {
 
 		$this->assertContains( home_url( '/one/' ), $urls );
 		$this->assertContains( home_url( '/two/' ), $urls );
+		$this->assertNotContains( home_url( '/skip-link/' ), $urls );
 
 		delete_transient( 'khse_homepage_discovered_urls' );
 	}

@@ -48,7 +48,7 @@ function khse_get_preload_post_types() {
 function khse_normalize_homepage_link_url( $href, $base_url ) {
 	$href = trim( html_entity_decode( (string) $href, ENT_QUOTES, 'UTF-8' ) );
 
-	if ( '' === $href || '#' === $href || preg_match( '#^(?:javascript|mailto|tel|data):#i', $href ) ) {
+	if ( '' === $href || '#' === $href[0] || preg_match( '#^(?:javascript|mailto|tel|data):#i', $href ) ) {
 		return '';
 	}
 
