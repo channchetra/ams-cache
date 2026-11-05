@@ -19,7 +19,7 @@ class KHSE_Cache {
 	/**
 	 * Cache insance.
 	 *
-	 * @var \Shieldon\SimpleCache\Cache
+	 * @var \Shieldon\SimpleCache\Cache|null
 	 */
 	public $driver;
 

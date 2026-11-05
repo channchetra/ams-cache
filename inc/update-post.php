@@ -137,7 +137,7 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
  * Purge the deleted post and affected archive cache before permanent deletion.
  *
  * @param int     $post_ID Post ID.
- * @param WP_Post $post    Post object.
+ * @param WP_Post|null $post Post object.
  *
  * @return void
  */

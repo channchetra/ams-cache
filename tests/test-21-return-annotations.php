@@ -17,7 +17,7 @@ class ReturnAnnotationsTest extends WP_UnitTestCase {
 		$expected = array(
 			'get_front_enqueue_styles' => 'string',
 			'debug_message'            => 'string',
-			'msg'                      => 'void|string',
+			'msg'                      => 'string|null',
 			'wp_ob_start'              => 'void',
 			'wp_ob_end_flush_all'      => 'void',
 			'wp_timer_stop'            => 'string',

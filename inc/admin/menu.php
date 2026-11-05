@@ -300,31 +300,30 @@ function khse_admin_enqueue_scripts( $hook_suffix ) {
 	if ( false === strpos( $hook_suffix, 'kh-speed-engine' ) ) {
 		return;
 	}
-	if ( false !== strpos( $hook_suffix, 'kh-speed-engine' ) ) {
-		$entry = khse_get_admin_build_asset_entry();
 
-		if ( empty( $entry['file'] ) ) {
-			return;
-		}
+	$entry = khse_get_admin_build_asset_entry();
 
-		wp_enqueue_script( 'kh-speed-engine-dashboard', khse_get_admin_build_asset_url( $entry['file'] ), array(), khse_get_admin_build_asset_version( $entry['file'] ), true );
-
-		wp_localize_script(
-			'kh-speed-engine-dashboard',
-			'khseDashboard',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),
-				'view'    => khse_get_admin_console_view(),
-				'status'  => khse_dashboard_get_status_data(),
-				'version' => KHSE_PLUGIN_VERSION,
-				'i18n'    => array(
-					'failed' => __( 'Request failed.', 'kh-speed-engine' ),
-					'saved'  => __( 'Settings saved.', 'kh-speed-engine' ),
-				),
-			)
-		);
+	if ( empty( $entry['file'] ) ) {
+		return;
 	}
+
+	wp_enqueue_script( 'kh-speed-engine-dashboard', khse_get_admin_build_asset_url( $entry['file'] ), array(), khse_get_admin_build_asset_version( $entry['file'] ), true );
+
+	wp_localize_script(
+		'kh-speed-engine-dashboard',
+		'khseDashboard',
+		array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'khse_dashboard_' . khse_get_dir_hash() ),
+			'view'    => khse_get_admin_console_view(),
+			'status'  => khse_dashboard_get_status_data(),
+			'version' => KHSE_PLUGIN_VERSION,
+			'i18n'    => array(
+				'failed' => __( 'Request failed.', 'kh-speed-engine' ),
+				'saved'  => __( 'Settings saved.', 'kh-speed-engine' ),
+			),
+		)
+	);
 }
 
 /**

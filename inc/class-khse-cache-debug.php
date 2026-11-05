@@ -244,7 +244,7 @@ trait KHSE_Cache_Debug {
 	 * @param string|null $msg         The message text body.
 	 * @param int         $line_breaks The number of line break.
 	 *
-	 * @return void|string Return a string and clear the stack if $msg is null.
+	 * @return string|null Return a string and clear the stack when $msg is null.
 	 */
 	private function msg( $msg = '', $line_breaks = 1 ) {
 		static $message = array();
