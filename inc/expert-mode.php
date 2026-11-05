@@ -73,6 +73,29 @@ function khse_run_expert_mode( $args ) {
 		return;
 	}
 
+	if ( ! defined( 'KHSE_PLUGIN_DIR' ) ) {
+		define( 'KHSE_PLUGIN_DIR', rtrim( $plugin_dir, '/' ) . '/' );
+	}
+
+	if ( ! defined( 'KHSE_PLUGIN_NAME' ) ) {
+		define( 'KHSE_PLUGIN_NAME', 'kh-speed-engine/kh-speed-engine.php' );
+	}
+
+	if ( ! defined( 'KHSE_PLUGIN_TEXT_DOMAIN' ) ) {
+		define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
+	}
+
+	if ( ! defined( 'KHSE_PLUGIN_VERSION' ) ) {
+		$plugin_header = (string) @file_get_contents( $plugin_dir . '/kh-speed-engine.php' );
+		$version       = '4.0.0';
+
+		if ( preg_match( '/^\s*\*?\s*Version:\s*([0-9][^\s]*)/mi', $plugin_header, $matches ) ) {
+			$version = trim( $matches[1] );
+		}
+
+		define( 'KHSE_PLUGIN_VERSION', $version );
+	}
+
 	include_once( $plugin_dir . '/inc/lib/autoload.php' );
 	include_once( $plugin_dir . '/inc/bootstrap.php' );
 
@@ -83,12 +106,6 @@ function khse_run_expert_mode( $args ) {
 	if ( ! is_array( $config ) || empty( $config ) ) {
 		error_log( '[KH Speed Engine] Ignoring unreadable Expert Mode config: ' . $config_file );
 		return;
-	}
-
-	// Expert Mode runs before plugins_loaded, so the normal migration hook
-	// cannot fire. Run the idempotent migration directly instead.
-	if ( function_exists( 'khse_maybe_migrate_legacy_brand' ) ) {
-		khse_maybe_migrate_legacy_brand();
 	}
 
 	if ( ! isset( $config['cache_enabled'] ) ) {

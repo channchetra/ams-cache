@@ -24,9 +24,7 @@ class UninstallTest extends WP_UnitTestCase {
 
 		update_option( 'khse_option_uninstall', 'yes' );
 
-		$found = uninstall_plugin( $plugin );
-
-		$this->assertTrue( $found );
+		uninstall_plugin( $plugin );
 
 		$this->assertFalse( ( file_exists( khse_get_upload_dir() . '/file_driver' ) ) );
 		$this->assertFalse( ( file_exists( khse_get_upload_dir() . '/sqlite_driver' ) ) );

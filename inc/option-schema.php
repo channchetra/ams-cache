@@ -10,7 +10,8 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-require_once __DIR__ . '/cache/cache-core.php';
+require_once __DIR__ . '/cache/cache-identity.php';
+require_once __DIR__ . '/cache/cache-settings.php';
 
 /**
  * Return the canonical option schema.

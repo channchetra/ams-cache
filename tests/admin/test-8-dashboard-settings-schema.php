@@ -22,7 +22,7 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 			'mode'    => array( 'option' => 'khse_test_schema_mode', 'sanitize' => 'enum', 'values' => array( 'a', 'b' ), 'fallback' => 'a', 'default' => 'a' ),
 		);
 
-		khse_ajax_dashboard_apply_option_schema(
+		khse_apply_option_schema(
 			array( 'enabled' => true, 'limit' => '999', 'mode' => 'z' ),
 			$schema
 		);
@@ -43,7 +43,7 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 		);
 
 		update_option( 'khse_test_schema_enabled2', 'no' );
-		khse_ajax_dashboard_apply_option_schema( array(), $schema );
+		khse_apply_option_schema( array(), $schema );
 
 		$this->assertSame( 'no', get_option( 'khse_test_schema_enabled2' ) );
 	}
@@ -61,7 +61,7 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 		wp_mkdir_p( dirname( $lock ) );
 		file_put_contents( $lock, 'VOTE!' );
 
-		khse_ajax_dashboard_apply_option_schema(
+		khse_apply_option_schema(
 			array( 'expertModeStatus' => false ),
 			array(
 				'expertModeStatus' => array(
@@ -77,7 +77,7 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertSame( 'disable', get_option( 'khse_option_expert_mode_status' ) );
 		$this->assertFileDoesNotExist( $lock );
 
-		khse_ajax_dashboard_apply_option_schema(
+		khse_apply_option_schema(
 			array( 'expertModeStatus' => true ),
 			array(
 				'expertModeStatus' => array(
@@ -109,7 +109,7 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 			'key'  => array( 'option' => 'khse_test_schema_key', 'sanitize' => 'key', 'default' => '' ),
 		);
 
-		khse_ajax_dashboard_apply_option_schema(
+		khse_apply_option_schema(
 			array( 'text' => "<b>keep</b>\nline", 'key' => 'A B!' ),
 			$schema
 		);

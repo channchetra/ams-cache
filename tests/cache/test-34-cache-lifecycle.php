@@ -132,6 +132,55 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		delete_option( 'khse_option_statistics_status' );
 	}
 
+	public function test_cached_response_respects_guest_visibility() {
+		$_SERVER['REQUEST_URI']    = '/gated-page/';
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		update_option( 'khse_option_visibility_guest', 'no' );
+
+		$driver = new class() {
+			public function get( $key ) {
+				return '<html><body>' . str_repeat( 'x', 1100 ) . '</body></html>';
+			}
+		};
+
+		$config = array(
+			'cache_enabled'    => true,
+			'cache_key_prefix' => 'gate_',
+		);
+
+		$this->assertNull( khse_serve_cached_response( $config, $driver ) );
+
+		update_option( 'khse_option_visibility_guest', 'yes' );
+
+		$this->assertIsString( khse_serve_cached_response( $config, $driver ) );
+
+		delete_option( 'khse_option_visibility_guest' );
+	}
+
+	public function test_clear_cache_type_removes_only_that_type() {
+		update_option( 'khse_option_driver', 'file' );
+		khse_ensure_upload_dir();
+
+		$post_dir = khse_get_stats_dir( 'post' );
+		$page_dir = khse_get_stats_dir( 'page' );
+		wp_mkdir_p( $post_dir );
+		wp_mkdir_p( $page_dir );
+
+		$post_file = $post_dir . '/clear-type-post.json';
+		$page_file = $page_dir . '/clear-type-page.json';
+
+		file_put_contents( $post_file, wp_json_encode( array( 'uri' => '/clear-post/', 'size' => 10 ) ) );
+		file_put_contents( $page_file, wp_json_encode( array( 'uri' => '/clear-page/', 'size' => 10 ) ) );
+
+		khse_clear_cache_type( 'post' );
+
+		$this->assertFileDoesNotExist( $post_file );
+		$this->assertFileExists( $page_file );
+
+		@unlink( $page_file );
+	}
+
 	public function test_corrupt_stats_file_is_ignored() {
 		$stats_dir = khse_get_stats_dir( 'post' );
 		wp_mkdir_p( $stats_dir );

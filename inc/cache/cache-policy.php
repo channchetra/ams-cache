@@ -55,7 +55,6 @@ function khse_get_runtime_config() {
 		khse_build_runtime_config()
 	);
 
-	$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
 	$config['cache_key_prefix']   = khse_get_cache_key_prefix();
 	$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
 

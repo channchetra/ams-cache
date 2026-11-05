@@ -281,7 +281,7 @@ function khse_preload_critical_urls( $post_id = 0, $delete_existing = true, $dri
 	}
 
 	if ( $delete_existing && null === $driver ) {
-		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+		$driver = khse_get_active_driver();
 	}
 
 	if ( is_wp_error( $driver ) ) {

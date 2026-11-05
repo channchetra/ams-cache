@@ -359,3 +359,103 @@ function khse_get_cache_key_prefix() {
 
 	return rtrim( $prefix, '._-' ) . '_';
 }
+
+/**
+ * Normalize a yes/no setting value.
+ *
+ * @param mixed  $value   Incoming value.
+ * @param string $default Default value.
+ *
+ * @return string
+ */
+function khse_settings_yes_no( $value, $default = 'no' ) {
+	$value = is_bool( $value ) ? ( $value ? 'yes' : 'no' ) : sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'yes', 'no' ), true ) ? $value : $default;
+}
+
+/**
+ * Normalize an enable/disable setting value.
+ *
+ * @param mixed  $value   Incoming value.
+ * @param string $default Default value.
+ *
+ * @return string
+ */
+function khse_settings_enable_disable( $value, $default = 'disable' ) {
+	$value = is_bool( $value ) ? ( $value ? 'enable' : 'disable' ) : sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'enable', 'disable' ), true ) ? $value : $default;
+}
+
+/**
+ * Apply a declarative option schema to an incoming settings section.
+ *
+ * @param array $incoming Incoming settings.
+ * @param array $schema   Field => rule map.
+ *
+ * @return void
+ */
+function khse_apply_option_schema( $incoming, $schema ) {
+	foreach ( $schema as $field => $rule ) {
+		if ( ! array_key_exists( $field, $incoming ) ) {
+			continue;
+		}
+
+		$value = $incoming[ $field ];
+
+		switch ( $rule['sanitize'] ) {
+			case 'yes_no':
+				$value = khse_settings_yes_no( $value, isset( $rule['fallback'] ) ? $rule['fallback'] : 'no' );
+				break;
+
+			case 'enable_disable':
+				$value = khse_settings_enable_disable( $value, isset( $rule['fallback'] ) ? $rule['fallback'] : 'disable' );
+				break;
+
+			case 'absint':
+				$value = absint( $value );
+				break;
+
+			case 'key':
+				$value = sanitize_key( (string) $value );
+				break;
+
+			case 'text':
+				$value = sanitize_text_field( (string) $value );
+				break;
+
+			case 'textarea':
+				$value = sanitize_textarea_field( (string) $value );
+				break;
+
+			case 'enum':
+				$value = sanitize_key( (string) $value );
+				$value = in_array( $value, $rule['values'], true ) ? $value : $rule['fallback'];
+				break;
+		}
+
+		if ( isset( $rule['min'] ) ) {
+			$value = max( $rule['min'], $value );
+		}
+
+		if ( isset( $rule['max'] ) ) {
+			$value = min( $rule['max'], $value );
+		}
+
+		update_option( $rule['option'], $value );
+	}
+}
+
+/**
+ * Sanitize advanced driver connection type.
+ *
+ * @param mixed $value Incoming value.
+ *
+ * @return string
+ */
+function khse_settings_connection_type( $value ) {
+	$value = sanitize_key( (string) $value );
+
+	return in_array( $value, array( 'tcp', 'socket' ), true ) ? $value : 'tcp';
+}

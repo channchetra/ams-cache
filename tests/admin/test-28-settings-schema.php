@@ -48,7 +48,7 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 	}
 
 	public function test_ajax_schema_applies_central_cache_rules() {
-		khse_ajax_dashboard_apply_option_schema(
+		khse_apply_option_schema(
 			array(
 				'cachingStatus'       => true,
 				'driver'              => 'redis',
@@ -83,7 +83,7 @@ class SettingsSchemaTest extends WP_UnitTestCase {
 		$this->assertTrue( $dto['cache']['visibilityLoginUser'] );
 		$this->assertFalse( $dto['cache']['visibilityGuest'] );
 
-		khse_ajax_dashboard_apply_option_schema( $dto['cache'], khse_get_settings_section_schema( 'cache' ) );
+		khse_apply_option_schema( $dto['cache'], khse_get_settings_section_schema( 'cache' ) );
 
 		$this->assertSame( 'yes', get_option( 'khse_option_visibility_login_user' ) );
 		$this->assertSame( 'no', get_option( 'khse_option_visibility_guest' ) );

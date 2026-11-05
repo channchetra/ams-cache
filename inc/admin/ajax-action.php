@@ -332,19 +332,6 @@ function khse_ajax_dashboard_nginx_snippet_callback() {
 }
 
 /**
- * Sanitize advanced driver connection type.
- *
- * @param mixed $value Incoming value.
- *
- * @return string
- */
-function khse_ajax_dashboard_connection_type( $value ) {
-	$value = sanitize_key( (string) $value );
-
-	return in_array( $value, array( 'tcp', 'socket' ), true ) ? $value : 'tcp';
-}
-
-/**
  * Save yes/no toggle map from React list.
  *
  * @param array  $items      Toggle items.
@@ -364,7 +351,7 @@ function khse_ajax_dashboard_save_toggle_map( $items, $option_key ) {
 			continue;
 		}
 
-		if ( 'yes' === khse_ajax_dashboard_yes_no( isset( $item['enabled'] ) ? $item['enabled'] : 'no' ) ) {
+		if ( 'yes' === khse_settings_yes_no( isset( $item['enabled'] ) ? $item['enabled'] : 'no' ) ) {
 			$value[ sanitize_key( $item['value'] ) ] = 'yes';
 		}
 	}

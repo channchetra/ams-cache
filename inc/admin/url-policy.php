@@ -259,30 +259,7 @@ function khse_cache_policy_permalink_check() {
 	);
 }
 
-/**
- * Document-path check for the admin URL tester.
- *
- * @param string $path Normalized path.
- *
- * @return array
- */
-function khse_cache_policy_document_check( $path ) {
-	if ( khse_is_cacheable_document_path( $path ) ) {
-		return khse_cache_policy_check(
-			'document_path',
-			__( 'Document path', 'kh-speed-engine' ),
-			'pass',
-			__( 'This path is an HTML document.', 'kh-speed-engine' )
-		);
-	}
 
-	return khse_cache_policy_check(
-		'document_path',
-		__( 'Document path', 'kh-speed-engine' ),
-		'fail',
-		__( 'Asset, feed, and non-document paths are not page-cached.', 'kh-speed-engine' )
-	);
-}
 
 /**
  * Cache driver availability check.
@@ -335,83 +312,9 @@ function khse_cache_policy_url_check( $url ) {
 	);
 }
 
-/**
- * Bypass path check.
- *
- * @param string $path Normalized path.
- *
- * @return array
- */
-function khse_cache_policy_bypass_check( $path ) {
-	$match = khse_find_bypass_path( $path );
 
-	if ( '' === $match ) {
-		return khse_cache_policy_check(
-			'bypass_path',
-			__( 'Bypass path', 'kh-speed-engine' ),
-			'pass',
-			__( 'This path is not in the bypass list.', 'kh-speed-engine' )
-		);
-	}
 
-	return khse_cache_policy_check(
-		'bypass_path',
-		__( 'Bypass path', 'kh-speed-engine' ),
-		'fail',
-		sprintf(
-			/* translators: %s is the bypass path. */
-			__( 'This path matches the bypass rule "%s".', 'kh-speed-engine' ),
-			'/' . trim( $match, '/' )
-		)
-	);
-}
 
-/**
- * Query string identity check.
- *
- * @param string $query      Query string.
- * @param array  $query_vars Parsed query variables.
- *
- * @return array
- */
-function khse_cache_policy_query_check( $query, $query_vars ) {
-	$blocked = array();
-
-	foreach ( array_keys( $query_vars ) as $query_var ) {
-		if ( ! khse_is_cache_tracking_query_var( $query_var ) ) {
-			$blocked[] = sanitize_text_field( (string) $query_var );
-		}
-	}
-
-	if ( '' === $query ) {
-		return khse_cache_policy_check(
-			'query',
-			__( 'Query string', 'kh-speed-engine' ),
-			'pass',
-			__( 'No query string is present.', 'kh-speed-engine' )
-		);
-	}
-
-	if ( empty( $blocked ) ) {
-		return khse_cache_policy_check(
-			'query',
-			__( 'Query string', 'kh-speed-engine' ),
-			'pass',
-			__( 'Only tracking query variables are present.', 'kh-speed-engine' )
-		);
-	}
-
-	return khse_cache_policy_check(
-		'query',
-		__( 'Query string', 'kh-speed-engine' ),
-		'fail',
-		sprintf(
-			/* translators: %s is a comma separated list of query variable names. */
-			__( 'Non-tracking query strings change the cache identity: %s', 'kh-speed-engine' ),
-			implode( ', ', $blocked )
-		)
-	);
-}
 
 /**
  * Find the first excluded path that matches a normalized path.

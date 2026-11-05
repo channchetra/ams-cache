@@ -105,7 +105,7 @@ function khse_purge_post_after_change( $post_id, $post = null ) {
 		return false;
 	}
 
-	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+	$driver = khse_get_active_driver();
 
 	if ( is_wp_error( $driver ) ) {
 		$driver = null;
@@ -121,19 +121,15 @@ function khse_purge_post_after_change( $post_id, $post = null ) {
  */
 function khse_update_post( $post_ID, $post, $update ) {
 
-	$option_caching_status = get_option( 'khse_option_caching_status', 'disable' );
-
-	if ( 'enable' === $option_caching_status ) {
-		if ( wp_is_post_revision( $post_ID ) || wp_is_post_autosave( $post_ID ) ) {
-			return;
-		}
-
-		if ( ! $post || 'publish' !== $post->post_status ) {
-			return;
-		}
-
-		khse_purge_post_after_change( $post_ID, $post );
+	if ( wp_is_post_revision( $post_ID ) || wp_is_post_autosave( $post_ID ) ) {
+		return;
 	}
+
+	if ( ! $post || 'publish' !== $post->post_status ) {
+		return;
+	}
+
+	khse_purge_post_after_change( $post_ID, $post );
 }
 
 /**
@@ -146,10 +142,6 @@ function khse_update_post( $post_ID, $post, $update ) {
  * @return void
  */
 function khse_update_post_status( $new_status, $old_status, $post ) {
-	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
-		return;
-	}
-
 	if ( ! $post || wp_is_post_revision( $post->ID ) || wp_is_post_autosave( $post->ID ) ) {
 		return;
 	}
@@ -180,7 +172,7 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 		$previous_status = $post ? $post->post_status : '';
 	}
 
-	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) || 'publish' !== $previous_status ) {
+	if ( 'publish' !== $previous_status ) {
 		return;
 	}
 
@@ -215,10 +207,6 @@ function khse_delete_post( $post_ID, $post = null ) {
  * @return void
  */
 function khse_update_post_terms( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids ) {
-	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
-		return;
-	}
-
 	$post = get_post( $object_id );
 
 	if ( ! $post || 'publish' !== $post->post_status || wp_is_post_revision( $object_id ) || wp_is_post_autosave( $object_id ) ) {

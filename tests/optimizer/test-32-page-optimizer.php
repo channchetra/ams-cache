@@ -102,6 +102,15 @@ class PageOptimizerTransformsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '.menu :hover', $result );
 	}
 
+	public function test_font_preconnects_are_added_once() {
+		$html = '<html><head><link href="https://fonts.googleapis.com/css?family=Inter"></head><body></body></html>';
+
+		$result = khse_add_font_preconnects( $html );
+
+		$this->assertSame( 1, substr_count( $result, 'rel="preconnect" href="https://fonts.googleapis.com"' ) );
+		$this->assertStringContainsString( 'fonts.googleapis.com/css?family=Inter', $result );
+	}
+
 	public function test_local_ucss_applies_to_inline_styles() {
 		$settings            = khse_get_default_page_optimization_settings();
 		$settings['local_ucss'] = 'yes';
