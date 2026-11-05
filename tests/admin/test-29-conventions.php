@@ -15,7 +15,7 @@ class ConventionsTest extends WP_UnitTestCase {
 	}
 
 	public function test_plugin_asset_handles_are_prefixed() {
-		$core = file_get_contents( KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php' );
+		$core = file_get_contents( KHSE_PLUGIN_DIR . 'inc/cache/class-khse-cache.php' );
 		$menu = file_get_contents( KHSE_PLUGIN_DIR . 'inc/admin/menu.php' );
 
 		$this->assertStringContainsString( "'kh-speed-engine-style'", $core );

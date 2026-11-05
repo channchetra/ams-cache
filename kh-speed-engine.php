@@ -85,7 +85,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		// loaded first and the local library loader registered afterwards to win.
 		require_once KHSE_PLUGIN_DIR . 'vendor/autoload.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
-		require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
+		require_once KHSE_PLUGIN_DIR . 'inc/cache/class-khse-cache.php';
 		khse_load_request_modules();
 
 		khse_load_admin_modules();
@@ -117,7 +117,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 				khse_load_admin_modules();
 			} else {
 
-				require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
+				require_once KHSE_PLUGIN_DIR . 'inc/cache/class-khse-cache.php';
 
 				add_action( 'plugins_loaded', 'khse_boot_cache_runtime' );
 			}

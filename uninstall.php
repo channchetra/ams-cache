@@ -19,7 +19,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	define( 'KHSE_INC', true );
 }
 
-require_once __DIR__ . '/inc/cache-core.php';
+require_once __DIR__ . '/inc/cache/cache-core.php';
 require_once __DIR__ . '/inc/option-schema.php';
 
 $option_uninstall = get_option( 'khse_option_uninstall' );

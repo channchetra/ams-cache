@@ -28,16 +28,16 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 | Module | Purpose |
 |--------|---------|
-| `cache-core.php` | Stable include aggregator; loads identity, settings, storage, and policy |
-| `cache-identity.php` | Site directory hash and blog identity |
-| `cache-settings.php` | Canonical option schema, defaults, and typed setting accessors |
-| `cache-storage.php` | Upload/runtime/config/stats paths, driver configuration, config sync |
-| `cache-policy.php` | URI normalization, cacheability/exclusion rules, cache keys, read path |
-| `cache-driver.php` | Driver factory, availability checks, cache entry limits |
-| `cache-view.php` | SVG icons, benchmark footer markup/JS |
+| `cache/cache-core.php` | Stable include aggregator; loads identity, settings, storage, and policy |
+| `cache/cache-identity.php` | Site directory hash and blog identity |
+| `cache/cache-settings.php` | Canonical option schema, defaults, and typed setting accessors |
+| `cache/cache-storage.php` | Upload/runtime/config/stats paths, driver configuration, config sync |
+| `cache/cache-policy.php` | URI normalization, cacheability/exclusion rules, cache keys, read path |
+| `cache/cache-driver.php` | Driver factory, availability checks, cache entry limits |
+| `cache/cache-view.php` | SVG icons, benchmark footer markup/JS |
 | `nginx/cache-nginx.php` | Nginx static cache write/delete/clear |
 | `nginx/cache-nginx-config.php` | Nginx requirements check + config snippet generation |
-| `cache-purger.php` | Cache statistics + purge operations |
+| `cache/cache-purger.php` | Cache statistics + purge operations |
 | `optimizer/settings.php` | Optimization defaults, runtime state, workspace helpers |
 | `optimizer/report.php` | Optimization report build, storage, pruning, and summaries |
 | `optimizer/dom.php` | Shared HTML attribute helpers for the optimizer modules |
@@ -48,7 +48,7 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), `admin/expert-mode-snippet.php` (code generation and readiness checks), and `admin/url-policy.php` (cache eligibility checks for the URL tester). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
 | `preload/cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
-| `brand-migration.php` | One-time legacy option and storage migration |
+| `cache/brand-migration.php` | One-time legacy option and storage migration |
 | `widgets.php` | Benchmark widget registration |
 
 ## Nginx Direct Static Cache

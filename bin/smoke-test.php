@@ -191,7 +191,7 @@ smoke_assert( ! khse_is_cacheable_request_uri( '/assets/app.css' ), 'asset reque
 smoke_assert( false !== strpos( khse_get_nginx_direct_cache_snippet(), 'fbclid' ), 'Nginx snippet allows Facebook tracking query' );
 smoke_assert( false !== strpos( khse_get_nginx_direct_cache_snippet(), 'mibextid' ), 'Nginx snippet allows Meta share query' );
 smoke_assert( false === strpos( khse_get_nginx_direct_cache_snippet(), '&&' ), 'Nginx snippet uses valid condition syntax' );
-smoke_assert( '' !== khse_local_asset_url_to_path( '/inc/cache-core.php' ), 'same-site asset resolution' );
+smoke_assert( '' !== khse_local_asset_url_to_path( '/inc/cache/cache-core.php' ), 'same-site asset resolution' );
 smoke_assert( '' === khse_local_asset_url_to_path( '/../cache-core.php' ), 'path traversal rejected' );
 
 $analysis = khse_analyze_javascript_source( 'document.write("unsafe");' );
@@ -290,7 +290,7 @@ smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post'
 smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post_id );' ), 'status changes warm related post archives' );
 smoke_assert( false !== strpos( $post_hooks_source, 'khse_purge_post_after_change' ), 'new and updated posts warm their own page' );
 smoke_assert( false !== strpos( $post_hooks_source, 'khse_post_cache_purge_guard' ), 'overlapping post hooks share one purge guard' );
-$cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-khse-cache.php' );
+$cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache/class-khse-cache.php' );
 smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );
 
 $preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/preload/cache-preload.php' );

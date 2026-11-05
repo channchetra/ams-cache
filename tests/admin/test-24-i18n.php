@@ -10,7 +10,7 @@ class I18nConventionTest extends WP_UnitTestCase {
 	public function test_benchmark_strings_use_english_msgids() {
 		$files = array(
 			'inc/class-khse-benchmark-widget.php',
-			'inc/class-khse-cache-debug.php',
+			'inc/cache/class-khse-cache-debug.php',
 		);
 
 		foreach ( $files as $file ) {
