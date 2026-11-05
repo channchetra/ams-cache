@@ -31,8 +31,8 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `cache-core.php` | Dir hash, upload dir, cache key, URI normalization, cacheable checks, config defaults |
 | `cache-driver.php` | Driver settings normalization + factory, cache entry limits |
 | `cache-view.php` | SVG icons, benchmark footer markup/JS |
-| `cache-nginx.php` | Nginx static cache write/delete/clear |
-| `cache-nginx-config.php` | Nginx requirements check + config snippet generation |
+| `nginx/cache-nginx.php` | Nginx static cache write/delete/clear |
+| `nginx/cache-nginx-config.php` | Nginx requirements check + config snippet generation |
 | `cache-purger.php` | Cache statistics + purge operations |
 | `optimizer/settings.php` | Optimization defaults, runtime state, workspace helpers |
 | `optimizer/report.php` | Optimization report build, storage, pruning, and summaries |
@@ -42,7 +42,7 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `optimizer/pipeline.php` | Pipeline orchestration and requirement checks |
 
 The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), `admin/expert-mode-snippet.php` (code generation and readiness checks), and `admin/url-policy.php` (cache eligibility checks for the URL tester). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
-| `cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
+| `preload/cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
 | `brand-migration.php` | One-time legacy option and storage migration |
 | `widgets.php` | Benchmark widget registration |
 

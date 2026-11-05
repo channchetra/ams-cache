@@ -173,10 +173,10 @@ function get_month_link( $year, $month ) {
 }
 
 require_once dirname( __DIR__ ) . '/inc/cache-core.php';
-require_once dirname( __DIR__ ) . '/inc/cache-nginx.php';
-require_once dirname( __DIR__ ) . '/inc/cache-nginx-config.php';
+require_once dirname( __DIR__ ) . '/inc/nginx/cache-nginx.php';
+require_once dirname( __DIR__ ) . '/inc/nginx/cache-nginx-config.php';
 require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
-require_once dirname( __DIR__ ) . '/inc/cache-preload.php';
+require_once dirname( __DIR__ ) . '/inc/preload/cache-preload.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/settings.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/report.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/html.php';
@@ -304,7 +304,7 @@ smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload
 $cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-khse-cache.php' );
 smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );
 
-$preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache-preload.php' );
+$preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/preload/cache-preload.php' );
 smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
 $admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/expert-mode-snippet.php' );
 smoke_assert( false !== strpos( $admin_source, 'khse_expert_mode_snippet_matches( khse_get_wp_config_contents(), $upload_dir, $runtime_dir )' ), 'Expert Mode readiness checks private runtime path' );

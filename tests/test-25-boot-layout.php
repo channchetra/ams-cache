@@ -32,6 +32,14 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/admin/functions.php' );
 	}
 
+	public function test_runtime_packages_own_preload_and_nginx_modules() {
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/preload/cache-preload.php' );
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/nginx/cache-nginx.php' );
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/nginx/cache-nginx-config.php' );
+		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/cache-preload.php' );
+		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/cache-nginx.php' );
+	}
+
 	public function test_runtime_config_helpers_live_in_core() {
 		foreach ( array( 'khse_get_runtime_exclusion_config', 'khse_update_config', 'khse_sync_expert_mode_runtime' ) as $function ) {
 			$reflection = new ReflectionFunction( $function );
