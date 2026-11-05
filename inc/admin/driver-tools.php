@@ -16,51 +16,13 @@ if ( ! defined( "KHSE_INC" ) ) {
  * @return array
  */
 function khse_dashboard_get_driver_advanced_settings_data() {
-	$file = wp_parse_args(
-		(array) get_option( 'khse_option_advanced_driver_file', array() ),
-		array(
-			'compress'           => 'no',
-			'compress_threshold' => 4096,
-			'compress_level'     => 1,
-		)
-	);
+	$file = wp_parse_args( (array) get_option( 'khse_option_advanced_driver_file', array() ), khse_get_driver_advanced_defaults( 'file' ) );
 
-	$redis = wp_parse_args(
-		(array) get_option( 'khse_option_advanced_driver_redis', array() ),
-		array(
-			'host'               => '127.0.0.1',
-			'port'               => 6379,
-			'user'               => '',
-			'pass'               => '',
-			'database'           => 0,
-			'unix_socket'        => '',
-			'compress'           => 'yes',
-			'compress_threshold' => 1024,
-			'compress_level'     => 6,
-		)
-	);
+	$redis = wp_parse_args( (array) get_option( 'khse_option_advanced_driver_redis', array() ), khse_get_driver_advanced_defaults( 'redis' ) );
 
-	$memcached = wp_parse_args(
-		(array) get_option( 'khse_option_advanced_driver_memcached', array() ),
-		array(
-			'host'        => '127.0.0.1',
-			'port'        => 11211,
-			'unix_socket' => '',
-		)
-	);
+	$memcached = wp_parse_args( (array) get_option( 'khse_option_advanced_driver_memcached', array() ), khse_get_driver_advanced_defaults( 'memcached' ) );
 
-	$mongodb = wp_parse_args(
-		(array) get_option( 'khse_option_advanced_driver_mongodb', array() ),
-		array(
-			'host'        => '127.0.0.1',
-			'port'        => 27017,
-			'user'        => '',
-			'pass'        => '',
-			'dbname'      => 'test',
-			'collection'  => 'cache_data',
-			'unix_socket' => '',
-		)
-	);
+	$mongodb = wp_parse_args( (array) get_option( 'khse_option_advanced_driver_mongodb', array() ), khse_get_driver_advanced_defaults( 'mongodb' ) );
 
 	return array(
 		'file'       => $file,

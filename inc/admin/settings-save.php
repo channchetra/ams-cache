@@ -33,46 +33,51 @@ function khse_apply_dashboard_settings( $settings ) {
 			$mongodb  = isset( $advanced['mongodb'] ) && is_array( $advanced['mongodb'] ) ? $advanced['mongodb'] : ( isset( $advanced['mongo'] ) && is_array( $advanced['mongo'] ) ? $advanced['mongo'] : array() );
 			$conn     = isset( $advanced['connection'] ) && is_array( $advanced['connection'] ) ? $advanced['connection'] : array();
 
+			$file     = array_merge( khse_get_driver_advanced_defaults( 'file' ), $file );
+			$redis    = array_merge( khse_get_driver_advanced_defaults( 'redis' ), $redis );
+			$memcache = array_merge( khse_get_driver_advanced_defaults( 'memcached' ), $memcache );
+			$mongodb  = array_merge( khse_get_driver_advanced_defaults( 'mongodb' ), $mongodb );
+
 			update_option(
 				'khse_option_advanced_driver_file',
 				array(
-					'compress'           => khse_ajax_dashboard_yes_no( isset( $file['compress'] ) ? $file['compress'] : 'no' ),
-					'compress_threshold' => max( 0, absint( isset( $file['compress_threshold'] ) ? $file['compress_threshold'] : 4096 ) ),
-					'compress_level'     => max( 1, min( 9, absint( isset( $file['compress_level'] ) ? $file['compress_level'] : 1 ) ) ),
+					'compress'           => khse_ajax_dashboard_yes_no( $file['compress'] ),
+					'compress_threshold' => max( 0, absint( $file['compress_threshold'] ) ),
+					'compress_level'     => max( 1, min( 9, absint( $file['compress_level'] ) ) ),
 				)
 			);
 			update_option(
 				'khse_option_advanced_driver_redis',
 				array(
-					'host'               => sanitize_text_field( isset( $redis['host'] ) ? $redis['host'] : '127.0.0.1' ),
-					'port'               => max( 1, absint( isset( $redis['port'] ) ? $redis['port'] : 6379 ) ),
-					'user'               => sanitize_text_field( isset( $redis['user'] ) ? $redis['user'] : '' ),
-					'pass'               => sanitize_text_field( isset( $redis['pass'] ) ? $redis['pass'] : '' ),
-					'database'           => max( 0, min( 15, absint( isset( $redis['database'] ) ? $redis['database'] : 0 ) ) ),
-					'unix_socket'        => sanitize_text_field( isset( $redis['unix_socket'] ) ? $redis['unix_socket'] : '' ),
-					'compress'           => khse_ajax_dashboard_yes_no( isset( $redis['compress'] ) ? $redis['compress'] : 'yes', 'yes' ),
-					'compress_threshold' => max( 0, absint( isset( $redis['compress_threshold'] ) ? $redis['compress_threshold'] : 1024 ) ),
-					'compress_level'     => max( 1, min( 9, absint( isset( $redis['compress_level'] ) ? $redis['compress_level'] : 6 ) ) ),
+					'host'               => sanitize_text_field( $redis['host'] ),
+					'port'               => max( 1, absint( $redis['port'] ) ),
+					'user'               => sanitize_text_field( $redis['user'] ),
+					'pass'               => sanitize_text_field( $redis['pass'] ),
+					'database'           => max( 0, min( 15, absint( $redis['database'] ) ) ),
+					'unix_socket'        => sanitize_text_field( $redis['unix_socket'] ),
+					'compress'           => khse_ajax_dashboard_yes_no( $redis['compress'], 'yes' ),
+					'compress_threshold' => max( 0, absint( $redis['compress_threshold'] ) ),
+					'compress_level'     => max( 1, min( 9, absint( $redis['compress_level'] ) ) ),
 				)
 			);
 			update_option(
 				'khse_option_advanced_driver_memcached',
 				array(
-					'host'        => sanitize_text_field( isset( $memcache['host'] ) ? $memcache['host'] : '127.0.0.1' ),
-					'port'        => max( 1, absint( isset( $memcache['port'] ) ? $memcache['port'] : 11211 ) ),
-					'unix_socket' => sanitize_text_field( isset( $memcache['unix_socket'] ) ? $memcache['unix_socket'] : '' ),
+					'host'        => sanitize_text_field( $memcache['host'] ),
+					'port'        => max( 1, absint( $memcache['port'] ) ),
+					'unix_socket' => sanitize_text_field( $memcache['unix_socket'] ),
 				)
 			);
 			update_option(
 				'khse_option_advanced_driver_mongodb',
 				array(
-					'host'        => sanitize_text_field( isset( $mongodb['host'] ) ? $mongodb['host'] : '127.0.0.1' ),
-					'port'        => max( 1, absint( isset( $mongodb['port'] ) ? $mongodb['port'] : 27017 ) ),
-					'user'        => sanitize_text_field( isset( $mongodb['user'] ) ? $mongodb['user'] : '' ),
-					'pass'        => sanitize_text_field( isset( $mongodb['pass'] ) ? $mongodb['pass'] : '' ),
-					'dbname'      => sanitize_text_field( isset( $mongodb['dbname'] ) ? $mongodb['dbname'] : ( isset( $mongodb['database'] ) ? $mongodb['database'] : 'test' ) ),
-					'collection'  => sanitize_text_field( isset( $mongodb['collection'] ) ? $mongodb['collection'] : 'cache_data' ),
-					'unix_socket' => sanitize_text_field( isset( $mongodb['unix_socket'] ) ? $mongodb['unix_socket'] : '' ),
+					'host'        => sanitize_text_field( $mongodb['host'] ),
+					'port'        => max( 1, absint( $mongodb['port'] ) ),
+					'user'        => sanitize_text_field( $mongodb['user'] ),
+					'pass'        => sanitize_text_field( $mongodb['pass'] ),
+					'dbname'      => sanitize_text_field( $mongodb['dbname'] ),
+					'collection'  => sanitize_text_field( $mongodb['collection'] ),
+					'unix_socket' => sanitize_text_field( $mongodb['unix_socket'] ),
 				)
 			);
 			update_option( 'khse_option_advanced_driver_redis_connection_type', khse_ajax_dashboard_connection_type( isset( $conn['redis'] ) ? $conn['redis'] : 'tcp' ) );

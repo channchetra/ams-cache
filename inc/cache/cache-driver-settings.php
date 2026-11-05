@@ -13,6 +13,51 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 /**
+ * Return the advanced default settings for a driver.
+ *
+ * @param string $type Driver type.
+ *
+ * @return array
+ */
+function khse_get_driver_advanced_defaults( $type ) {
+	switch ( $type ) {
+		case 'file':
+			return array( 'compress' => 'no', 'compress_threshold' => 4096, 'compress_level' => 1 );
+
+		case 'redis':
+			return array(
+				'host'               => '127.0.0.1',
+				'port'               => 6379,
+				'user'               => '',
+				'pass'               => '',
+				'database'           => 0,
+				'unix_socket'        => '',
+				'compress'           => 'yes',
+				'compress_threshold' => 1024,
+				'compress_level'     => 6,
+			);
+
+		case 'memcache':
+		case 'memcached':
+			return array( 'host' => '127.0.0.1', 'port' => 11211, 'unix_socket' => '' );
+
+		case 'mongo':
+		case 'mongodb':
+			return array(
+				'host'        => '127.0.0.1',
+				'port'        => 27017,
+				'user'        => '',
+				'pass'        => '',
+				'dbname'      => 'test',
+				'collection'  => 'cache_data',
+				'unix_socket' => '',
+			);
+	}
+
+	return array();
+}
+
+/**
  * Get advanced driver settings from WordPress options.
  *
  * @param string $type Driver type.

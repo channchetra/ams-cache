@@ -63,7 +63,7 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		$this->assertSame( 'pass', $this->check( $result, 'request' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'caching' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'permalink' )['status'] );
-		$this->assertCount( 14, $result['checks'] );
+		$this->assertCount( 12, $result['checks'] );
 	}
 
 	public function test_fragment_url_is_rejected() {
@@ -101,7 +101,7 @@ class UrlPolicyTest extends WP_UnitTestCase {
 			$result = khse_evaluate_cache_url_policy( $path, $this->config() );
 
 			$this->assertFalse( $result['cacheable'], $path );
-			$this->assertSame( 'fail', $this->check( $result, 'bypass_path' )['status'], $path );
+			$this->assertSame( 'fail', $this->check( $result, 'url' )['status'], $path );
 		}
 	}
 
@@ -109,14 +109,14 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		$result = khse_evaluate_cache_url_policy( '/assets/app.css', $this->config() );
 
 		$this->assertFalse( $result['cacheable'] );
-		$this->assertSame( 'fail', $this->check( $result, 'document_path' )['status'] );
+		$this->assertSame( 'fail', $this->check( $result, 'url' )['status'] );
 	}
 
 	public function test_non_tracking_query_var_fails() {
 		$result = khse_evaluate_cache_url_policy( '/sample-page/?page=2', $this->config() );
 
 		$this->assertFalse( $result['cacheable'] );
-		$this->assertSame( 'fail', $this->check( $result, 'query' )['status'] );
+		$this->assertSame( 'fail', $this->check( $result, 'url' )['status'] );
 		$this->assertSame( '/sample-page/?page=2', $result['path'] );
 	}
 
@@ -127,7 +127,7 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		);
 
 		$this->assertTrue( $result['cacheable'] );
-		$this->assertSame( 'pass', $this->check( $result, 'query' )['status'] );
+		$this->assertSame( 'pass', $this->check( $result, 'url' )['status'] );
 		$this->assertSame( '/sample-page/?utm_source=newsletter&fbclid=abc123', $result['path'] );
 	}
 

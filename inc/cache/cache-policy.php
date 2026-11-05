@@ -443,6 +443,37 @@ function khse_find_bypass_path( $path ) {
 }
 
 /**
+ * Check whether a URI is a cacheable HTML document target.
+ *
+ * This is the single policy used by the runtime and the admin tester.
+ *
+ * @param string $uri Request URI, URL, or path.
+ *
+ * @return bool
+ */
+function khse_is_cacheable_uri( $uri ) {
+	$uri = (string) $uri;
+
+	if ( '' === $uri || false !== strpos( $uri, '#' ) ) {
+		return false;
+	}
+
+	$parsed = parse_url( $uri );
+
+	if ( false === $parsed ) {
+		return false;
+	}
+
+	$query = isset( $parsed['query'] ) ? (string) $parsed['query'] : '';
+
+	if ( ! khse_is_cacheable_query_string( $query ) ) {
+		return false;
+	}
+
+	return khse_is_cacheable_document_path( khse_normalize_cache_uri( $uri ) );
+}
+
+/**
  * Check if a full request URI can be treated as a cacheable HTML document request.
  *
  * @param string|null $request_uri Full request URI including the query string.
@@ -463,29 +494,7 @@ function khse_is_cacheable_request_uri( $request_uri = null ) {
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
 	}
 
-	$request_uri = (string) $request_uri;
-
-	// A raw fragment is never valid in an HTTP request target. Reject it so
-	// parse_url() cannot truncate the query relative to PHP's $_GET parsing.
-	if ( false !== strpos( $request_uri, '#' ) ) {
-		return false;
-	}
-
-	$parsed = parse_url( $request_uri );
-
-	if ( false === $parsed ) {
-		return false;
-	}
-
-	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
-
-	if ( ! khse_is_cacheable_query_string( $query ) ) {
-		return false;
-	}
-
-	$path = khse_normalize_cache_uri( $request_uri );
-
-	return khse_is_cacheable_document_path( $path );
+	return khse_is_cacheable_uri( $request_uri );
 }
 
 /**

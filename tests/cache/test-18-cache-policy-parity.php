@@ -105,7 +105,7 @@ class CachePolicyParityTest extends WP_UnitTestCase {
 
 		$this->assertFalse( khse_is_cacheable_document_path( $path ) );
 		$this->assertSame( 'wp-admin', khse_find_bypass_path( $path ) );
-		$this->assertSame( 'fail', $this->policy_check( khse_evaluate_cache_url_policy( $path, $config ), 'bypass_path' )['status'] );
+		$this->assertSame( 'fail', $this->policy_check( khse_evaluate_cache_url_policy( $path, $config ), 'url' )['status'] );
 	}
 
 	public function test_bypass_paths_are_rejected() {

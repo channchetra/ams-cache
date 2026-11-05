@@ -316,6 +316,26 @@ function khse_cache_policy_driver_check( $config ) {
 }
 
 /**
+ * Unified URL cacheability check.
+ *
+ * @param string $url Resolved URL.
+ *
+ * @return array
+ */
+function khse_cache_policy_url_check( $url ) {
+	$cacheable = khse_is_cacheable_uri( $url );
+
+	return khse_cache_policy_check(
+		'url',
+		__( 'URL cacheability', 'kh-speed-engine' ),
+		$cacheable ? 'pass' : 'fail',
+		$cacheable
+			? __( 'This URL is a cacheable HTML document.', 'kh-speed-engine' )
+			: __( 'This URL is a bypass path, asset, feed, or function query.', 'kh-speed-engine' )
+	);
+}
+
+/**
  * Bypass path check.
  *
  * @param string $path Normalized path.
@@ -627,9 +647,7 @@ function khse_evaluate_cache_url_policy( $url, $config = array() ) {
 		khse_cache_policy_caching_check( $config ),
 		khse_cache_policy_permalink_check(),
 		khse_cache_policy_driver_check( $config ),
-		khse_cache_policy_bypass_check( $path ),
-		khse_cache_policy_document_check( $path ),
-		khse_cache_policy_query_check( $query, $query_vars ),
+		khse_cache_policy_url_check( $resolved['url'] ),
 		khse_cache_policy_visibility_check(),
 		khse_cache_policy_homepage_check( $path ),
 		khse_cache_policy_post_type_check( $resolved['url'] ),
