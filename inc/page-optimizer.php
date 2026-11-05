@@ -1117,11 +1117,20 @@ function khse_css_selector_is_used( $selector, $html, $safelist ) {
 	$id_names    = isset( $id_matches[1] ) ? $id_matches[1] : array();
 
 	foreach ( $class_names as $class_name ) {
-		if ( ! preg_match( '/\bclass\s*=\s*(["\'])(.*?)\1/is', $html, $class_attributes ) ) {
+		if ( ! preg_match_all( '/\bclass\s*=\s*(["\'])(.*?)\1/is', $html, $class_attributes ) ) {
 			return false;
 		}
 
-		if ( ! preg_match( '/(?:^|\s)' . preg_quote( $class_name, '/' ) . '(?:\s|$)/', $class_attributes[2] ) ) {
+		$class_found = false;
+
+		foreach ( $class_attributes[2] as $class_attribute ) {
+			if ( preg_match( '/(?:^|\s)' . preg_quote( $class_name, '/' ) . '(?:\s|$)/', $class_attribute ) ) {
+				$class_found = true;
+				break;
+			}
+		}
+
+		if ( ! $class_found ) {
 			return false;
 		}
 	}
