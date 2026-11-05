@@ -669,6 +669,22 @@ function khse_ajax_dashboard_reports_callback() {
 function khse_ajax_dashboard_preload_callback() {
 	khse_ajax_dashboard_guard();
 
+	if ( ! khse_is_preload_enabled() ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Enable preload before running it.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
+	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Enable page caching before running preload.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
 	$count = khse_preload_cache();
 
 	wp_send_json_success(

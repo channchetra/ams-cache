@@ -3576,3 +3576,14 @@ body.folded .khse-savebar {
 		flex-wrap: nowrap;
 	}
 }
+
+.khse-preload-warning {
+	margin: 10px 0 0;
+	border: 1px solid #f0dfba;
+	border-radius: 10px;
+	background: var(--khse-amber-soft);
+	color: #784c05;
+	font-size: 12px;
+	line-height: 1.5;
+	padding: 9px 11px;
+}

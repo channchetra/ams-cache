@@ -674,6 +674,8 @@ export function PreloadView({data, settings, update, actions}) {
 	const postTypeCount = (preload.postTypes || []).filter((item) => item.enabled === 'yes').length;
 	const archiveCount = (preload.archives || []).filter((item) => item.enabled === 'yes').length;
 	const limit = Number(preload.limit) || 0;
+	const cachingEnabled = Boolean(settings.cache?.cachingStatus);
+	const ready = Boolean(preload.enabled) && cachingEnabled;
 
 	return (
 		<div className="khse-stack">
@@ -686,16 +688,21 @@ export function PreloadView({data, settings, update, actions}) {
 				<div className="khse-preload-hero__grid">
 					<div className="khse-preload-hero__main">
 						<h3 className="khse-preload-hero__title">
-							{preload.enabled ? 'Warming content' : 'Preload is off'}
+							{ready ? 'Warming content' : preload.enabled ? 'Preload needs page caching' : 'Preload is off'}
 						</h3>
 						<p className="khse-note">
-							{preload.enabled
+							{ready
 								? 'Queued pages are cached in the background, starting with the homepage.'
-								: 'Turn preload on to queue and warm pages. The queue below still reflects the last run.'}
+								: preload.enabled
+									? 'Page caching is off. Enable it under Caching → Cache before preload can run.'
+									: 'Turn preload on to queue and warm pages. The queue below still reflects the last run.'}
 						</p>
+						{!cachingEnabled && preload.enabled ? (
+							<p className="khse-preload-warning" role="status">Caching is paused, so the queued count may be stale until preload is run with caching enabled.</p>
+						) : null}
 						<PreloadQueue status={status} />
 						<div className="khse-inline">
-							<Button variant="primary" icon={Play} onClick={() => actions.runPreload()}>Run preload</Button>
+							<Button variant="primary" icon={Play} disabled={!cachingEnabled} onClick={() => actions.runPreload()}>Run preload</Button>
 							<Button variant="secondary" icon={Trash2} onClick={() => actions.purgeHomepage()}>Purge homepage</Button>
 						</div>
 					</div>

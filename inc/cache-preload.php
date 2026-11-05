@@ -69,7 +69,7 @@ function khse_schedule_preload_cache( $force = false ) {
  * @return void
  */
 function khse_schedule_preload_queue( $delay = 15 ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
 		return;
 	}
 
@@ -79,12 +79,33 @@ function khse_schedule_preload_queue( $delay = 15 ) {
 }
 
 /**
+ * Clear stale queue state when preload cannot run.
+ *
+ * @return void
+ */
+function khse_reset_preload_queue_state() {
+	delete_transient( 'khse_preload_queue' );
+	update_option( 'khse_preload_queue_total', 0 );
+	update_option( 'khse_preload_queue_processed', 0 );
+	update_option( 'khse_preload_queue_failed', 0 );
+	update_option( 'khse_preload_queue_remaining', 0 );
+}
+
+/**
  * Bootstrap preload once after a plugin deployment.
  *
  * @return void
  */
 function khse_maybe_schedule_preload_cache() {
-	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) || ! function_exists( 'wp_next_scheduled' ) ) {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		if ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
+		}
+
+		return;
+	}
+
+	if ( ! function_exists( 'wp_next_scheduled' ) ) {
 		return;
 	}
 
@@ -789,6 +810,7 @@ function khse_get_preload_urls( $limit = null, $priority_urls = null ) {
  */
 function khse_preload_cache( $limit = null ) {
 	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		khse_reset_preload_queue_state();
 		return 0;
 	}
 
@@ -822,6 +844,10 @@ function khse_preload_cache( $limit = null ) {
  * @return int Number of new URLs queued.
  */
 function khse_queue_preload_urls( $urls ) {
+	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		return 0;
+	}
+
 	$urls = array_values( array_unique( array_filter( array_map( 'strval', (array) $urls ) ) ) );
 
 	if ( empty( $urls ) ) {
@@ -884,8 +910,7 @@ function khse_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
  */
 function khse_process_preload_queue() {
 	if ( ! khse_is_preload_enabled() || 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
-		delete_transient( 'khse_preload_queue' );
-		update_option( 'khse_preload_queue_remaining', 0 );
+		khse_reset_preload_queue_state();
 		return 0;
 	}
 

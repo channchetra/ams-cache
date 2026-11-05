@@ -11,6 +11,13 @@ require_once $khse_tests_dir . '/includes/testcase-ajax.php';
 
 class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 
+	public function set_up() {
+		parent::set_up();
+
+		update_option( 'khse_option_caching_status', 'enable' );
+		update_option( 'khse_option_preload_cache', 'yes' );
+	}
+
 	public function tear_down() {
 		delete_option( 'khse_option_ttl' );
 		parent::tear_down();
@@ -93,6 +100,19 @@ class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 		$this->assertTrue( $response['success'] );
 		$this->assertStringContainsString( 'preload URLs queued', $response['data']['message'] );
 		$this->assertArrayHasKey( 'status', $response['data'] );
+	}
+
+	public function test_preload_endpoint_rejects_when_caching_is_disabled() {
+		update_option( 'khse_option_preload_cache', 'yes' );
+		update_option( 'khse_option_caching_status', 'disable' );
+		$this->authenticate();
+
+		$response = $this->dispatch( 'khse_action_dashboard_preload' );
+
+		$this->assertFalse( $response['success'] );
+		$this->assertStringContainsString( 'Enable page caching', $response['data']['message'] );
+
+		update_option( 'khse_option_caching_status', 'enable' );
 	}
 
 	public function test_purge_homepage_endpoint_returns_success() {

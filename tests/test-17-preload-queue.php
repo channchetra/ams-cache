@@ -31,6 +31,23 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		$this->assertSame( 3, (int) get_option( 'khse_preload_queue_remaining' ) );
 	}
 
+	public function test_stale_queue_is_cleared_when_caching_is_disabled() {
+		update_option( 'khse_option_caching_status', 'disable' );
+		update_option( 'khse_option_preload_cache', 'yes' );
+		set_transient( 'khse_preload_queue', array( home_url( '/' ) ), HOUR_IN_SECONDS );
+		update_option( 'khse_preload_queue_total', 31 );
+		update_option( 'khse_preload_queue_remaining', 31 );
+
+		khse_maybe_schedule_preload_cache();
+
+		$this->assertFalse( get_transient( 'khse_preload_queue' ) );
+		$this->assertSame( 0, (int) get_option( 'khse_preload_queue_remaining' ) );
+		$this->assertSame( 0, khse_queue_preload_urls( array( home_url( '/sample-page/' ) ) ) );
+		$this->assertFalse( wp_next_scheduled( 'khse_preload_queue_event' ) );
+
+		update_option( 'khse_option_caching_status', 'enable' );
+	}
+
 	public function test_critical_helper_queues_the_post_permalink() {
 		$post_id = self::factory()->post->create( array( 'post_status' => 'publish' ) );
 

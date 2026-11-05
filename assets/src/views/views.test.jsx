@@ -134,6 +134,21 @@ describe('admin views render server-side', () => {
 		expect(markup).toContain('Unsaved changes');
 	});
 
+	it('explains that preload needs page caching', () => {
+		const preloadSettings = {
+			...settings,
+			preload: {...settings.preload, enabled: true}
+		};
+
+		const markup = text(
+			<PreloadView data={data} settings={preloadSettings} update={noop} actions={actions} />
+		);
+
+		expect(markup).toContain('Preload needs page caching');
+		expect(markup).toContain('Enable it under Caching');
+		expect(markup).toMatch(/Run preload/);
+	});
+
 	it('renders every settings view', () => {
 		const views = [
 			['Cache', <CacheView settings={settings} update={noop} actions={actions} />, 'Page caching'],
