@@ -257,3 +257,100 @@ function khse_clear_cache_type( $cache_type ) {
 
 	return $rows;
 }
+
+/**
+ * Build every cache URL affected by a post change.
+ *
+ * Invalidation is independent of preload settings: homepage, permalink,
+ * post-type archive, author/date archives, and all public term archives are
+ * always included so editing or deleting a post cannot leave stale pages.
+ *
+ * @param int          $post_id Post ID.
+ * @param \WP_Post|null $post    Optional post object.
+ *
+ * @return array
+ */
+function khse_get_post_cache_invalidation_urls( $post_id, $post = null ) {
+	$post = $post ? $post : get_post( $post_id );
+	$urls = array( home_url( '/' ) );
+
+	if ( ! $post ) {
+		return $urls;
+	}
+
+	$add_url = function ( $url ) use ( &$urls ) {
+		if ( ! empty( $url ) && ( ! function_exists( 'is_wp_error' ) || ! is_wp_error( $url ) ) ) {
+			$urls[] = (string) $url;
+		}
+	};
+
+	$add_url( get_permalink( $post_id ) );
+
+	$post_type = get_post_type_object( $post->post_type );
+
+	if ( $post_type && $post_type->public ) {
+		$add_url( get_post_type_archive_link( $post->post_type ) );
+		$add_url( get_author_posts_url( (int) $post->post_author ) );
+
+		$timestamp = strtotime( $post->post_date );
+
+		if ( $timestamp ) {
+			$add_url( get_year_link( (int) gmdate( 'Y', $timestamp ) ) );
+			$add_url( get_month_link( (int) gmdate( 'Y', $timestamp ), (int) gmdate( 'm', $timestamp ) ) );
+		}
+
+		foreach ( get_object_taxonomies( $post->post_type, 'objects' ) as $taxonomy ) {
+			if ( empty( $taxonomy->public ) && empty( $taxonomy->publicly_queryable ) ) {
+				continue;
+			}
+
+			$terms = get_the_terms( $post_id, $taxonomy->name );
+
+			if ( is_wp_error( $terms ) || empty( $terms ) ) {
+				continue;
+			}
+
+			foreach ( $terms as $term ) {
+				$add_url( get_term_link( $term ) );
+			}
+		}
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+	return apply_filters( 'khse_post_cache_invalidation_urls', $urls, $post_id, $post );
+}
+
+/**
+ * Purge every cache URL affected by a post change.
+ *
+ * @param int            $post_id Post ID.
+ * @param \WP_Post|null  $post    Optional post object.
+ * @param \Shieldon\SimpleCache\Cache|WP_Error|null $driver Optional driver.
+ *
+ * @return int Number of URLs invalidated.
+ */
+function khse_purge_post_cache_urls( $post_id, $post = null, $driver = null ) {
+	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		return 0;
+	}
+
+	if ( null === $driver ) {
+		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+	}
+
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
+	$urls = khse_get_post_cache_invalidation_urls( $post_id, $post );
+
+	foreach ( $urls as $url ) {
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		$path = is_string( $path ) && '' !== $path ? $path : '/';
+
+		khse_purge_cache_uri( $path, $driver );
+	}
+
+	return count( $urls );
+}

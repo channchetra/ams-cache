@@ -14,6 +14,7 @@ add_action( 'save_post', 'khse_update_post', 10, 3 );
 add_action( 'transition_post_status', 'khse_update_post_status', 10, 3 );
 add_action( 'wp_trash_post', 'khse_purge_post_before_trash', 10, 2 );
 add_action( 'before_delete_post', 'khse_delete_post', 10, 2 );
+add_action( 'set_object_terms', 'khse_update_post_terms', 10, 6 );
 add_filter( 'post_updated_messages', 'khse_notice_after_update_post' );
 
 /**
@@ -45,7 +46,6 @@ function khse_update_post( $post_ID, $post, $update ) {
 			return;
 		}
 
-		$post_url    = get_permalink( $post_ID );
 		$driver_type = get_option( 'khse_option_driver' );
 		$driver      = khse_driver_factory( $driver_type );
 
@@ -53,8 +53,8 @@ function khse_update_post( $post_ID, $post, $update ) {
 			$driver = null;
 		}
 
-		khse_purge_permalink( $post_url, $driver );
-		khse_queue_critical_preload_urls( $post_ID, $driver );
+		khse_purge_post_cache_urls( $post_ID, $post, $driver );
+		khse_queue_critical_preload_urls( $post_ID );
 	}
 }
 
@@ -83,18 +83,14 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 	}
 
 	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
-	$post_url = get_permalink( $post->ID );
 
 	if ( is_wp_error( $driver ) ) {
 		$driver = null;
 	}
 
 	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
-		if ( $post_url ) {
-			khse_purge_permalink( $post_url, $driver );
-		}
-
-		khse_queue_critical_preload_urls( $post->ID, $driver );
+		khse_purge_post_cache_urls( $post->ID, $post, $driver );
+		khse_queue_critical_preload_urls( $post->ID );
 		return;
 	}
 
@@ -104,11 +100,8 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 
 	$GLOBALS['khse_recently_published_post_ids'][ $post->ID ] = true;
 
-	if ( $post_url ) {
-		khse_purge_permalink( $post_url, $driver );
-	}
-
-	khse_queue_critical_preload_urls( $post->ID, $driver );
+	khse_purge_post_cache_urls( $post->ID, $post, $driver );
+	khse_queue_critical_preload_urls( $post->ID );
 }
 
 /**
@@ -129,17 +122,15 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 		return;
 	}
 
-	$post_url = get_permalink( $post_ID );
+	$post   = get_post( $post_ID );
+	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
 
-	if ( $post_url ) {
-		$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
-
-		if ( is_wp_error( $driver ) ) {
-			$driver = null;
-		}
-
-		khse_purge_permalink( $post_url, $driver );
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
 	}
+
+	khse_purge_post_cache_urls( $post_ID, $post, $driver );
+	khse_queue_critical_preload_urls( $post_ID );
 }
 
 /**
@@ -170,17 +161,55 @@ function khse_delete_post( $post_ID, $post = null ) {
 	}
 
 	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
-	$post_url = get_permalink( $post_ID );
 
 	if ( is_wp_error( $driver ) ) {
 		$driver = null;
 	}
 
-	if ( $post_url ) {
-		khse_purge_permalink( $post_url, $driver );
+	khse_purge_post_cache_urls( $post_ID, $post, $driver );
+	khse_queue_critical_preload_urls( $post_ID );
+}
+
+/**
+ * Purge post-related caches when terms are assigned after the post is saved.
+ *
+ * The block editor can create the post before assigning categories/tags, so
+ * save_post alone is not enough to invalidate term archives.
+ *
+ * @param int    $object_id  Post ID.
+ * @param array  $terms      Term IDs or slugs.
+ * @param array  $tt_ids     Term taxonomy IDs.
+ * @param string $taxonomy   Taxonomy name.
+ * @param bool   $append     Whether terms were appended.
+ * @param array  $old_tt_ids Previous term taxonomy IDs.
+ *
+ * @return void
+ */
+function khse_update_post_terms( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids ) {
+	if ( 'enable' !== get_option( 'khse_option_caching_status', 'disable' ) ) {
+		return;
 	}
 
-	khse_queue_critical_preload_urls( $post_ID, $driver );
+	$post = get_post( $object_id );
+
+	if ( ! $post || 'publish' !== $post->post_status || wp_is_post_revision( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+		return;
+	}
+
+	$post_type = get_post_type_object( $post->post_type );
+
+	if ( ! $post_type || ! $post_type->public ) {
+		return;
+	}
+
+	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+
+	if ( is_wp_error( $driver ) ) {
+		$driver = null;
+	}
+
+	khse_purge_post_cache_urls( $object_id, $post, $driver );
+	khse_queue_critical_preload_urls( $object_id );
 }
 
 /**
