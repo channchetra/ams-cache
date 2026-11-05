@@ -52,11 +52,28 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertNotFalse( has_action( 'template_redirect', array( $cache, 'ob_start' ) ) );
 	}
 
-	public function test_runtime_config_helpers_live_in_core() {
-		foreach ( array( 'khse_get_runtime_exclusion_config', 'khse_update_config', 'khse_sync_expert_mode_runtime' ) as $function ) {
+	public function test_cache_foundation_modules_own_their_functions() {
+		$expected = array(
+			'khse_get_setting'                  => 'inc/cache-settings.php',
+			'khse_get_default_config'           => 'inc/cache-settings.php',
+			'khse_get_runtime_exclusion_config' => 'inc/cache-policy.php',
+			'khse_serve_cached_response'        => 'inc/cache-policy.php',
+			'khse_get_cache_key'                => 'inc/cache-policy.php',
+			'khse_update_config'                => 'inc/cache-storage.php',
+			'khse_sync_expert_mode_runtime'     => 'inc/cache-storage.php',
+			'khse_get_stats_dir'                => 'inc/cache-storage.php',
+		);
+
+		foreach ( $expected as $function => $file ) {
 			$reflection = new ReflectionFunction( $function );
 
-			$this->assertStringEndsWith( 'inc/cache-core.php', $reflection->getFileName(), $function );
+			$this->assertStringEndsWith( $file, $reflection->getFileName(), $function );
+		}
+
+		$core = file_get_contents( KHSE_PLUGIN_DIR . 'inc/cache-core.php' );
+
+		foreach ( array( 'cache-settings.php', 'cache-storage.php', 'cache-policy.php' ) as $module ) {
+			$this->assertStringContainsString( $module, $core, 'cache-core.php must load ' . $module );
 		}
 	}
 }

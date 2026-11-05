@@ -48,7 +48,11 @@ function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $d
 		}
 
 		if ( $driver ) {
-			$driver->delete( $key );
+			try {
+				$driver->delete( $key );
+			} catch ( \Throwable $e ) {
+				error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
+			}
 		}
 
 		if ( @unlink( $file->getPathname() ) ) {
@@ -80,7 +84,7 @@ function khse_delete_cache_stats_by_key( $key ) {
 			continue;
 		}
 
-		if ( unlink( $file->getPathname() ) ) {
+		if ( @unlink( $file->getPathname() ) ) {
 			$removed++;
 		}
 	}
@@ -119,8 +123,13 @@ function khse_purge_cache_uri( $uri, $driver = null ) {
 	$removed = 0;
 
 	if ( $driver ) {
-		$driver->delete( $key );
-		$removed++;
+		try {
+			if ( $driver->delete( $key ) ) {
+				$removed++;
+			}
+		} catch ( \Throwable $e ) {
+			error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
+		}
 	}
 
 	$removed += khse_delete_cache_stats_by_key( $key );
@@ -197,7 +206,13 @@ function khse_clear_all_cache( $sync = true ) {
 	$list = khse_get_cache_type_list( true );
 
 	if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
-		$driver->clear();
+		try {
+			if ( ! $driver->clear() ) {
+				error_log( '[KH Speed Engine] Driver clear failed for ' . $driver_type );
+			}
+		} catch ( \Throwable $e ) {
+			error_log( '[KH Speed Engine] Driver clear failed for ' . $driver_type . ': ' . $e->getMessage() );
+		}
 	}
 
 	$i = 0;
@@ -211,7 +226,11 @@ function khse_clear_all_cache( $sync = true ) {
 					$filename = $file->getFilename();
 					$key      = strstr( $filename, '.', true );
 
-					$driver->delete( $key );
+					try {
+						$driver->delete( $key );
+					} catch ( \Throwable $e ) {
+						error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
+					}
 
 					if ( @unlink( $file->getPathname() ) ) {
 						$i++;
@@ -251,7 +270,11 @@ function khse_clear_cache_type( $cache_type ) {
 				$filename = $file->getFilename();
 				$key      = strstr( $filename, '.', true );
 
-				$driver->delete( $key );
+				try {
+					$driver->delete( $key );
+				} catch ( \Throwable $e ) {
+					error_log( '[KH Speed Engine] Could not delete cache entry ' . $key . ': ' . $e->getMessage() );
+				}
 
 				if ( @unlink( $file->getPathname() ) ) {
 					$rows++;
@@ -351,14 +374,19 @@ function khse_purge_post_cache_urls( $post_id, $post = null, $driver = null ) {
 		$driver = null;
 	}
 
-	$urls = khse_get_post_cache_invalidation_urls( $post_id, $post );
+	$urls     = khse_get_post_cache_invalidation_urls( $post_id, $post );
+	$invalidated = 0;
 
 	foreach ( $urls as $url ) {
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 		$path = is_string( $path ) && '' !== $path ? $path : '/';
 
-		khse_purge_cache_uri( $path, $driver );
+		$result = khse_purge_cache_uri( $path, $driver );
+
+		if ( ! empty( $result['removed'] ) ) {
+			$invalidated++;
+		}
 	}
 
-	return count( $urls );
+	return $invalidated;
 }
