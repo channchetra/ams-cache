@@ -52,7 +52,11 @@ jobs:
         if: matrix.php == '8.1'
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
-        run: vendor/bin/phpunit --coverage-text
+        run: vendor/bin/phpunit --coverage-text --coverage-clover build/coverage.xml
+
+      - name: Check coverage gate
+        if: matrix.php == '8.1'
+        run: php bin/check-coverage.php build/coverage.xml 60
 
       - name: Run PHPUnit
         if: matrix.php != '8.1'
