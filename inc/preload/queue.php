@@ -449,13 +449,25 @@ function khse_process_preload_batch( $queue ) {
 	$failed     = (int) get_option( 'khse_preload_queue_failed', 0 );
 
 	foreach ( $batch as $url ) {
-		$response = khse_preload_url( $url, true, 8 );
-		$status   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
-		$body     = is_wp_error( $response ) ? '' : wp_remote_retrieve_body( $response );
+		// Dispatch non-blocking requests. A blocking loopback request can
+		// deadlock single-worker FPM pools and leave the whole queue stuck.
+		$blocking = (bool) apply_filters( 'khse_preload_blocking', false, $url );
+		$response = khse_preload_url( $url, $blocking, $blocking ? 8 : 2 );
 
-		if ( $status < 200 || $status >= 400 || empty( $body ) || false === strpos( $body, '</body>' ) || strlen( $body ) < 1024 ) {
+		if ( is_wp_error( $response ) ) {
 			$failed++;
 			continue;
+		}
+
+		// A blocking response still has to be a complete HTML document.
+		if ( $blocking ) {
+			$status = (int) wp_remote_retrieve_response_code( $response );
+			$body   = wp_remote_retrieve_body( $response );
+
+			if ( $status < 200 || $status >= 400 || empty( $body ) || false === strpos( $body, '</body>' ) || strlen( $body ) < 1024 ) {
+				$failed++;
+				continue;
+			}
 		}
 
 		$processed++;
