@@ -397,10 +397,7 @@ function khse_queue_critical_preload_urls( $post_id = 0, $driver = null ) {
 
 	if ( $driver ) {
 		foreach ( $urls as $url ) {
-			$path = parse_url( $url, PHP_URL_PATH );
-			$path = empty( $path ) ? '/' : $path;
-
-			khse_purge_cache_uri( $path, $driver );
+			khse_purge_permalink( $url, $driver );
 		}
 	}
 

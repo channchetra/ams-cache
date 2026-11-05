@@ -167,6 +167,26 @@ function khse_driver_factory( $type ) {
 }
 
 /**
+ * Resolve the configured driver once per request.
+ *
+ * @return \Shieldon\SimpleCache\Cache|null
+ */
+function khse_get_active_driver() {
+	static $resolved = false;
+	static $driver   = null;
+
+	if ( $resolved ) {
+		return $driver;
+	}
+
+	$resolved = true;
+	$candidate = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+	$driver    = is_wp_error( $candidate ) ? null : $candidate;
+
+	return $driver;
+}
+
+/**
  * Check whether a cache driver's PHP extension is available.
  *
  * This is runtime policy, not dashboard presentation, so admin and the URL

@@ -62,7 +62,7 @@ function khse_ajax_dashboard_guard( $nonce_action = 'khse_dashboard', $capabilit
  * @return void
  */
 function khse_ajax_clear_cache_response() {
-	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+	$driver = khse_get_active_driver();
 
 	if ( ! $driver || is_wp_error( $driver ) ) {
 		wp_send_json_error(
@@ -458,7 +458,7 @@ function khse_ajax_dashboard_clear_cache_type_callback() {
 		);
 	}
 
-	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+	$driver = khse_get_active_driver();
 
 	if ( ! $driver || is_wp_error( $driver ) ) {
 		wp_send_json_error(

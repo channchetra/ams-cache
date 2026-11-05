@@ -73,17 +73,17 @@ function khse_run_expert_mode( $args ) {
 		return;
 	}
 
-	// Read configuration data.
-	$content = @file_get_contents( $config_file );
-	$config  = json_decode( (string) $content, true );
+	include_once( $plugin_dir . '/inc/lib/autoload.php' );
+	include_once( $plugin_dir . '/inc/bootstrap.php' );
 
-	if ( ! is_array( $config ) ) {
+	// Read configuration data with the same normalizer as the WP reader.
+	$content = @file_get_contents( $config_file );
+	$config  = function_exists( 'khse_decode_config_json' ) ? khse_decode_config_json( $content ) : json_decode( (string) $content, true );
+
+	if ( ! is_array( $config ) || empty( $config ) ) {
 		error_log( '[KH Speed Engine] Ignoring unreadable Expert Mode config: ' . $config_file );
 		return;
 	}
-
-	include_once( $plugin_dir . '/inc/lib/autoload.php' );
-	include_once( $plugin_dir . '/inc/bootstrap.php' );
 
 	// Expert Mode runs before plugins_loaded, so the normal migration hook
 	// cannot fire. Run the idempotent migration directly instead.

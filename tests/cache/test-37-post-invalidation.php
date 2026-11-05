@@ -9,6 +9,7 @@ class PostInvalidationTest extends WP_UnitTestCase {
 
 	public function set_up() {
 		parent::set_up();
+		$this->set_permalink_structure( '/%postname%/' );
 		khse_reset_post_cache_purge_guard();
 	}
 

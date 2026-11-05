@@ -79,9 +79,7 @@ class KHSE_Cache {
 		}
 
 		$this->driver_resolved = true;
-		$driver                = khse_driver_factory( get_option( 'khse_option_driver' ) );
-
-		$this->driver = is_wp_error( $driver ) ? null : $driver;
+		$this->driver = khse_get_active_driver();
 
 		return $this->driver;
 	}

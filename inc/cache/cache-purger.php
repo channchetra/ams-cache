@@ -405,12 +405,9 @@ function khse_purge_post_cache_urls( $post_id, $post = null, $driver = null ) {
 	$invalidated = 0;
 
 	foreach ( $urls as $url ) {
-		$path = wp_parse_url( $url, PHP_URL_PATH );
-		$path = is_string( $path ) && '' !== $path ? $path : '/';
+		$result = khse_purge_permalink( $url, $driver );
 
-		$result = khse_purge_cache_uri( $path, $driver );
-
-		if ( ! empty( $result['removed'] ) ) {
+		if ( is_array( $result ) && ! empty( $result['removed'] ) ) {
 			$invalidated++;
 		}
 	}
