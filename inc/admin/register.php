@@ -49,6 +49,7 @@ function khse_activation() {
 
 	khse_setup_security_files();
 	khse_ensure_upload_dir();
+	khse_ensure_page_optimization_workspace();
 
 	$file_dir = khse_get_upload_dir() . '/file_driver';
 

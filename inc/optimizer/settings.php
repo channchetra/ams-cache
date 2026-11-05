@@ -206,6 +206,21 @@ function khse_get_page_optimization_work_dir() {
 }
 
 /**
+ * Ensure the local optimizer workspace exists.
+ *
+ * @return string Workspace path.
+ */
+function khse_ensure_page_optimization_workspace() {
+	$dir = khse_get_page_optimization_work_dir();
+
+	if ( ! is_dir( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+
+	return $dir;
+}
+
+/**
  * Get latest optimization runtime metadata.
  *
  * @return array
@@ -308,4 +323,8 @@ function khse_delete_page_optimization_workspace( $dir ) {
 	}
 
 	@rmdir( $path );
+}
+
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'admin_init', 'khse_ensure_page_optimization_workspace' );
 }
