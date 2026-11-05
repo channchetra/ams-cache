@@ -53,18 +53,26 @@ function App() {
 		window.history.pushState({view: nextView}, '', url.toString());
 	};
 
-	const run = useCallback((action, payload = {}) => {
+	const run = useCallback((action, payload = {}, options = {}) => {
+		const {silent = false, forceSettings = false} = options;
+
 		setBusy(true);
 
 		return request(action, payload)
 			.then((result) => {
 				if (result.status) {
 					setData(clone(result.status));
-					setSettings(clone(result.status.settings));
-					setSavedSettings(clone(result.status.settings));
+
+					if (forceSettings || !dirty) {
+						setSettings(clone(result.status.settings));
+						setSavedSettings(clone(result.status.settings));
+					}
 				}
 
-				notify('success', result.message || i18n.saved || 'Done.');
+				if (!silent) {
+					notify('success', result.message || i18n.saved || 'Done.');
+				}
+
 				return result;
 			})
 			.catch((error) => {
@@ -72,7 +80,7 @@ function App() {
 				return null;
 			})
 			.finally(() => setBusy(false));
-	}, [notify]);
+	}, [notify, dirty]);
 
 	const update = (section, key, value) => {
 		setSettings((current) => ({
@@ -85,8 +93,8 @@ function App() {
 	};
 
 	const updatePerformance = (key, value) => update('performance', key, value);
-	const save = () => run('khse_action_dashboard_save_settings', {settings: JSON.stringify(settings)});
-	const refresh = () => run('khse_action_dashboard_status');
+	const save = () => run('khse_action_dashboard_save_settings', {settings: JSON.stringify(settings)}, {forceSettings: true});
+	const refresh = () => run('khse_action_dashboard_status', {}, {silent: true});
 	const runPreload = () => run('khse_action_dashboard_preload');
 	const purgeHomepage = () => run('khse_action_dashboard_purge_homepage');
 	const discard = () => setSettings(clone(savedSettings));

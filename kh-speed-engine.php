@@ -137,8 +137,10 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			}
 		} else {
 			if ( is_admin() ) {
+				// AJAX requests need the runtime modules for the internal preload
+				// batch runner and for the same option side effects as admin saves.
+				require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 				require_once KHSE_PLUGIN_DIR . 'inc/admin/ajax-action.php';
-				// AJAX saves use the same option side-effect hooks as admin saves.
 				require_once KHSE_PLUGIN_DIR . 'inc/admin/update-setting.php';
 			}
 		}

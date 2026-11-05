@@ -111,6 +111,69 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		delete_option( 'khse_option_caching_status' );
 	}
 
+	public function test_force_schedule_builds_the_queue_immediately() {
+		update_option( 'khse_option_preload_cache', 'yes' );
+		update_option( 'khse_option_caching_status', 'enable' );
+		delete_transient( 'khse_preload_queue' );
+		delete_option( 'khse_preload_queue_lock' );
+		delete_option( 'khse_preload_last_kick' );
+
+		$home = home_url( '/' );
+
+		$response = static function ( $pre, $args, $url ) use ( $home ) {
+			if ( false !== strpos( $url, 'admin-ajax.php' ) ) {
+				return new WP_Error( 'khse_no_loopback', 'Blocked in tests.' );
+			}
+
+			if ( $url === $home ) {
+				return array(
+					'headers'  => array(),
+					'body'     => '<a href="/force-one/">One</a><a href="/force-two/">Two</a>',
+					'response' => array( 'code' => 200, 'message' => 'OK' ),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			}
+
+			return $pre;
+		};
+
+		add_filter( 'pre_http_request', $response, 20, 3 );
+		khse_schedule_preload_cache( true );
+		remove_filter( 'pre_http_request', $response, 20 );
+
+		$queue = get_transient( 'khse_preload_queue' );
+
+		$this->assertIsArray( $queue );
+		$this->assertNotEmpty( $queue );
+		$this->assertSame( count( $queue ), (int) get_option( 'khse_preload_queue_remaining' ) );
+
+		delete_transient( 'khse_preload_queue' );
+		delete_option( 'khse_preload_queue_lock' );
+		delete_option( 'khse_preload_queue_remaining' );
+		delete_option( 'khse_option_preload_cache' );
+		delete_option( 'khse_option_caching_status' );
+	}
+
+	public function test_preload_kick_uses_the_private_token_endpoint() {
+		delete_option( 'khse_preload_last_kick' );
+
+		$captured = '';
+		$capture  = static function ( $pre, $args, $url ) use ( &$captured ) {
+			$captured = $url;
+			return new WP_Error( 'khse_no_loopback', 'Blocked in tests.' );
+		};
+
+		add_filter( 'pre_http_request', $capture, 20, 3 );
+		khse_kick_preload_queue();
+		remove_filter( 'pre_http_request', $capture, 20 );
+
+		$this->assertStringContainsString( 'action=khse_preload_batch', $captured );
+		$this->assertStringContainsString( 'token=' . khse_get_preload_token(), $captured );
+
+		delete_option( 'khse_preload_last_kick' );
+	}
+
 	public function test_preload_lock_is_exclusive_and_reclaims_stale_locks() {
 		delete_option( 'khse_preload_queue_lock' );
 

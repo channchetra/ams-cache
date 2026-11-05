@@ -59,15 +59,21 @@ function khse_get_preload_batch_size() {
  * @return void
  */
 function khse_schedule_preload_cache( $force = false ) {
-	if ( ! function_exists( 'wp_schedule_single_event' ) || ! khse_is_preload_runnable() ) {
+	if ( ! khse_is_preload_runnable() ) {
 		return;
 	}
 
-	if ( $force && function_exists( 'wp_clear_scheduled_hook' ) ) {
-		wp_clear_scheduled_hook( 'khse_preload_cache_event' );
+	if ( $force ) {
+		if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
+			wp_clear_scheduled_hook( 'khse_preload_cache_event' );
+		}
+
+		// Build and queue immediately; admin shutdown drains the first batches.
+		khse_preload_cache();
+		return;
 	}
 
-	if ( $force || ! wp_next_scheduled( 'khse_preload_cache_event' ) ) {
+	if ( function_exists( 'wp_schedule_single_event' ) && ! wp_next_scheduled( 'khse_preload_cache_event' ) ) {
 		wp_schedule_single_event( time() + 5, 'khse_preload_cache_event' );
 	}
 }
@@ -86,6 +92,10 @@ function khse_schedule_preload_queue( $delay = 15 ) {
 
 	if ( ! wp_next_scheduled( 'khse_preload_queue_event' ) ) {
 		wp_schedule_single_event( time() + max( 1, (int) $delay ), 'khse_preload_queue_event' );
+	}
+
+	if ( is_array( get_transient( 'khse_preload_queue' ) ) ) {
+		khse_kick_preload_queue();
 	}
 }
 
@@ -122,6 +132,120 @@ function khse_release_preload_lock() {
 	if ( function_exists( 'delete_option' ) ) {
 		delete_option( 'khse_preload_queue_lock' );
 	}
+}
+
+/**
+ * Return the private token used by the internal preload runner.
+ *
+ * @return string
+ */
+function khse_get_preload_token() {
+	$token = get_option( 'khse_preload_token', '' );
+
+	if ( ! is_string( $token ) || strlen( $token ) < 32 ) {
+		$token = wp_generate_password( 64, false, false );
+		update_option( 'khse_preload_token', $token, false );
+	}
+
+	return $token;
+}
+
+/**
+ * Drain pending preload work after an admin/AJAX response.
+ *
+ * This is the no-WP-Cron fallback. FastCGI sites close the connection first.
+ *
+ * @return void
+ */
+function khse_admin_drain_preload_queue() {
+	if ( ! khse_is_preload_runnable() || (int) get_option( 'khse_preload_queue_remaining', 0 ) <= 0 ) {
+		return;
+	}
+
+	if ( ! is_admin() && ! ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+		return;
+	}
+
+	if ( function_exists( 'fastcgi_finish_request' ) ) {
+		fastcgi_finish_request();
+	}
+
+	$started = microtime( true );
+
+	while ( ( microtime( true ) - $started ) < 20 ) {
+		$count = khse_process_preload_queue();
+
+		if ( $count <= 0 || (int) get_option( 'khse_preload_queue_remaining', 0 ) <= 0 ) {
+			break;
+		}
+	}
+}
+
+/**
+ * Ask the site to process a preload batch without waiting for WP-Cron.
+ *
+ * @return void
+ */
+function khse_kick_preload_queue() {
+	if ( ! khse_is_preload_runnable() || ! function_exists( 'wp_remote_post' ) ) {
+		return;
+	}
+
+	$last = (int) get_option( 'khse_preload_last_kick', 0 );
+
+	if ( $last > 0 && ( time() - $last ) < 2 ) {
+		return;
+	}
+
+	update_option( 'khse_preload_last_kick', time(), false );
+
+	$url = add_query_arg(
+		array(
+			'action' => 'khse_preload_batch',
+			'token'  => khse_get_preload_token(),
+		),
+		admin_url( 'admin-ajax.php' )
+	);
+
+	wp_remote_get(
+		$url,
+		array(
+			'blocking'  => false,
+			'timeout'   => 1,
+			'sslverify' => khse_preload_should_verify_ssl( $url ),
+		)
+	);
+}
+
+/**
+ * Internal AJAX runner for one preload drain window.
+ *
+ * @return void
+ */
+function khse_ajax_preload_batch() {
+	$token = isset( $_REQUEST['token'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['token'] ) ) : '';
+
+	if ( ! hash_equals( khse_get_preload_token(), $token ) ) {
+		wp_die( '0', '', array( 'response' => 403 ) );
+	}
+
+	$started   = microtime( true );
+	$processed = 0;
+
+	for ( $i = 0; $i < 5; $i++ ) {
+		if ( (int) get_option( 'khse_preload_queue_remaining', 0 ) <= 0 ) {
+			break;
+		}
+
+		$count = khse_process_preload_queue();
+		$processed += $count;
+
+		if ( $count <= 0 || ( microtime( true ) - $started ) >= 15 ) {
+			break;
+		}
+	}
+
+	wp_die( (string) $processed );
 }
 
 /**
@@ -201,6 +325,10 @@ function khse_maybe_schedule_preload_cache() {
 		} elseif ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
 			khse_reset_preload_queue_state();
 		}
+	}
+
+	if ( is_array( get_transient( 'khse_preload_queue' ) ) ) {
+		khse_kick_preload_queue();
 	}
 
 	$signature = defined( 'KHSE_PLUGIN_VERSION' ) ? (string) KHSE_PLUGIN_VERSION : 'kh-speed-engine';
@@ -357,4 +485,7 @@ if ( function_exists( 'add_action' ) ) {
 	// anything about the preload subsystem.
 	add_action( 'khse_cache_cleared', 'khse_schedule_preload_cache' );
 	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
+	add_action( 'wp_ajax_nopriv_khse_preload_batch', 'khse_ajax_preload_batch' );
+	add_action( 'wp_ajax_khse_preload_batch', 'khse_ajax_preload_batch' );
+	add_action( 'shutdown', 'khse_admin_drain_preload_queue', 20 );
 }

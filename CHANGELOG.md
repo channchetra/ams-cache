@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.0.0] - 2026-11-05
+## [4.0.0] - 2026-11-06
 
 ### Changed
 - Rebranded the plugin as KH Speed Engine (KHSE), with the admin menu label "KH Speed". Renamed the plugin folder, main file, text domain, functions, constants, classes, options, AJAX actions, nonces, CSS classes, asset handles, and language files.
@@ -10,6 +10,11 @@
 - Added a cache eligibility URL checker and an on-demand Nginx direct-cache snippet generator.
 - Self-hosted the Google Sans variable font for the admin UI.
 - Removed the WooCommerce integration.
+- Preload now builds immediately when enabled or changed and drains through admin/AJAX shutdown plus an internal token endpoint, so it no longer depends on WP-Cron or front-end traffic.
+- Post publish/edit/delete preload work drains on the same admin request.
+- Refresh status now updates data only: it no longer shows a "Settings saved" toast or overwrites unsaved edits.
+- Fixed fragment-only homepage links being queued as fake preload URLs.
+- Provision the optimizer workspace on activation/admin and keep the requirement check read-only.
 
 ## [3.1.5] - 2026-11-04
 

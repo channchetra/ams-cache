@@ -46,6 +46,30 @@ test.describe('KH Speed feature tour', () => {
 		await page.screenshot({ path: `${shots}/rules-url-check.png`, fullPage: true });
 	});
 
+	test('refresh reloads status without saving or overwriting edits', async ({ page }) => {
+		await openView(page, 'Caching', 'Cache');
+
+		const loggedInSwitch = page.getByRole('switch', { name: 'Cache pages for logged-in users' });
+
+		await loggedInSwitch.click();
+		await expect(page.getByText('Unsaved changes')).toBeVisible();
+
+		await Promise.all([
+			page.waitForResponse((response) => {
+				const body = response.request().postData() || '';
+				return response.url().includes('admin-ajax.php') && body.includes('khse_action_dashboard_status');
+			}),
+			page.getByTitle('Refresh status').click(),
+		]);
+
+		await expect(page.locator('.khse-toast')).toHaveCount(0);
+		await expect(loggedInSwitch).toHaveAttribute('aria-checked', 'true');
+		await expect(page.getByText('Unsaved changes')).toBeVisible();
+
+		await page.getByRole('button', { name: 'Discard' }).click();
+		await expect(loggedInSwitch).toHaveAttribute('aria-checked', 'false');
+	});
+
 	test('saving settings and cache actions work end to end', async ({ page }) => {
 		await openView(page, 'Caching', 'Cache');
 
