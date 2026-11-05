@@ -45,13 +45,27 @@ if ( ! defined( 'KHSE_INC' ) ) {
  * KHSE_PLUGIN_LANGUAGE_PACK : kh-speed-engine/languages
  */
 
-define( 'KHSE_PLUGIN_NAME', plugin_basename( __FILE__ ) );
-define( 'KHSE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'KHSE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KHSE_PLUGIN_PATH', __FILE__ );
-define( 'KHSE_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-define( 'KHSE_PLUGIN_VERSION', '4.0.0' );
-define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
+if ( ! defined( 'KHSE_PLUGIN_NAME' ) ) {
+	define( 'KHSE_PLUGIN_NAME', plugin_basename( __FILE__ ) );
+}
+if ( ! defined( 'KHSE_PLUGIN_DIR' ) ) {
+	define( 'KHSE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+if ( ! defined( 'KHSE_PLUGIN_URL' ) ) {
+	define( 'KHSE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( ! defined( 'KHSE_PLUGIN_PATH' ) ) {
+	define( 'KHSE_PLUGIN_PATH', __FILE__ );
+}
+if ( ! defined( 'KHSE_PLUGIN_LANGUAGE_PACK' ) ) {
+	define( 'KHSE_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+if ( ! defined( 'KHSE_PLUGIN_VERSION' ) ) {
+	define( 'KHSE_PLUGIN_VERSION', '4.0.0' );
+}
+if ( ! defined( 'KHSE_PLUGIN_TEXT_DOMAIN' ) ) {
+	define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
+}
 
 /**
  * Start KH Speed Engine cores.

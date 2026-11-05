@@ -101,7 +101,7 @@ function khse_run_expert_mode( $args ) {
 
 	// Read configuration data with the same normalizer as the WP reader.
 	$content = @file_get_contents( $config_file );
-	$config  = function_exists( 'khse_decode_config_json' ) ? khse_decode_config_json( $content ) : json_decode( (string) $content, true );
+	$config  = khse_decode_config_json( $content );
 
 	if ( ! is_array( $config ) || empty( $config ) ) {
 		error_log( '[KH Speed Engine] Ignoring unreadable Expert Mode config: ' . $config_file );

@@ -49,11 +49,7 @@ function khse_find_excluded_path( $path, $excluded_list ) {
  * @return array
  */
 function khse_get_runtime_config() {
-	$config = array_merge(
-		khse_get_default_config(),
-		khse_get_config_data(),
-		khse_build_runtime_config()
-	);
+	$config = khse_build_runtime_config();
 
 	$config['cache_key_prefix']   = khse_get_cache_key_prefix();
 	$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
