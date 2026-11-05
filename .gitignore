@@ -27,3 +27,7 @@ economy*.json
 
 # Desloppify generated scorecard
 scorecard.png
+.claude/
+.fdx/
+.playwright-mcp/
+CLAUDE.md

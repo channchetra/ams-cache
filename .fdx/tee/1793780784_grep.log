@@ -1,8 +1,0 @@
-[file] .desloppify/state-php.json  (2 matches)
-        "suppressed_at": "2026-11-04T08:10:36+00:00",
-  L2229:     "test_coverage::inc/helpers.php::untested_module": {
-        "confidence": "high",
-        "zone": "production",
-  L2255:       "suppression_pattern": "test_coverage::*"
-        "confidence": "high",
-7 matches across 1 file
