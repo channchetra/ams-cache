@@ -52,6 +52,39 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		$this->assertGreaterThanOrEqual( 1, $result['removed'] );
 	}
 
+	public function test_entry_limit_evicts_the_oldest_stats_row() {
+		$stats_dir = khse_get_stats_dir( 'post' );
+		wp_mkdir_p( $stats_dir );
+
+		$old_key = khse_get_cache_key( '/evict-old/' );
+		$new_key = khse_get_cache_key( '/evict-new/' );
+		$old     = $stats_dir . '/' . $old_key . '.json';
+		$new     = $stats_dir . '/' . $new_key . '.json';
+		$driver  = new class() {
+			public $deleted = array();
+
+			public function delete( $key ) {
+				$this->deleted[] = $key;
+				return true;
+			}
+		};
+
+		file_put_contents( $old, wp_json_encode( array( 'uri' => '/evict-old/', 'size' => 10 ) ) );
+		file_put_contents( $new, wp_json_encode( array( 'uri' => '/evict-new/', 'size' => 10 ) ) );
+		touch( $old, time() - 100 );
+
+		update_option( 'khse_option_cache_max_entries', 1 );
+
+		$removed = khse_enforce_cache_entry_limit( $driver );
+
+		$this->assertSame( 1, $removed );
+		$this->assertFileDoesNotExist( $old );
+		$this->assertFileExists( $new );
+		$this->assertContains( $old_key, $driver->deleted );
+
+		delete_option( 'khse_option_cache_max_entries' );
+	}
+
 	public function test_purge_skips_non_document_paths() {
 		$result = khse_purge_cache_uri( '/assets/app.css', new class() {
 			public function delete( $key ) {
