@@ -11,17 +11,6 @@ if ( ! defined( "KHSE_INC" ) ) {
 }
 
 /**
- * Check if a cache driver looks available without opening external connections.
- *
- * @param string $driver Driver key.
- *
- * @return bool
- */
-function khse_dashboard_is_driver_available( $driver ) {
-	return khse_is_driver_available( $driver );
-}
-
-/**
  * Get dashboard-ready driver settings.
  *
  * @return array
@@ -173,7 +162,7 @@ function khse_dashboard_test_driver_connection( $type ) {
 		);
 	}
 
-	if ( ! khse_dashboard_is_driver_available( $type ) ) {
+	if ( ! khse_is_driver_available( $type ) ) {
 		return array(
 			'passed'  => false,
 			'driver'  => $type,

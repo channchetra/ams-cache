@@ -357,7 +357,7 @@ function khse_dashboard_get_settings_data() {
 	}
 	$drivers      = array_map(
 		function ( $driver ) {
-			$driver['available'] = khse_dashboard_is_driver_available( $driver['value'] );
+			$driver['available'] = khse_is_driver_available( $driver['value'] );
 			return $driver;
 		},
 		$drivers
@@ -432,7 +432,8 @@ function khse_dashboard_get_status_data() {
 	$planned_priority  = 0;
 
 	if ( khse_is_preload_enabled() ) {
-		$planned_priority = count( khse_get_homepage_priority_preload_urls( $preload_limit ) );
+		// Use the last recorded count; status requests must never crawl the site.
+		$planned_priority = (int) get_option( 'khse_last_preload_priority_count', 0 );
 	}
 
 	$feature_keys = khse_get_page_optimization_feature_keys();
@@ -473,14 +474,14 @@ function khse_dashboard_get_status_data() {
 		'generatedAt' => current_time( 'mysql' ),
 		'cache'       => array(
 			'enabled'       => $cache_checks['enabled'],
-			'driver'        => $driver_type,
-			'ttl'           => (int) get_option( 'khse_option_ttl', 0 ),
-			'ttlMechanism'  => get_option( 'khse_option_ttl_mechanism', 'enable' ),
-			'keyPrefix'     => khse_get_cache_key_prefix(),
-			'maxEntries'    => khse_get_cache_max_entries(),
-			'expertMode'    => 'enable' === get_option( 'khse_option_expert_mode_status', 'disable' ),
+			'driver'        => khse_get_setting( 'cache', 'driver' ),
+			'ttl'           => (int) khse_get_setting( 'cache', 'ttl' ),
+			'ttlMechanism'  => khse_get_setting( 'cache', 'ttlMechanism' ),
+			'keyPrefix'     => khse_get_setting( 'cache', 'cacheKeyPrefix' ),
+			'maxEntries'    => (int) khse_get_setting( 'cache', 'maxEntries' ),
+			'expertMode'    => 'enable' === khse_get_setting( 'cache', 'expertModeStatus' ),
 			'expertReady'   => khse_is_expert_mode_code_ready(),
-			'nginxDirect'   => khse_is_nginx_direct_cache_enabled(),
+			'nginxDirect'   => 'yes' === khse_get_setting( 'cache', 'nginxDirect' ),
 			'permalinkReady' => '' !== get_option( 'permalink_structure', '' ),
 			'progress'      => round( ( $cache_ready / count( $cache_checks ) ) * 100 ),
 		),
@@ -498,7 +499,7 @@ function khse_dashboard_get_status_data() {
 		'preload'     => array(
 			'enabled'        => khse_is_preload_enabled(),
 			'limit'          => $preload_limit,
-			'crawlHomepage'  => 'yes' === get_option( 'khse_option_preload_homepage_links', 'yes' ),
+			'crawlHomepage'  => 'yes' === khse_get_setting( 'preload', 'crawlHomepage' ),
 			'lastCount'      => $preload_count,
 			'priorityCount'  => $planned_priority,
 			'lastPriorityCount' => $priority_count,

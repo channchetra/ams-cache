@@ -193,7 +193,7 @@ trait KHSE_Cache_Debug {
 	private function debug_message( $position = '' )
 	{
 		$sql_queries  = get_num_queries();
-		$timer_stop   = $this->wp_timer_stop();
+		$timer_stop   = timer_stop();
 		$memory_usage = $this->get_memory_usage();
 		$date         = $this->get_date();
 		$stage        = ( $position === 'ob_start' ) ? 'after' : 'before';
@@ -288,16 +288,6 @@ trait KHSE_Cache_Debug {
 		for ( $i = 0; $i < $levels - 1; $i++ ) {
 			ob_end_flush();
 		}
-	}
-
-	/**
-	 * Return the WordPress timer.
-	 *
-	 * @return string
-	 */
-	private function wp_timer_stop() {
-		// timer_stop is WordPress function.
-		return timer_stop();
 	}
 
 	/**

@@ -80,9 +80,7 @@ function khse_get_runtime_base_dir() {
 		$candidates[] = WP_TEMP_DIR;
 	}
 
-	if ( function_exists( 'sys_get_temp_dir' ) ) {
-		$candidates[] = sys_get_temp_dir();
-	}
+	$candidates[] = sys_get_temp_dir();
 
 	if ( defined( 'ABSPATH' ) ) {
 		$candidates[] = dirname( ABSPATH ) . '/kh-speed-engine-runtime';

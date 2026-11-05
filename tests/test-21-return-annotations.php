@@ -20,7 +20,6 @@ class ReturnAnnotationsTest extends WP_UnitTestCase {
 			'msg'                      => 'string|null',
 			'wp_ob_start'              => 'void',
 			'wp_ob_end_flush_all'      => 'void',
-			'wp_timer_stop'            => 'string',
 			'get_date'                 => 'string',
 			'get_memory_usage'         => 'float',
 			'log'                      => 'void',
@@ -55,7 +54,6 @@ class ReturnAnnotationsTest extends WP_UnitTestCase {
 		};
 
 		$this->assertIsFloat( $invoke( 'get_memory_usage' ) );
-		$this->assertIsString( $invoke( 'wp_timer_stop' ) );
 		$this->assertIsString( $invoke( 'footer_html' ) );
 		$this->assertIsString( $invoke( 'get_date' ) );
 	}

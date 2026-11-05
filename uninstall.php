@@ -74,45 +74,6 @@ if ( 'yes' === $option_uninstall ) {
 		)
 	);
 
-	$options = khse_get_option_keys();
-
-	foreach ( $options as $option ) {
-		delete_option( 'khse_option_' . $option );
-	}
-
-	// Legacy keys removed by the unified schema.
-	delete_option( 'khse_option_excluded_get_variables' );
-	delete_option( 'khse_option_excluded_post_variables' );
-	delete_option( 'khse_option_excluded_cookie_variables' );
-	delete_option( 'khse_option_woocommerce_status' );
-	delete_option( 'khse_option_woocommerce_post_types' );
-	delete_option( 'khse_option_woocommerce_post_archives' );
-	delete_option( 'khse_option_woocommerce_event_payment_complete' );
-	delete_option( 'khse_option_woocommerce_taxonomies' );
-	delete_option( 'khse_woocommerce_removed' );
-
-	delete_option( 'khse_last_reset_time' );
-	delete_option( 'khse_version' );
-	delete_option( 'khse_brand_migrated' );
-	delete_option( 'khse_brand_migration_retry_after' );
-	delete_option( 'khse_dir_hash' );
-	delete_option( 'khse_blog_id' );
-	delete_option( 'khse_last_preload_time' );
-	delete_option( 'khse_last_preload_count' );
-	delete_option( 'khse_last_preload_priority_count' );
-	delete_option( 'khse_last_homepage_priority_preload_time' );
-	delete_option( 'khse_last_homepage_priority_preload_count' );
-	delete_option( 'khse_last_cache_prune_count' );
-	delete_option( 'khse_last_critical_preload_time' );
-	delete_option( 'khse_last_critical_preload_count' );
-	delete_option( 'khse_preload_queue_total' );
-	delete_option( 'khse_preload_queue_processed' );
-	delete_option( 'khse_preload_queue_remaining' );
-	delete_option( 'khse_preload_queue_started_time' );
-	delete_option( 'khse_preload_queue_finished_time' );
-	delete_option( 'khse_preload_queue_lock' );
-	delete_option( 'khse_preload_bootstrap_version' );
-
 	$dirs = array(
 		WP_CONTENT_DIR . '/uploads/kh-speed-engine',
 		WP_CONTENT_DIR . '/uploads/cache-master',

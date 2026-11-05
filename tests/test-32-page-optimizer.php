@@ -102,6 +102,28 @@ class PageOptimizerTransformsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '.menu :hover', $result );
 	}
 
+	public function test_external_ucss_helpers_rewrite_and_store_assets() {
+		$tag = '<link rel="stylesheet" href="https://cdn.example.com/css/a.css">';
+
+		$this->assertTrue( khse_is_external_ucss_candidate( $tag ) );
+		$this->assertFalse( khse_is_external_ucss_candidate( '<link rel="stylesheet" href="/local.css" integrity="sha384-x">' ) );
+		$this->assertSame(
+			'https://cdn.example.com/img/a.png',
+			khse_resolve_css_url( '../img/a.png', 'https://cdn.example.com/css/main.css' )
+		);
+
+		$rewritten = khse_rewrite_css_relative_urls( 'a{background:url(../img/a.png)}', 'https://cdn.example.com/css/main.css' );
+
+		$this->assertStringContainsString( 'url("https://cdn.example.com/img/a.png")', $rewritten );
+
+		$asset = khse_store_optimized_css_asset( '.a{color:red}' );
+
+		$this->assertArrayHasKey( 'file', $asset );
+		$this->assertFileExists( $asset['file'] );
+
+		@unlink( $asset['file'] );
+	}
+
 	public function test_selector_list_is_kept_when_any_selector_is_used() {
 		$html = '<div class="present"></div>';
 

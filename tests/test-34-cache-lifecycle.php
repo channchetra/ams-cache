@@ -85,6 +85,51 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		delete_option( 'khse_option_cache_max_entries' );
 	}
 
+	public function test_cache_write_lifecycle_persists_payload_and_stats() {
+		$_SERVER['REQUEST_URI'] = '/write-lifecycle/';
+
+		$driver = new class() {
+			public $stored = array();
+
+			public function set( $key, $value, $ttl = null ) {
+				$this->stored[ $key ] = $value;
+				return true;
+			}
+
+			public function get( $key ) {
+				return isset( $this->stored[ $key ] ) ? $this->stored[ $key ] : false;
+			}
+
+			public function delete( $key ) {
+				unset( $this->stored[ $key ] );
+				return true;
+			}
+		};
+
+		$cache     = new KHSE_Cache();
+		$reflection = new ReflectionClass( $cache );
+		$property   = $reflection->getProperty( 'driver' );
+		$property->setAccessible( true );
+		$property->setValue( $cache, $driver );
+		$resolved = $reflection->getProperty( 'driver_resolved' );
+		$resolved->setAccessible( true );
+		$resolved->setValue( $cache, true );
+
+		$cache->is_cacheable  = true;
+		$cache->cache_key = 'write-lifecycle';
+		$cache->data_type = 'post';
+
+		$payload = '<html><body>' . str_repeat( 'x', 1100 ) . '</body></html>';
+
+		$this->assertTrue( $cache->persist_cache_payload( $payload ) );
+		$this->assertSame( $payload, $driver->get( 'write-lifecycle' ) );
+
+		$stats = khse_get_stats_dir( 'post' ) . '/write-lifecycle.json';
+		$this->assertFileExists( $stats );
+
+		@unlink( $stats );
+	}
+
 	public function test_corrupt_stats_file_is_ignored() {
 		$stats_dir = khse_get_stats_dir( 'post' );
 		wp_mkdir_p( $stats_dir );

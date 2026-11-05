@@ -35,7 +35,7 @@ class KHSE_Cache {
 	 *
 	 * @var bool
 	 */
-	public $is_cache = false;
+	public $is_cacheable = false;
 
 	/**
 	 * Data type.
@@ -109,7 +109,7 @@ class KHSE_Cache {
 			return;
 		}
 
-		if ( $this->is_ignore() ) {
+		if ( $this->is_request_excluded() ) {
 			return;
 		}
 
@@ -154,7 +154,7 @@ class KHSE_Cache {
 		$status        = get_option( 'khse_option_caching_status' );
 
 		if ( 'enable' !== $status ) {
-			$this->is_cache = false;
+			$this->is_cacheable = false;
 			return;
 		}
 
@@ -162,12 +162,12 @@ class KHSE_Cache {
 		$is_archive  = false;
 
 		if ( is_front_page() || is_home() ) {
-			$this->is_cache  = true;
+			$this->is_cacheable  = true;
 			$this->data_type = 'homepage';
 			
 			if ( 'no' === $post_homepage ) {
 				
-				$this->is_cache = false;
+				$this->is_cacheable = false;
 			}
 			return;
 		
@@ -197,7 +197,7 @@ class KHSE_Cache {
 				foreach( $types as $type ) {
 					if ( isset( $post_types[ $type ] ) && is_singular( $type ) ) {
 						
-						$this->is_cache  = true;
+						$this->is_cacheable  = true;
 						$this->data_type = $type;
 						return;
 					}
@@ -212,7 +212,7 @@ class KHSE_Cache {
 	
 				foreach( $archives as $type => $wp_function ) {
 					if ( isset( $post_archives[ $type ] ) && $wp_function() ) {
-						$this->is_cache  = true;
+						$this->is_cacheable  = true;
 						$this->data_type = $type;
 						return;
 					}
@@ -232,7 +232,7 @@ class KHSE_Cache {
 					$type = 'archive_' . $post_type->name;
 
 					if ( isset( $post_archives[ $type ] ) && is_post_type_archive( $post_type->name ) ) {
-						$this->is_cache  = true;
+						$this->is_cacheable  = true;
 						$this->data_type = $type;
 						return;
 					}
@@ -273,6 +273,49 @@ class KHSE_Cache {
 	}
 
 	/**
+	 * Persist one rendered payload to the cache and its side channels.
+	 *
+	 * @param string $content Full HTML payload.
+	 *
+	 * @return bool True when the driver accepted the payload.
+	 */
+	public function persist_cache_payload( $content ) {
+		if ( ! $this->is_cacheable || '' === $this->cache_key ) {
+			return false;
+		}
+
+		$driver = $this->get_driver();
+
+		if ( ! $driver ) {
+			return false;
+		}
+
+		if ( empty( $content ) || strpos( $content, '</body>' ) === false || strlen( $content ) < 1024 ) {
+			return false;
+		}
+
+		$ttl = (int) get_option( 'khse_option_ttl' );
+
+		if ( 'disable' === get_option( 'khse_option_ttl_mechanism' ) ) {
+			$ttl = null;
+		}
+
+		try {
+			$written = $driver->set( $this->cache_key, $content, $ttl );
+		} catch ( \Throwable $e ) {
+			$written = false;
+			error_log( '[KH Speed Engine] Could not write cache entry ' . $this->cache_key . ': ' . $e->getMessage() );
+		}
+
+		if ( $written ) {
+			khse_write_nginx_static_cache( $this->get_request_uri(), $content );
+			$this->log( $this->data_type, $this->cache_key, $content );
+		}
+
+		return (bool) $written;
+	}
+
+	/**
 	 *  Stop output buffering.
 	 *
 	 * @return void
@@ -296,54 +339,29 @@ class KHSE_Cache {
 			);
 		}
 
-		if ( $this->is_cache ) {
+		if ( $this->is_cacheable ) {
 			$before_optimization = $content;
-			$content             = khse_optimize_html( $content );
-			$optimization_report = khse_build_page_optimization_report(
-				$before_optimization,
-				$content,
-				khse_get_page_optimization_settings(),
-				$this->get_request_uri(),
-				$this->data_type
-			);
-
-			khse_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
+			$optimized           = khse_optimize_html( $content );
 
 			// Guard: optimization must never produce empty/invalid HTML.
-			if ( empty( $content ) || strpos( $content, '</body>' ) === false || strlen( $content ) < 1024 ) {
-				$content = $before_optimization;
+			if ( ! empty( $optimized ) && strpos( $optimized, '</body>' ) !== false && strlen( $optimized ) >= 1024 ) {
+				$content             = $optimized;
+				$optimization_report = khse_build_page_optimization_report(
+					$before_optimization,
+					$content,
+					khse_get_page_optimization_settings(),
+					$this->get_request_uri(),
+					$this->data_type
+				);
+
+				khse_write_page_optimization_report( $this->get_request_uri(), $optimization_report );
 			}
 		}
 
 		$cache_content = $content;
 		$debug_message = $this->debug_message( 'ob_stop' );
 
-		$driver = $this->get_driver();
-
-		if ( $this->is_cache && $driver ) {
-			$ttl = (int) get_option( 'khse_option_ttl' );
-
-			$cache_content .= $debug_message;
-
-			// Only store the cache entry when the final payload is a valid HTML document.
-			if ( ! empty( $cache_content ) && strpos( $cache_content, '</body>' ) !== false && strlen( $cache_content ) >= 1024 ) {
-				if ( 'disable' === get_option( 'khse_option_ttl_mechanism' ) ) {
-					$ttl = null;
-				}
-
-				try {
-					$written = $driver->set( $this->cache_key, $cache_content, $ttl );
-				} catch ( \Throwable $e ) {
-					$written = false;
-					error_log( '[KH Speed Engine] Could not write cache entry ' . $this->cache_key . ': ' . $e->getMessage() );
-				}
-
-				if ( $written ) {
-					khse_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
-					$this->log( $this->data_type, $this->cache_key, $cache_content );
-				}
-			}
-		}
+		$this->persist_cache_payload( $cache_content . $debug_message );
 
 		$content = str_replace(
 			'</body>',
@@ -378,7 +396,7 @@ class KHSE_Cache {
 	 *
 	 * @return bool
 	 */
-	private function is_ignore() {
+	private function is_request_excluded() {
 		return khse_is_cache_request_excluded( $this->config );
 	}
 }
