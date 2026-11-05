@@ -128,24 +128,8 @@ function khse_setup_security_files() {
  * @return void
  */
 function khse_deactivation() {
-
-	$option_uninstall = get_option( 'khse_option_uninstall' );
 	delete_transient( 'khse_preload_queue' );
-
-	if ( 'yes' === $option_uninstall ) {
-
-		foreach ( khse_get_option_keys() as $key ) {
-			delete_option( 'khse_option_' . $key );
-		}
-
-		// Legacy keys removed by the unified schema.
-		foreach ( array( 'excluded_get_variables', 'excluded_post_variables', 'excluded_cookie_variables', 'woocommerce_status', 'woocommerce_post_types', 'woocommerce_post_archives', 'woocommerce_event_payment_complete', 'woocommerce_taxonomies' ) as $legacy_key ) {
-			delete_option( 'khse_option_' . $legacy_key );
-		}
-
-		// Queue state is stored as unprefixed options.
-		foreach ( array( 'khse_preload_queue_total', 'khse_preload_queue_processed', 'khse_preload_queue_remaining', 'khse_preload_queue_started_time', 'khse_preload_queue_finished_time' ) as $queue_key ) {
-			delete_option( $queue_key );
-		}
-	}
+	wp_clear_scheduled_hook( 'khse_preload_cache_event' );
+	wp_clear_scheduled_hook( 'khse_preload_queue_event' );
 }
+

@@ -328,6 +328,10 @@ trait KHSE_Cache_Debug {
 	 */
 	private function log( $type, $key, $data )
 	{
+		if ( 'enable' !== get_option( 'khse_option_statistics_status', 'disable' ) ) {
+			return;
+		}
+
 		$dir = khse_get_stats_dir( $type );
 
 		if ( ! is_dir( $dir ) ) {

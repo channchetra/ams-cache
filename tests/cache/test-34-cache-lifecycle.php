@@ -87,6 +87,7 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 
 	public function test_cache_write_lifecycle_persists_payload_and_stats() {
 		$_SERVER['REQUEST_URI'] = '/write-lifecycle/';
+		update_option( 'khse_option_statistics_status', 'enable' );
 
 		$driver = new class() {
 			public $stored = array();
@@ -128,6 +129,7 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		$this->assertFileExists( $stats );
 
 		@unlink( $stats );
+		delete_option( 'khse_option_statistics_status' );
 	}
 
 	public function test_corrupt_stats_file_is_ignored() {

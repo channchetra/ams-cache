@@ -28,17 +28,16 @@ First release date: October, 1, 2020
 * Optional Redis and File cache compression.
 * Optional Nginx direct static cache for the File driver.
 * Optional page optimization before cache storage: HTML minify, inline/external UCSS generation, JS analysis, lazy media, LCP image priority, Google Fonts preconnect, and guarded JavaScript defer.
-* Optional WebP image optimizer for WordPress uploads with background queueing and offload-safe controls.
 * Admin bar purge controls for clearing all cache or only the current page.
 * And more...
 
 == Nginx Direct Static Cache ==
 
-When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx server block, run nginx -t, then reload Nginx.
+When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in the Performance workspace, review the requirement checks, copy the generated snippet into your Nginx server block, run nginx -t, then reload Nginx.
 
 == Page Optimization ==
 
-KH Speed Engine can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
+KH Speed Engine can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Performance workspace. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
 
 External UCSS reads only same-site .css files under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative url() assets before publishing a hashed CSS file, and keeps the original link if the PHP engine produces no smaller output.
 
@@ -76,34 +75,6 @@ Built assets are required for the React console. The release script verifies the
 KH Speed Engine uses built-in PHP engines for Local UCSS, External UCSS, and JS Analysis. Production does not require Bun, Node, PurgeCSS, Composer, or shell_exec. The legacy executable fields remain only for saved-setting compatibility. Bun and frontend packages are build-machine dependencies; run `bun install --frozen-lockfile` and `bun run build` before packaging. Optimization workspaces and runtime config use a private temp directory outside public uploads when available.
 
 Use the UCSS safelist for dynamic classes JavaScript adds after load. Local UCSS targets inline page CSS. External UCSS targets eligible same-site stylesheet files and inlines optimized output into cached guest HTML. If one CSS block or stylesheet is malformed, KH Speed Engine keeps that block or stylesheet raw and still optimizes valid items.
-
-== Image Optimization ==
-
-KH Speed Engine can generate WebP variants for WordPress image attachments. Enable Image Optimization in the Performance settings, set quality, and use Queue Images to process the newest 200 JPEG/PNG/WebP attachments. New uploads are optimized automatically when Optimize images on upload is enabled.
-
-KH Speed Engine now uses WebP as the only output and primary upload format. The generated .webp file can become the WordPress attachment file for new uploads before offload plugins sync the attachment. Originals stay on disk for backup/compatibility, but the attachment URL can point to WebP after successful conversion.
-
-The image engine uses Bun Image for local WebP generation and tiny loading placeholders. If Bun cannot create WebP, KH Speed Engine falls back to the native WordPress image editor. Use an absolute Bun binary path in the Performance settings if PHP cannot see bun in its PATH. Verify the image optimizer with:
-
-`bun --version`
-`bun run image:check`
-
-Image placeholders store a short, safe data:image/...;base64 preview in attachment optimization metadata. When Image placeholders is enabled, KH Speed Engine adds that preview as an inline background while the real WebP image loads.
-
-Safety rules:
-
-* Original uploads are never overwritten.
-* Writes are restricted to generated variant files beside existing images inside wp-content/uploads.
-* GIF, SVG, unknown mime types, and files outside uploads are skipped.
-* Background batches are capped to avoid long admin or cron requests.
-* HTML rewrite only happens when generated variant metadata exists.
-* The Bun optimizer receives only upload-directory source and output paths, validates real paths before writing, and generated placeholder data URLs are length and mime-type restricted before HTML output.
-
-Offload compatibility:
-
-* Default mode is safe for WP Offload Media and Advanced Offload Media because remote/offloaded URL rewriting is disabled.
-* If your offload plugin syncs generated .webp files to the same remote path, you may enable Allow offloaded remote URL rewrite.
-* Original image files stay intact; new-upload attachment metadata can point to the generated WebP file after successful conversion.
 
 Notice:
 

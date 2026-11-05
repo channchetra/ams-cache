@@ -144,7 +144,11 @@ class KHSE_Cache {
 
 		// Logged-in users will not trigger the cache.
 		if ( is_user_logged_in() ) {
-			
+			return;
+		}
+
+		if ( 'yes' !== get_option( 'khse_option_visibility_guest', 'yes' ) ) {
+			$this->is_cacheable = false;
 			return;
 		}
 
