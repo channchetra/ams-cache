@@ -186,6 +186,31 @@ function khse_cache_policy_permalink_check() {
 }
 
 /**
+ * Document-path check for the admin URL tester.
+ *
+ * @param string $path Normalized path.
+ *
+ * @return array
+ */
+function khse_cache_policy_document_check( $path ) {
+	if ( khse_is_cacheable_document_path( $path ) ) {
+		return khse_cache_policy_check(
+			'document_path',
+			__( 'Document path', 'kh-speed-engine' ),
+			'pass',
+			__( 'This path is an HTML document.', 'kh-speed-engine' )
+		);
+	}
+
+	return khse_cache_policy_check(
+		'document_path',
+		__( 'Document path', 'kh-speed-engine' ),
+		'fail',
+		__( 'Asset, feed, and non-document paths are not page-cached.', 'kh-speed-engine' )
+	);
+}
+
+/**
  * Cache driver availability check.
  *
  * @param array $config Runtime config.
@@ -552,6 +577,7 @@ function khse_evaluate_cache_url_policy( $url, $config = array() ) {
 		khse_cache_policy_permalink_check(),
 		khse_cache_policy_driver_check( $config ),
 		khse_cache_policy_bypass_check( $path ),
+		khse_cache_policy_document_check( $path ),
 		khse_cache_policy_query_check( $query, $query_vars ),
 		khse_cache_policy_exclusion_path_check( $path, $exclusion, $rules_enabled ),
 		khse_cache_policy_exclusion_get_check( $query_vars, $exclusion, $rules_enabled ),

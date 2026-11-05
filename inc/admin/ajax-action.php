@@ -384,7 +384,11 @@ function khse_ajax_dashboard_save_toggle_map( $items, $option_key ) {
  */
 function khse_ajax_dashboard_apply_option_schema( $incoming, $schema ) {
 	foreach ( $schema as $field => $rule ) {
-		$value = array_key_exists( $field, $incoming ) ? $incoming[ $field ] : $rule['default'];
+		if ( ! array_key_exists( $field, $incoming ) ) {
+			continue;
+		}
+
+		$value = $incoming[ $field ];
 
 		switch ( $rule['sanitize'] ) {
 			case 'yes_no':

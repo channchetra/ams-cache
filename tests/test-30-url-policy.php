@@ -63,7 +63,7 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		$this->assertSame( 'pass', $this->check( $result, 'request' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'caching' )['status'] );
 		$this->assertSame( 'pass', $this->check( $result, 'permalink' )['status'] );
-		$this->assertCount( 10, $result['checks'] );
+		$this->assertCount( 11, $result['checks'] );
 	}
 
 	public function test_full_same_site_url_is_cacheable() {
@@ -97,6 +97,13 @@ class UrlPolicyTest extends WP_UnitTestCase {
 			$this->assertFalse( $result['cacheable'], $path );
 			$this->assertSame( 'fail', $this->check( $result, 'bypass_path' )['status'], $path );
 		}
+	}
+
+	public function test_non_document_asset_path_is_rejected() {
+		$result = khse_evaluate_cache_url_policy( '/assets/app.css', $this->config() );
+
+		$this->assertFalse( $result['cacheable'] );
+		$this->assertSame( 'fail', $this->check( $result, 'document_path' )['status'] );
 	}
 
 	public function test_non_tracking_query_var_fails() {

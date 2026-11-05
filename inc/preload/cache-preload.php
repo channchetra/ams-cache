@@ -822,6 +822,7 @@ function khse_preload_cache( $limit = null ) {
 	update_option( 'khse_last_preload_time', time() );
 	update_option( 'khse_last_preload_count', count( $urls ) );
 	update_option( 'khse_last_preload_priority_count', count( $priority_urls ) );
+	update_option( 'khse_last_homepage_priority_preload_time', time() );
 	update_option( 'khse_preload_queue_total', count( $urls ) );
 	update_option( 'khse_preload_queue_processed', 0 );
 	update_option( 'khse_preload_queue_failed', 0 );

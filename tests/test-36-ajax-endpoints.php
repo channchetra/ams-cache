@@ -20,6 +20,8 @@ class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 
 	public function tear_down() {
 		delete_option( 'khse_option_ttl' );
+		delete_option( 'khse_option_caching_status' );
+		delete_option( 'khse_option_preload_cache' );
 		parent::tear_down();
 	}
 
@@ -38,7 +40,8 @@ class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 		return json_decode( $this->_last_response, true );
 	}
 
-	public function test_save_settings_persists_and_returns_status() {
+	public function test_save_settings_persists_and_preserves_omitted_options() {
+		update_option( 'khse_option_caching_status', 'enable' );
 		$this->authenticate();
 		$_POST['settings'] = wp_json_encode( array( 'cache' => array( 'ttl' => 7200 ) ) );
 
@@ -47,6 +50,7 @@ class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 		$this->assertTrue( $response['success'] );
 		$this->assertTrue( $response['data']['runtimeSynced'] );
 		$this->assertSame( 7200, (int) get_option( 'khse_option_ttl' ) );
+		$this->assertSame( 'enable', get_option( 'khse_option_caching_status' ) );
 		$this->assertSame( 7200, (int) $response['data']['status']['settings']['cache']['ttl'] );
 	}
 
