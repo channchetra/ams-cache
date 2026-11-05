@@ -124,7 +124,9 @@ function khse_update_khse_option_driver() {
  * @return void
  */
 function khse_update_runtime_config() {
-	khse_sync_expert_mode_runtime();
+	if ( ! khse_sync_expert_mode_runtime() ) {
+		error_log( '[KH Speed Engine] Could not write the Expert Mode runtime config after a settings change.' );
+	}
 }
 
 /**

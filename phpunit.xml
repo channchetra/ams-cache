@@ -13,4 +13,13 @@
 			<exclude>./tests/test-sample.php</exclude>
 		</testsuite>
 	</testsuites>
+	<coverage processUncoveredFiles="true">
+		<include>
+			<directory suffix=".php">./inc</directory>
+		</include>
+		<exclude>
+			<directory>./inc/lib</directory>
+			<directory>./inc/assets</directory>
+		</exclude>
+	</coverage>
 </phpunit>

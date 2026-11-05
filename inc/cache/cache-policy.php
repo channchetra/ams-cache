@@ -44,6 +44,21 @@ function khse_find_excluded_path( $path, $excluded_list ) {
 }
 
 /**
+ * Build the runtime config used by the cache reader and writer.
+ *
+ * @return array
+ */
+function khse_get_runtime_config() {
+	$config = khse_get_config_data();
+
+	$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
+	$config['cache_key_prefix']   = khse_get_cache_key_prefix();
+	$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
+
+	return khse_normalize_config( $config );
+}
+
+/**
  * Check whether the current request is excluded from the page cache.
  *
  * @param array $config Runtime config.
@@ -484,4 +499,56 @@ function khse_build_cache_key( $prefix, $uri ) {
  */
 function khse_get_cache_key( $uri ) {
 	return khse_build_cache_key( khse_get_cache_key_prefix(), $uri );
+}
+
+/**
+ * Build the runtime exclusion configuration from the stored settings.
+ *
+ * Persists the normalized path list to khse_option_excluded_list_filtered.
+ *
+ * @return array {
+ *     @type bool  $enable               Whether exclusion rules are enabled.
+ *     @type array $excluded_list        Normalized excluded paths.
+ *     @type array $excluded_get_vars    Excluded GET variables.
+ *     @type array $excluded_post_vars   Excluded POST variables.
+ *     @type array $excluded_cookie_vars Excluded cookie variables.
+ * }
+ */
+function khse_build_runtime_exclusion_config() {
+	$list = array();
+
+	foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_list', '' ) ) as $item ) {
+		$path = parse_url( $item, PHP_URL_PATH );
+		$path = is_string( $path ) ? trim( $path ) : '';
+
+		if ( '' === $path ) {
+			continue;
+		}
+
+		if ( '/' !== $path[0] ) {
+			$path = '/' . $path;
+		}
+
+		$list[] = '/' === $path ? '/' : untrailingslashit( $path );
+	}
+
+	$variables = array();
+
+	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
+		$variables[ $type ] = array();
+
+		foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
+			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
+				$variables[ $type ][] = $item;
+			}
+		}
+	}
+
+	return array(
+		'enable'               => 'yes' === get_option( 'khse_option_exclusion_status', 'no' ),
+		'excluded_list'        => $list,
+		'excluded_get_vars'    => $variables['get'],
+		'excluded_post_vars'   => $variables['post'],
+		'excluded_cookie_vars' => $variables['cookie'],
+	);
 }

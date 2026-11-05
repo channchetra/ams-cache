@@ -109,7 +109,7 @@ function khse_dashboard_get_stats_summary() {
 	$total_rows = 0;
 	$total_size = 0;
 
-	foreach ( khse_get_cache_type_list() as $type => $label ) {
+	foreach ( khse_get_cache_type_labels() as $type => $label ) {
 		$stats = khse_dashboard_get_stats_for_type( $type );
 
 		$total_rows += $stats['rows'];

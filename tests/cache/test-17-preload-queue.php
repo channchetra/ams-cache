@@ -48,6 +48,40 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		update_option( 'khse_option_caching_status', 'enable' );
 	}
 
+	public function test_preload_batch_records_failed_urls_and_clears_the_queue() {
+		update_option( 'khse_option_preload_cache', 'yes' );
+		update_option( 'khse_option_caching_status', 'enable' );
+		delete_option( 'khse_preload_queue_lock' );
+
+		set_transient( 'khse_preload_queue', array( home_url( '/preload-failure/' ) ), HOUR_IN_SECONDS );
+		update_option( 'khse_preload_queue_total', 1 );
+		update_option( 'khse_preload_queue_processed', 0 );
+		update_option( 'khse_preload_queue_failed', 0 );
+		update_option( 'khse_preload_queue_remaining', 1 );
+
+		$fail = static function () {
+			return new WP_Error( 'khse_preload_failed', 'Simulated failure.' );
+		};
+
+		add_filter( 'pre_http_request', $fail, 20, 3 );
+		$processed = khse_process_preload_queue();
+		remove_filter( 'pre_http_request', $fail, 20 );
+
+		$this->assertSame( 1, $processed );
+		$this->assertSame( 0, (int) get_option( 'khse_preload_queue_processed' ) );
+		$this->assertSame( 1, (int) get_option( 'khse_preload_queue_failed' ) );
+		$this->assertSame( 0, (int) get_option( 'khse_preload_queue_remaining' ) );
+		$this->assertFalse( get_transient( 'khse_preload_queue' ) );
+
+		delete_option( 'khse_preload_queue_lock' );
+		delete_option( 'khse_preload_queue_total' );
+		delete_option( 'khse_preload_queue_processed' );
+		delete_option( 'khse_preload_queue_failed' );
+		delete_option( 'khse_preload_queue_remaining' );
+		delete_option( 'khse_option_preload_cache' );
+		delete_option( 'khse_option_caching_status' );
+	}
+
 	public function test_preload_lock_is_exclusive_and_reclaims_stale_locks() {
 		delete_option( 'khse_preload_queue_lock' );
 

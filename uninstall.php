@@ -86,9 +86,8 @@ if ( 'yes' === $option_uninstall ) {
 		$dirs[] = $legacy_runtime;
 	}
 
-	if ( '' !== $runtime_root && '' !== $runtime_hash ) {
-		$runtime_dir = rtrim( str_replace( '\\', '/', $runtime_root ), '/' ) . '/kh-speed-engine/' . absint( $runtime_blog ) . '_' . sanitize_key( $runtime_hash );
-		$public_root = rtrim( str_replace( '\\', '/', ABSPATH ), '/' ) . '/';
+	if ( function_exists( 'khse_get_private_runtime_dir' ) ) {
+		$runtime_dir = khse_get_private_runtime_dir();
 
 		if ( 0 !== strncasecmp( $runtime_dir . '/', $public_root, strlen( $public_root ) ) ) {
 			$dirs[] = $runtime_dir;

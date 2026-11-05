@@ -62,7 +62,7 @@ class KHSE_Cache {
 	 * Constructer.
 	 */
 	public function __construct() {
-		$this->config = khse_get_config_data();
+		$this->config = khse_get_runtime_config();
 	}
 
 	/**
@@ -255,13 +255,7 @@ class KHSE_Cache {
 		$driver = $this->get_driver();
 
 		if ( $driver ) {
-			$config = $this->config;
-
-			$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
-			$config['cache_key_prefix']   = khse_get_cache_key_prefix();
-			$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
-
-			$cached_content = khse_serve_cached_response( $config, $driver );
+			$cached_content = khse_serve_cached_response( $this->config, $driver );
 
 			if ( null !== $cached_content ) {
 				echo $cached_content;

@@ -5,8 +5,8 @@ KH Speed Engine is an extremely lightweight, high-performance cache plugin that 
 
 ## Requirement
 
-* PHP version > 7.1.0
-* WordPress version > 4.7
+* PHP version 7.1 or later
+* WordPress version 5.8 or later
 * Tested up to WordPress 6.9.4
 * Tested up to PHP 8.2.5
 
@@ -53,11 +53,11 @@ The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status 
 
 ## Nginx Direct Static Cache
 
-When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in Advanced settings, review the requirement checks, copy the generated snippet into your Nginx `server` block, run `nginx -t`, then reload Nginx. The generated rule serves the same cached page for Facebook/Meta and UTM tracking variables (`fbclid`, `mibextid`, `rdid`, `shbid`, `shbv`, and standard UTM keys) while bypassing functional or unknown query variables.
+When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in the Performance workspace, review the requirement checks, copy the generated snippet into your Nginx `server` block, run `nginx -t`, then reload Nginx. The generated rule serves the same cached page for Facebook/Meta and UTM tracking variables (`fbclid`, `mibextid`, `rdid`, `shbid`, `shbv`, and standard UTM keys) while bypassing functional or unknown query variables.
 
 ## Page Optimization
 
-KH Speed Engine can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Optimization tab. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS for local styles, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
+KH Speed Engine can optimize cacheable guest HTML before it is saved to File, Redis, Memcached, APCu, or another selected driver. Enable it in the Performance workspace. The pipeline includes HTML/comment cleanup, inline CSS minify, conservative PHP UCSS for local styles, hashed CSS assets for eligible same-site stylesheets, native lazy loading for media, first-image LCP priority/preload, Google Fonts preconnect, bounded PHP JS analysis, and optional safe JavaScript defer with exclusions.
 
 External UCSS is intentionally conservative. It reads only same-site `.css` files that resolve under the WordPress root, skips SRI/crossorigin/alternate/preload/importing stylesheets, obeys the configured max file size, rewrites relative `url()` assets before publishing a content-addressed CSS file, and keeps the original `<link>` when the PHP engine produces no smaller output.
 

@@ -18,4 +18,7 @@ require_once __DIR__ . '/cache-identity.php';
 require_once __DIR__ . '/cache-view.php';
 require_once __DIR__ . '/cache-settings.php';
 require_once __DIR__ . '/cache-storage.php';
+require_once __DIR__ . '/cache-driver-settings.php';
+require_once __DIR__ . '/cache-driver.php';
+require_once __DIR__ . '/cache-stats.php';
 require_once __DIR__ . '/cache-policy.php';

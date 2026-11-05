@@ -102,6 +102,17 @@ class PageOptimizerTransformsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '.menu :hover', $result );
 	}
 
+	public function test_local_ucss_applies_to_inline_styles() {
+		$settings            = khse_get_default_page_optimization_settings();
+		$settings['local_ucss'] = 'yes';
+		$html                = '<html><body><div class="used"></div><style>.used{color:red}.unused{color:blue}</style></body></html>';
+
+		$result = khse_apply_local_ucss( $html, $settings );
+
+		$this->assertStringContainsString( '.used', $result );
+		$this->assertStringNotContainsString( '.unused', $result );
+	}
+
 	public function test_external_ucss_helpers_rewrite_and_store_assets() {
 		$tag = '<link rel="stylesheet" href="https://cdn.example.com/css/a.css">';
 

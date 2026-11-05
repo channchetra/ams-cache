@@ -88,6 +88,39 @@ function khse_ajax_clear_cache_response() {
 }
 
 /**
+ * Parse and validate a same-site URL for purging.
+ *
+ * @param string $url URL to inspect.
+ *
+ * @return array|false Array with path/query/parts, or false when not cacheable.
+ */
+function khse_parse_cacheable_url( $url ) {
+	$parsed = parse_url( (string) $url );
+
+	if ( ! is_array( $parsed ) ) {
+		return false;
+	}
+
+	$query = isset( $parsed['query'] ) ? (string) $parsed['query'] : '';
+
+	if ( ! khse_is_cacheable_query_string( $query ) ) {
+		return false;
+	}
+
+	$path = isset( $parsed['path'] ) && '' !== $parsed['path'] ? (string) $parsed['path'] : '/';
+
+	if ( ! khse_is_cacheable_document_path( $path ) ) {
+		return false;
+	}
+
+	return array(
+		'path'   => $path,
+		'query'  => $query,
+		'parsed' => $parsed,
+	);
+}
+
+/**
  * Check whether the current user may purge the cache for a URL.
  *
  * Users with edit_posts may purge only the canonical path of a publicly
@@ -99,15 +132,9 @@ function khse_ajax_clear_cache_response() {
  * @return bool
  */
 function khse_can_purge_url( $url ) {
-	$parsed = parse_url( $url );
+	$parsed = khse_parse_cacheable_url( $url );
 
 	if ( false === $parsed ) {
-		return current_user_can( 'manage_options' );
-	}
-
-	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
-
-	if ( ! khse_is_cacheable_query_string( $query ) ) {
 		return current_user_can( 'manage_options' );
 	}
 
@@ -117,7 +144,7 @@ function khse_can_purge_url( $url ) {
 		$permalink = get_permalink( $post_id );
 
 		if ( false !== $permalink ) {
-			$requested_path = isset( $parsed['path'] ) ? $parsed['path'] : '';
+			$requested_path = $parsed['path'];
 			$permalink_path = parse_url( $permalink, PHP_URL_PATH );
 			$requested_path = empty( $requested_path ) ? '/' : $requested_path;
 			$permalink_path = empty( $permalink_path ) ? '/' : $permalink_path;
@@ -188,9 +215,9 @@ function khse_ajax_purge_current_page_callback() {
 		);
 	}
 
-	$query = isset( $parsed['query'] ) ? $parsed['query'] : '';
+	$parsed = khse_parse_cacheable_url( $url );
 
-	if ( ! khse_is_cacheable_query_string( $query ) ) {
+	if ( false === $parsed ) {
 		wp_send_json_error(
 			array(
 				'message' => __( 'This URL is not a cacheable page.', 'kh-speed-engine' ),
@@ -198,18 +225,7 @@ function khse_ajax_purge_current_page_callback() {
 		);
 	}
 
-	$path = isset( $parsed['path'] ) ? $parsed['path'] : '';
-	$path = empty( $path ) ? '/' : $path;
-
-	if ( ! khse_is_cacheable_document_path( $path ) ) {
-		wp_send_json_error(
-			array(
-				'message' => __( 'This URL is not a cacheable page.', 'kh-speed-engine' ),
-			)
-		);
-	}
-
-	$result = khse_purge_cache_uri( $path );
+	$result = khse_purge_cache_uri( $parsed['path'] );
 
 	wp_send_json_success(
 		array(
@@ -627,8 +643,8 @@ function khse_ajax_dashboard_clear_cache_type_callback() {
 	khse_ajax_dashboard_guard();
 
 	$cache_type = isset( $_POST['cacheType'] ) ? sanitize_key( wp_unslash( $_POST['cacheType'] ) ) : '';
-	$labels     = khse_get_cache_type_list();
-	$list       = array_keys( $labels );
+	$labels     = khse_get_cache_type_labels();
+	$list       = khse_get_cache_type_keys();
 
 	if ( ! in_array( $cache_type, $list, true ) ) {
 		wp_send_json_error(

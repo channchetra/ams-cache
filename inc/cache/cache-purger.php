@@ -273,7 +273,7 @@ function khse_clear_all_cache( $sync = true ) {
 		return 0;
 	}
 
-	$list = khse_get_cache_type_list( true );
+	$list = khse_get_cache_type_keys();
 
 	if ( in_array( $driver_type, array( 'file', 'sqlite' ), true ) ) {
 		try {
@@ -302,7 +302,7 @@ function khse_clear_all_cache( $sync = true ) {
  */
 function khse_clear_cache_type( $cache_type ) {
 	$driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
-	$list   = khse_get_cache_type_list( true );
+	$list   = khse_get_cache_type_keys();
 
 	if ( ! $driver || is_wp_error( $driver ) || ! in_array( $cache_type, $list, true ) ) {
 		return 0;
