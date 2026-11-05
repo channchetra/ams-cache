@@ -16,13 +16,15 @@
     "release:sh": "bash ./bin/release.sh",
     "release:sh:patch": "bash ./bin/release.sh --bump patch",
     "release:sh:minor": "bash ./bin/release.sh --bump minor",
-    "release:sh:major": "bash ./bin/release.sh --bump major"
+    "release:sh:major": "bash ./bin/release.sh --bump major",
+    "test:js": "vitest run"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.2",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "vite": "8.0.14"
+    "vite": "8.0.14",
+    "vitest": "^5.1.0"
   }
 }
