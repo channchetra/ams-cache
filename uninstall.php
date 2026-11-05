@@ -23,30 +23,10 @@ require_once __DIR__ . '/inc/cache-core.php';
 require_once __DIR__ . '/inc/option-schema.php';
 
 $option_uninstall = get_option( 'khse_option_uninstall' );
-$runtime_root     = '';
-$runtime_candidates = array();
-
-if ( defined( 'WP_TEMP_DIR' ) && WP_TEMP_DIR ) {
-	$runtime_candidates[] = WP_TEMP_DIR;
-}
-
-if ( function_exists( 'sys_get_temp_dir' ) ) {
-	$runtime_candidates[] = sys_get_temp_dir();
-}
-
-$public_root = rtrim( str_replace( '\\', '/', ABSPATH ), '/' ) . '/';
-
-foreach ( $runtime_candidates as $candidate ) {
-	$candidate = rtrim( str_replace( '\\', '/', $candidate ), '/' ) . '/';
-
-	if ( 0 !== strncasecmp( $candidate, $public_root, strlen( $public_root ) ) ) {
-		$runtime_root = rtrim( $candidate, '/' );
-		break;
-	}
-}
-
+$runtime_root     = function_exists( 'khse_get_runtime_base_dir' ) ? khse_get_runtime_base_dir() : '';
 $runtime_hash     = get_option( 'khse_dir_hash', '' );
 $runtime_blog     = get_option( 'khse_blog_id', 1 );
+$public_root      = rtrim( str_replace( '\\', '/', ABSPATH ), '/' ) . '/';
 
 if ( 'yes' === $option_uninstall ) {
 

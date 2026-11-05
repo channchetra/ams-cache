@@ -305,3 +305,37 @@ function khse_merge_textarea_lines( $value, $extra ) {
 
 	return implode( "\n", array_values( array_filter( array_map( 'trim', $lines ) ) ) );
 }
+
+/**
+ * Get the maximum number of cached entries.
+ *
+ * A value of 0 disables pruning.
+ *
+ * @return int
+ */
+function khse_get_cache_max_entries() {
+	$limit = (int) get_option( 'khse_option_cache_max_entries', 0 );
+
+	return max( 0, $limit );
+}
+
+/**
+ * Get the cache key prefix used to isolate shared cache stores.
+ *
+ * @return string
+ */
+function khse_get_cache_key_prefix() {
+	$prefix = get_option( 'khse_option_cache_key_prefix', '' );
+
+	if ( '' === $prefix ) {
+		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
+	}
+
+	$prefix = preg_replace( '/[^A-Za-z0-9_.-]/', '_', $prefix );
+
+	if ( '' === $prefix ) {
+		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
+	}
+
+	return rtrim( $prefix, '._-' ) . '_';
+}

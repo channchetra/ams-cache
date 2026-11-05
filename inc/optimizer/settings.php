@@ -226,12 +226,17 @@ function khse_create_page_optimization_workspace( $prefix ) {
 	}
 
 	if ( is_dir( $root ) ) {
-		if ( ! file_exists( trailingslashit( $root ) . 'index.html' ) ) {
-			file_put_contents( trailingslashit( $root ) . 'index.html', '' );
+		$index = trailingslashit( $root ) . 'index.html';
+		$deny  = trailingslashit( $root ) . '.htaccess';
+
+		if ( ! file_exists( $index ) && false === @file_put_contents( $index, '' ) ) {
+			error_log( '[KH Speed Engine] Could not protect the optimizer workspace: ' . $root );
+			return '';
 		}
 
-		if ( ! file_exists( trailingslashit( $root ) . '.htaccess' ) ) {
-			file_put_contents( trailingslashit( $root ) . '.htaccess', "Require all denied\nDeny from all" );
+		if ( ! file_exists( $deny ) && false === @file_put_contents( $deny, "Require all denied\nDeny from all" ) ) {
+			error_log( '[KH Speed Engine] Could not protect the optimizer workspace: ' . $root );
+			return '';
 		}
 	}
 
@@ -266,11 +271,11 @@ function khse_delete_page_optimization_workspace( $dir ) {
 
 	foreach ( $iterator as $file ) {
 		if ( $file->isDir() ) {
-			rmdir( $file->getPathname() );
+			@rmdir( $file->getPathname() );
 		} else {
-			unlink( $file->getPathname() );
+			@unlink( $file->getPathname() );
 		}
 	}
 
-	rmdir( $path );
+	@rmdir( $path );
 }

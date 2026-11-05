@@ -14,6 +14,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
     die;
 }
 
+require_once __DIR__ . '/cache-identity.php';
 require_once __DIR__ . '/cache-settings.php';
 require_once __DIR__ . '/cache-storage.php';
 require_once __DIR__ . '/cache-policy.php';

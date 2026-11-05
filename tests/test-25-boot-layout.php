@@ -56,12 +56,16 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$expected = array(
 			'khse_get_setting'                  => 'inc/cache-settings.php',
 			'khse_get_default_config'           => 'inc/cache-settings.php',
-			'khse_get_runtime_exclusion_config' => 'inc/cache-policy.php',
+			'khse_get_cache_key_prefix'         => 'inc/cache-settings.php',
+			'khse_get_blog_id'                  => 'inc/cache-identity.php',
+			'khse_get_dir_hash'                 => 'inc/cache-identity.php',
+			'khse_get_runtime_exclusion_config' => 'inc/cache-storage.php',
 			'khse_serve_cached_response'        => 'inc/cache-policy.php',
 			'khse_get_cache_key'                => 'inc/cache-policy.php',
 			'khse_update_config'                => 'inc/cache-storage.php',
 			'khse_sync_expert_mode_runtime'     => 'inc/cache-storage.php',
 			'khse_get_stats_dir'                => 'inc/cache-storage.php',
+			'khse_get_driver_settings'          => 'inc/cache-storage.php',
 		);
 
 		foreach ( $expected as $function => $file ) {
@@ -72,7 +76,7 @@ class BootLayoutTest extends WP_UnitTestCase {
 
 		$core = file_get_contents( KHSE_PLUGIN_DIR . 'inc/cache-core.php' );
 
-		foreach ( array( 'cache-settings.php', 'cache-storage.php', 'cache-policy.php' ) as $module ) {
+		foreach ( array( 'cache-identity.php', 'cache-settings.php', 'cache-storage.php', 'cache-policy.php' ) as $module ) {
 			$this->assertStringContainsString( $module, $core, 'cache-core.php must load ' . $module );
 		}
 	}

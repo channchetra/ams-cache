@@ -198,62 +198,6 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 }
 
 /**
- * Build the runtime exclusion configuration from the stored settings.
- *
- * Persists the normalized path list to khse_option_excluded_list_filtered.
- *
- * @return array {
- *     @type bool  $enable               Whether exclusion rules are enabled.
- *     @type array $excluded_list        Normalized excluded paths.
- *     @type array $excluded_get_vars    Excluded GET variables.
- *     @type array $excluded_post_vars   Excluded POST variables.
- *     @type array $excluded_cookie_vars Excluded cookie variables.
- * }
- */
-function khse_get_runtime_exclusion_config() {
-	$list = array();
-
-	foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_list', '' ) ) as $item ) {
-		$path = parse_url( $item, PHP_URL_PATH );
-		$path = is_string( $path ) ? trim( $path ) : '';
-
-		if ( '' === $path ) {
-			continue;
-		}
-
-		if ( '/' !== $path[0] ) {
-			$path = '/' . $path;
-		}
-
-		$list[] = '/' === $path ? '/' : untrailingslashit( $path );
-	}
-
-	$variables = array();
-
-	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
-		$variables[ $type ] = array();
-
-		foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
-			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
-				$variables[ $type ][] = $item;
-			}
-		}
-	}
-
-	update_option( 'khse_option_excluded_list_filtered', implode( "\n", $list ) );
-
-	return array(
-		'enable'               => 'yes' === get_option( 'khse_option_exclusion_status', 'no' ),
-		'excluded_list'        => $list,
-		'excluded_get_vars'    => $variables['get'],
-		'excluded_post_vars'   => $variables['post'],
-		'excluded_cookie_vars' => $variables['cookie'],
-	);
-}
-
-
-
-/**
  * Normalize a request URI before using it as a cache identity.
  *
  * @param string $uri Request URI, URL, or path.
@@ -492,5 +436,3 @@ function khse_build_cache_key( $prefix, $uri ) {
 function khse_get_cache_key( $uri ) {
 	return khse_build_cache_key( khse_get_cache_key_prefix(), $uri );
 }
-
-

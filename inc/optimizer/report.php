@@ -300,7 +300,7 @@ function khse_prune_page_optimization_reports( $limit = 200 ) {
 	);
 
 	foreach ( array_slice( $files, 0, count( $files ) - $limit ) as $file ) {
-		if ( unlink( $file['path'] ) ) {
+		if ( @unlink( $file['path'] ) ) {
 			$deleted++;
 		}
 	}

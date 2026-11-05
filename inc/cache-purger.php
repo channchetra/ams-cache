@@ -241,7 +241,7 @@ function khse_clear_all_cache( $sync = true ) {
 	}
 
 	khse_clear_nginx_static_cache();
-	khse_schedule_preload_cache();
+	do_action( 'khse_cache_cleared' );
 
 	return $i;
 }
@@ -284,7 +284,7 @@ function khse_clear_cache_type( $cache_type ) {
 	}
 
 	khse_clear_nginx_static_cache();
-	khse_schedule_preload_cache();
+	do_action( 'khse_cache_cleared' );
 
 	return $rows;
 }

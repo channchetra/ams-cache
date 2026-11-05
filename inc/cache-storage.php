@@ -13,58 +13,6 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 /**
- * Return the site directory hash.
- *
- * Pure: returns the persisted hash or a deterministic fallback without
- * writing. Use khse_ensure_dir_hash() when the value must be persisted.
- *
- * @return string
- */
-function khse_get_dir_hash() {
-	$hash = get_option( 'khse_dir_hash' );
-
-	if ( ! empty( $hash ) ) {
-		return $hash;
-	}
-
-	return khse_generate_dir_hash();
-}
-
-/**
- * Generate a deterministic directory hash for this site.
- *
- * @return string
- */
-function khse_generate_dir_hash() {
-	$salt = defined( 'AUTH_SALT' ) ? AUTH_SALT : '';
-	$site = defined( 'WP_HOME' ) ? WP_HOME : ( defined( 'ABSPATH' ) ? ABSPATH : __DIR__ );
-
-	if ( function_exists( 'wp_hash' ) ) {
-		return substr( wp_hash( $site . '|' . $salt ), 0, 8 );
-	}
-
-	return substr( hash( 'sha256', $site . '|' . $salt ), 0, 8 );
-}
-
-/**
- * Persist and return the site directory hash.
- *
- * @return string
- */
-function khse_ensure_dir_hash() {
-	$hash = get_option( 'khse_dir_hash' );
-
-	if ( empty( $hash ) ) {
-		$hash = khse_generate_dir_hash();
-		update_option( 'khse_dir_hash', $hash );
-	}
-
-	return $hash;
-}
-
-
-
-/**
  * Ensure caching is disabled when permalinks are plain.
  *
  * @return void
@@ -384,24 +332,6 @@ function khse_sync_expert_mode_runtime() {
 }
 
 /**
- * Set channel Id.
- *
- * @return void
- */
-function khse_set_blog_id() {
-	update_option( 'khse_blog_id', get_current_blog_id() );
-}
-
-/**
- * Get channel Id.
- *
- * @return string
- */
-function khse_get_blog_id() {
-	return get_option( 'khse_blog_id', 1 );
-}
-
-/**
  * Get the cache stats root directory.
  *
  * @return string
@@ -420,29 +350,6 @@ function khse_get_stats_root() {
 function khse_get_stats_dir( $cache_type = 'post' ) {
 	return khse_get_stats_root() . '/' . $cache_type;
 }
-
-/**
- * Get the cache key prefix used to isolate shared cache stores.
- *
- * @return string
- */
-function khse_get_cache_key_prefix() {
-	$prefix = get_option( 'khse_option_cache_key_prefix', '' );
-
-	if ( '' === $prefix ) {
-		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
-	}
-
-	$prefix = preg_replace( '/[^A-Za-z0-9_.-]/', '_', $prefix );
-
-	if ( '' === $prefix ) {
-		$prefix = 'khse_' . khse_get_blog_id() . '_' . khse_get_dir_hash() . '_';
-	}
-
-	return rtrim( $prefix, '._-' ) . '_';
-}
-
-
 
 /**
  * Read one stats row.
@@ -524,4 +431,239 @@ function khse_get_cache_type_list( $get_key = false ) {
 	return $list;
 }
 
+/**
+ * Get advanced driver settings from WordPress options.
+ *
+ * @param string $type Driver type.
+ *
+ * @return array
+ */
+function khse_get_driver_advanced_settings( $type ) {
+	if ( 'file' === $type ) {
+		return (array) get_option( 'khse_option_advanced_driver_file', array() );
+	}
 
+	if ( 'memcache' === $type || 'memcached' === $type ) {
+		return (array) get_option( 'khse_option_advanced_driver_memcached', array() );
+	}
+
+	if ( 'redis' === $type ) {
+		return (array) get_option( 'khse_option_advanced_driver_redis', array() );
+	}
+
+	if ( 'mongo' === $type ) {
+		return (array) get_option( 'khse_option_advanced_driver_mongodb', array() );
+	}
+
+	return array();
+}
+
+/**
+ * Get advanced driver connection type.
+ *
+ * @param string $type Driver type.
+ *
+ * @return string
+ */
+function khse_get_driver_connection_type( $type ) {
+	if ( 'memcache' === $type || 'memcached' === $type ) {
+		return get_option( 'khse_option_advanced_driver_memcached_connection_type', 'tcp' );
+	}
+
+	if ( 'redis' === $type ) {
+		return get_option( 'khse_option_advanced_driver_redis_connection_type', 'tcp' );
+	}
+
+	if ( 'mongo' === $type ) {
+		return get_option( 'khse_option_advanced_driver_mongodb_connection_type', 'tcp' );
+	}
+
+	return 'tcp';
+}
+
+/**
+ * Normalize driver settings before passing them to Simple Cache.
+ *
+ * @param array  $setting         Driver settings.
+ * @param string $connection_type tcp|socket.
+ *
+ * @return array
+ */
+function khse_normalize_driver_settings( $setting, $connection_type = 'tcp' ) {
+	foreach ( $setting as $k => $v ) {
+		if ( is_string( $v ) ) {
+			$v = trim( $v );
+		}
+
+		if ( '' === $v ) {
+			unset( $setting[ $k ] );
+			continue;
+		}
+
+		if ( is_numeric( $v ) ) {
+			$v = (int) $v;
+		}
+
+		if ( 'compress' === $k ) {
+			$v = in_array( $v, array( true, 1, '1', 'yes', 'on' ), true );
+		}
+
+		if ( 'compress_threshold' === $k ) {
+			$v = max( 0, (int) $v );
+		}
+
+		if ( 'compress_level' === $k ) {
+			$v = max( 1, min( 9, (int) $v ) );
+		}
+
+		$setting[ $k ] = $v;
+	}
+
+	if ( 'socket' !== $connection_type && isset( $setting['unix_socket'] ) ) {
+		unset( $setting['unix_socket'] );
+	}
+
+	return $setting;
+}
+
+/**
+ * Get the base connection settings for a cache driver.
+ *
+ * Pure defaults only; callers apply their own fallbacks and advanced settings.
+ *
+ * @param string $type Driver type.
+ *
+ * @return array
+ */
+function khse_get_driver_setting( $type ) {
+	switch ( $type ) {
+		case 'mysql':
+			return array(
+				'host'    => DB_HOST,
+				'dbname'  => DB_NAME,
+				'user'    => DB_USER,
+				'pass'    => DB_PASSWORD,
+				'charset' => DB_CHARSET,
+			);
+
+		case 'sqlite':
+			return array(
+				'storage' => khse_get_upload_dir() . '/sqlite_driver',
+			);
+
+		case 'redis':
+			return array(
+				'host'     => '127.0.0.1',
+				'port'     => 6379,
+				'database' => 0,
+			);
+
+		case 'mongo':
+			return array(
+				'host' => '127.0.0.1',
+				'port' => 27017,
+			);
+
+		case 'memcache':
+		case 'memcached':
+			return array(
+				'host' => '127.0.0.1',
+				'port' => 11211,
+			);
+
+		case 'apc':
+		case 'apcu':
+		case 'wincache':
+			return array();
+
+		case 'file':
+		default:
+			return array(
+				'storage' => khse_get_upload_dir() . '/file_driver',
+			);
+	}
+}
+
+/**
+ * Get the resolved driver settings and connection type.
+ *
+ * @param string      $type              Driver type.
+ * @param array|null  $advanced_settings Optional advanced settings; defaults to the stored option.
+ * @param string|null $connection_type   Optional connection type; defaults to the stored option.
+ *
+ * @return array
+ */
+function khse_get_driver_settings( $type, $advanced_settings = null, $connection_type = null ) {
+	$setting = khse_get_driver_setting( $type );
+
+	if ( null === $advanced_settings ) {
+		$advanced_settings = khse_get_driver_advanced_settings( $type );
+	}
+
+	if ( null === $connection_type ) {
+		$connection_type = khse_get_driver_connection_type( $type );
+	}
+
+	if ( ! empty( $advanced_settings ) ) {
+		$setting = array_merge( $setting, khse_normalize_driver_settings( $advanced_settings, $connection_type ) );
+	}
+
+	return array(
+		'setting'         => $setting,
+		'connection_type' => $connection_type,
+	);
+}
+
+/**
+ * Build the runtime exclusion configuration from the stored settings.
+ *
+ * Persists the normalized path list to khse_option_excluded_list_filtered.
+ *
+ * @return array {
+ *     @type bool  $enable               Whether exclusion rules are enabled.
+ *     @type array $excluded_list        Normalized excluded paths.
+ *     @type array $excluded_get_vars    Excluded GET variables.
+ *     @type array $excluded_post_vars   Excluded POST variables.
+ *     @type array $excluded_cookie_vars Excluded cookie variables.
+ * }
+ */
+function khse_get_runtime_exclusion_config() {
+	$list = array();
+
+	foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_list', '' ) ) as $item ) {
+		$path = parse_url( $item, PHP_URL_PATH );
+		$path = is_string( $path ) ? trim( $path ) : '';
+
+		if ( '' === $path ) {
+			continue;
+		}
+
+		if ( '/' !== $path[0] ) {
+			$path = '/' . $path;
+		}
+
+		$list[] = '/' === $path ? '/' : untrailingslashit( $path );
+	}
+
+	$variables = array();
+
+	foreach ( array( 'get', 'post', 'cookie' ) as $type ) {
+		$variables[ $type ] = array();
+
+		foreach ( khse_get_lines_from_textarea( get_option( 'khse_option_excluded_' . $type . '_vars', '' ) ) as $item ) {
+			if ( preg_match( '/^[a-zA-Z0-9_-]+$/', $item ) ) {
+				$variables[ $type ][] = $item;
+			}
+		}
+	}
+
+	update_option( 'khse_option_excluded_list_filtered', implode( "\n", $list ) );
+
+	return array(
+		'enable'               => 'yes' === get_option( 'khse_option_exclusion_status', 'no' ),
+		'excluded_list'        => $list,
+		'excluded_get_vars'    => $variables['get'],
+		'excluded_post_vars'   => $variables['post'],
+		'excluded_cookie_vars' => $variables['cookie'],
+	);
+}

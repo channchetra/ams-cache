@@ -20,6 +20,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
  */
 function khse_get_runtime_module_files() {
 	return array(
+		'cache-identity.php',
 		'cache-core.php',
 		'brand-migration.php',
 		'cache-driver.php',
@@ -29,6 +30,7 @@ function khse_get_runtime_module_files() {
 		'nginx/cache-nginx-config.php',
 		'optimizer/settings.php',
 		'optimizer/report.php',
+		'optimizer/dom.php',
 		'optimizer/html.php',
 		'optimizer/css.php',
 		'optimizer/js.php',

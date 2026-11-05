@@ -179,6 +179,7 @@ require_once dirname( __DIR__ ) . '/inc/cache-purger.php';
 require_once dirname( __DIR__ ) . '/inc/preload/cache-preload.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/settings.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/report.php';
+require_once dirname( __DIR__ ) . '/inc/optimizer/dom.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/html.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/css.php';
 require_once dirname( __DIR__ ) . '/inc/optimizer/js.php';
