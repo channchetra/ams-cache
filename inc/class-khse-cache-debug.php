@@ -347,7 +347,7 @@ trait KHSE_Cache_Debug {
 		$size = $this->get_string_bytes( $data );
 		$file = $dir . '/' . $key . '.json';
 
-		khse_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->driver );
+		khse_delete_duplicate_stats_for_uri( $type, $this->get_request_uri(), $key, $this->get_driver() );
 
 		$written = @file_put_contents(
 			$file,
@@ -364,7 +364,7 @@ trait KHSE_Cache_Debug {
 			error_log( '[KH Speed Engine] Could not write cache stats row: ' . $file );
 		}
 
-		khse_enforce_cache_entry_limit( $this->driver );
+		khse_enforce_cache_entry_limit( $this->get_driver() );
 	}
 
 	/**

@@ -26,6 +26,15 @@ class ConventionsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( "'kh-speed-engine-code-highlight'", $menu );
 	}
 
+	public function test_plugin_action_links_always_return_the_links_array() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$links = array( 'deactivate' => '<a>Deactivate</a>' );
+
+		$this->assertSame( $links, khse_plugin_action_links( $links, 'other-plugin/other.php' ) );
+		$this->assertNotSame( $links, khse_plugin_action_links( $links, KHSE_PLUGIN_NAME ) );
+	}
+
 	public function test_benchmark_widget_title_uses_text_domain() {
 		$widget = file_get_contents( KHSE_PLUGIN_DIR . 'inc/class-khse-benchmark-widget.php' );
 

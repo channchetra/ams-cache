@@ -185,8 +185,9 @@ function khse_plugin_action_links( $links, $file ) {
 
 	if ( KHSE_PLUGIN_NAME === $file ) {
 		$links[] = '<a href="' . admin_url( 'admin.php?page=kh-speed-engine-settings' ) . '">' . __( 'Settings', 'kh-speed-engine' ) . '</a>';
-		return $links;
 	}
+
+	return $links;
 }
 
 /**

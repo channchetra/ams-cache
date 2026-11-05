@@ -80,6 +80,26 @@ function khse_option_set_enabled( $key, $enabled, $format = 'yes_no' ) {
 }
 
 /**
+ * Return the canonical cache driver catalog.
+ *
+ * @return array Driver key => translated label.
+ */
+function khse_get_driver_catalog() {
+	return array(
+		'file'      => __( 'File', 'kh-speed-engine' ),
+		'redis'     => __( 'Redis', 'kh-speed-engine' ),
+		'memcache'  => __( 'Memcache', 'kh-speed-engine' ),
+		'memcached' => __( 'Memcached', 'kh-speed-engine' ),
+		'apc'       => __( 'APC', 'kh-speed-engine' ),
+		'apcu'      => __( 'APCu', 'kh-speed-engine' ),
+		'wincache'  => __( 'WinCache', 'kh-speed-engine' ),
+		'mongo'     => __( 'MongoDB', 'kh-speed-engine' ),
+		'mysql'     => __( 'MySQL', 'kh-speed-engine' ),
+		'sqlite'    => __( 'SQLite', 'kh-speed-engine' ),
+	);
+}
+
+/**
  * Return the canonical settings schema.
  *
  * Each field maps a dashboard payload key to its option, default, sanitizer,
@@ -91,7 +111,7 @@ function khse_get_settings_schema() {
 	return array(
 		'cache'       => array(
 			'cachingStatus'       => array( 'option' => 'khse_option_caching_status', 'default' => 'disable', 'sanitize' => 'enable_disable', 'fallback' => 'disable', 'read' => 'enabled', 'config' => 'cache_enabled', 'config_type' => 'enabled' ),
-			'driver'              => array( 'option' => 'khse_option_driver', 'default' => 'file', 'sanitize' => 'enum', 'values' => array( 'file', 'redis', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'mongo', 'mysql', 'sqlite' ), 'fallback' => 'file', 'read' => 'raw', 'config' => 'cache_driver', 'config_type' => 'raw' ),
+			'driver'              => array( 'option' => 'khse_option_driver', 'default' => 'file', 'sanitize' => 'enum', 'values' => array_keys( khse_get_driver_catalog() ), 'fallback' => 'file', 'read' => 'raw', 'config' => 'cache_driver', 'config_type' => 'raw' ),
 			'ttlMechanism'        => array( 'option' => 'khse_option_ttl_mechanism', 'default' => 'enable', 'sanitize' => 'enable_disable', 'fallback' => 'enable', 'read' => 'enabled' ),
 			'ttl'                 => array( 'option' => 'khse_option_ttl', 'default' => 86400, 'sanitize' => 'absint', 'min' => 300, 'max' => 2592000, 'read' => 'int' ),
 			'cacheKeyPrefix'      => array( 'option' => 'khse_option_cache_key_prefix', 'default' => '', 'sanitize' => 'key', 'read' => 'cache_prefix', 'dynamic_default' => true, 'config' => 'cache_key_prefix', 'config_type' => 'raw' ),

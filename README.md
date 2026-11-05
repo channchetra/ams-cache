@@ -28,14 +28,19 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 | Module | Purpose |
 |--------|---------|
-| `cache-core.php` | Dir hash, upload dir, cache key, URI normalization, cacheable checks, config defaults |
-| `cache-driver.php` | Driver settings normalization + factory, cache entry limits |
+| `cache-core.php` | Stable include aggregator; loads identity, settings, storage, and policy |
+| `cache-identity.php` | Site directory hash and blog identity |
+| `cache-settings.php` | Canonical option schema, defaults, and typed setting accessors |
+| `cache-storage.php` | Upload/runtime/config/stats paths, driver configuration, config sync |
+| `cache-policy.php` | URI normalization, cacheability/exclusion rules, cache keys, read path |
+| `cache-driver.php` | Driver factory, availability checks, cache entry limits |
 | `cache-view.php` | SVG icons, benchmark footer markup/JS |
 | `nginx/cache-nginx.php` | Nginx static cache write/delete/clear |
 | `nginx/cache-nginx-config.php` | Nginx requirements check + config snippet generation |
 | `cache-purger.php` | Cache statistics + purge operations |
 | `optimizer/settings.php` | Optimization defaults, runtime state, workspace helpers |
 | `optimizer/report.php` | Optimization report build, storage, pruning, and summaries |
+| `optimizer/dom.php` | Shared HTML attribute helpers for the optimizer modules |
 | `optimizer/html.php` | HTML minification, media/LCP tags, font preconnect, deferral |
 | `optimizer/css.php` | CSS minify, conservative purge, local/external UCSS |
 | `optimizer/js.php` | JavaScript safety analysis and deferral |

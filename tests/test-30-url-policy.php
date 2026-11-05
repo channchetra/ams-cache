@@ -66,6 +66,12 @@ class UrlPolicyTest extends WP_UnitTestCase {
 		$this->assertCount( 11, $result['checks'] );
 	}
 
+	public function test_fragment_url_is_rejected() {
+		$result = khse_evaluate_cache_url_policy( home_url( '/about/#section' ), $this->config() );
+
+		$this->assertFalse( $result['cacheable'] );
+	}
+
 	public function test_full_same_site_url_is_cacheable() {
 		$url    = home_url( '/sample-page/' );
 		$result = khse_evaluate_cache_url_policy( $url, $this->config() );

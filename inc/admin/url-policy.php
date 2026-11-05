@@ -100,6 +100,10 @@ function khse_cache_policy_resolve_parts( $input, $parts, $home ) {
  * }
  */
 function khse_resolve_cache_policy_url( $input ) {
+	if ( false !== strpos( (string) $input, '#' ) ) {
+		return khse_cache_policy_invalid_resolution( __( 'Fragments are not sent to the server and cannot be cached.', 'kh-speed-engine' ) );
+	}
+
 	$home = wp_parse_url( home_url( '/' ) );
 
 	if ( ! is_array( $home ) || empty( $home['host'] ) ) {
@@ -339,21 +343,7 @@ function khse_cache_policy_query_check( $query, $query_vars ) {
 function khse_cache_policy_find_excluded_path( $path, $exclusion ) {
 	$excluded_list = isset( $exclusion['excluded_list'] ) && is_array( $exclusion['excluded_list'] ) ? $exclusion['excluded_list'] : array();
 
-	foreach ( $excluded_list as $entry ) {
-		$entry = is_string( $entry ) ? trim( $entry ) : '';
-
-		if ( '' === $entry ) {
-			continue;
-		}
-
-		$normalized = khse_normalize_cache_uri( $entry );
-
-		if ( '/' === $normalized || 0 === strpos( $path, $normalized ) ) {
-			return $normalized;
-		}
-	}
-
-	return '';
+	return khse_find_excluded_path( $path, $excluded_list );
 }
 
 /**

@@ -62,6 +62,25 @@ class CachePolicyParityTest extends WP_UnitTestCase {
 		$this->assertFalse( khse_request_has_cache_bypass_cookie() );
 	}
 
+	public function test_runtime_and_admin_exclusions_agree_on_prefix_boundaries() {
+		$config = array(
+			'exclusion' => array(
+				'enable'        => true,
+				'excluded_list' => array( '/news/' ),
+			),
+		);
+
+		$_SERVER['REQUEST_URI'] = '/newsletter/';
+
+		$this->assertFalse( khse_is_cache_request_excluded( $config ) );
+		$this->assertSame( '', khse_cache_policy_find_excluded_path( '/newsletter/', array( 'excluded_list' => array( '/news' ) ) ) );
+
+		$_SERVER['REQUEST_URI'] = '/news/2026/';
+
+		$this->assertTrue( khse_is_cache_request_excluded( $config ) );
+		$this->assertSame( '/news/', khse_cache_policy_find_excluded_path( '/news/2026/', array( 'excluded_list' => array( '/news' ) ) ) );
+	}
+
 	public function test_bypass_paths_are_rejected() {
 		foreach ( khse_get_cache_bypass_paths() as $path ) {
 			$this->assertFalse( khse_is_cacheable_document_path( '/' . $path ), $path );

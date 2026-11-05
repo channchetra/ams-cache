@@ -851,27 +851,40 @@ function khse_preload_cache( $limit = null ) {
 		return 0;
 	}
 
-	$limit         = khse_get_preload_limit( $limit );
-	delete_transient( 'khse_homepage_discovered_urls' );
-	$priority_urls = khse_get_homepage_priority_preload_urls( $limit );
-	$urls          = khse_get_preload_urls( $limit, $priority_urls );
+	if ( ! khse_acquire_preload_lock() ) {
+		// Another worker owns the queue; retry the rebuild shortly.
+		if ( function_exists( 'wp_schedule_single_event' ) ) {
+			wp_schedule_single_event( time() + 30, 'khse_preload_cache_event' );
+		}
 
-	update_option( 'khse_last_preload_time', time() );
-	update_option( 'khse_last_preload_count', count( $urls ) );
-	update_option( 'khse_last_preload_priority_count', count( $priority_urls ) );
-	update_option( 'khse_last_homepage_priority_preload_time', time() );
-	update_option( 'khse_preload_queue_total', count( $urls ) );
-	update_option( 'khse_preload_queue_processed', 0 );
-	update_option( 'khse_preload_queue_failed', 0 );
-	update_option( 'khse_preload_queue_remaining', count( $urls ) );
-	update_option( 'khse_preload_queue_started_time', time() );
-	update_option( 'khse_preload_queue_finished_time', 0 );
+		return 0;
+	}
 
-	set_transient( 'khse_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
+	try {
+		$limit = khse_get_preload_limit( $limit );
+		delete_transient( 'khse_homepage_discovered_urls' );
+		$priority_urls = khse_get_homepage_priority_preload_urls( $limit );
+		$urls          = khse_get_preload_urls( $limit, $priority_urls );
 
-	khse_schedule_preload_queue();
+		update_option( 'khse_last_preload_time', time() );
+		update_option( 'khse_last_preload_count', count( $urls ) );
+		update_option( 'khse_last_preload_priority_count', count( $priority_urls ) );
+		update_option( 'khse_last_homepage_priority_preload_time', time() );
+		update_option( 'khse_preload_queue_total', count( $urls ) );
+		update_option( 'khse_preload_queue_processed', 0 );
+		update_option( 'khse_preload_queue_failed', 0 );
+		update_option( 'khse_preload_queue_remaining', count( $urls ) );
+		update_option( 'khse_preload_queue_started_time', time() );
+		update_option( 'khse_preload_queue_finished_time', 0 );
 
-	return count( $urls );
+		set_transient( 'khse_preload_queue', $urls, 12 * HOUR_IN_SECONDS );
+
+		khse_schedule_preload_queue();
+
+		return count( $urls );
+	} finally {
+		khse_release_preload_lock();
+	}
 }
 
 /**
@@ -911,6 +924,11 @@ function khse_queue_preload_urls( $urls ) {
 		$queue  = array_values( array_unique( array_merge( $queue, $urls ) ) );
 
 		set_transient( 'khse_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
+
+		$processed = (int) get_option( 'khse_preload_queue_processed', 0 );
+		$failed    = (int) get_option( 'khse_preload_queue_failed', 0 );
+
+		update_option( 'khse_preload_queue_total', $processed + $failed + count( $queue ) );
 		update_option( 'khse_preload_queue_remaining', count( $queue ) );
 		khse_schedule_preload_queue();
 
@@ -1018,6 +1036,7 @@ function khse_process_preload_batch( $queue ) {
 	update_option( 'khse_preload_queue_processed', $processed );
 	update_option( 'khse_preload_queue_failed', $failed );
 	update_option( 'khse_preload_queue_remaining', count( $remaining ) );
+	update_option( 'khse_preload_queue_total', $processed + $failed + count( $remaining ) );
 
 	if ( empty( $remaining ) ) {
 		delete_transient( 'khse_preload_queue' );

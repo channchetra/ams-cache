@@ -116,7 +116,7 @@ function khse_enforce_cache_entry_limit( $driver = null ) {
  */
 function khse_driver_factory( $type ) {
 
-	$known_types = array( 'mysql', 'sqlite', 'redis', 'mongo', 'memcache', 'memcached', 'apc', 'apcu', 'wincache', 'file' );
+	$known_types = array_keys( khse_get_driver_catalog() );
 
 	if ( ! in_array( $type, $known_types, true ) ) {
 		$type = 'file';

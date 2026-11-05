@@ -52,16 +52,38 @@ class KHSE_Cache {
 	public $config = array();
 
 	/**
+	 * Whether the driver has been resolved for this request.
+	 *
+	 * @var bool
+	 */
+	private $driver_resolved = false;
+
+	/**
 	 * Constructer.
 	 */
 	public function __construct() {
-		$this->driver = khse_driver_factory( get_option( 'khse_option_driver' ) );
+		$this->config = khse_get_config_data();
+	}
 
-		if ( is_wp_error( $this->driver ) ) {
-			$this->driver = null;
+	/**
+	 * Resolve the cache driver on first use.
+	 *
+	 * Front-end requests that are not cacheable should never open a Redis,
+	 * database, or socket connection.
+	 *
+	 * @return \Shieldon\SimpleCache\Cache|null
+	 */
+	public function get_driver() {
+		if ( $this->driver_resolved ) {
+			return $this->driver;
 		}
 
-		$this->config = khse_get_config_data();
+		$this->driver_resolved = true;
+		$driver                = khse_driver_factory( get_option( 'khse_option_driver' ) );
+
+		$this->driver = is_wp_error( $driver ) ? null : $driver;
+
+		return $this->driver;
 	}
 
 	/**
@@ -218,11 +240,6 @@ class KHSE_Cache {
 			}
 		}
 
-		// Do not cache 404 page.
-		if ( is_404() ) {
-			$this->is_cache = false;
-			return;
-		}
 	}
 
 	/**
@@ -231,14 +248,16 @@ class KHSE_Cache {
 	 * @return void
 	 */
 	public function ob_start() {
-		if ( $this->driver ) {
+		$driver = $this->get_driver();
+
+		if ( $driver ) {
 			$config = $this->config;
 
 			$config['cache_enabled']      = 'enable' === get_option( 'khse_option_caching_status', 'disable' );
 			$config['cache_key_prefix']   = khse_get_cache_key_prefix();
 			$config['html_debug_comment'] = khse_option_is_enabled( 'khse_option_html_debug_comment', 'yes' );
 
-			$cached_content = khse_serve_cached_response( $config, $this->driver );
+			$cached_content = khse_serve_cached_response( $config, $driver );
 
 			if ( null !== $cached_content ) {
 				echo $cached_content;
@@ -299,7 +318,9 @@ class KHSE_Cache {
 		$cache_content = $content;
 		$debug_message = $this->debug_message( 'ob_stop' );
 
-		if ( $this->is_cache && $this->driver ) {
+		$driver = $this->get_driver();
+
+		if ( $this->is_cache && $driver ) {
 			$ttl = (int) get_option( 'khse_option_ttl' );
 
 			$cache_content .= $debug_message;
@@ -310,9 +331,17 @@ class KHSE_Cache {
 					$ttl = null;
 				}
 
-				$this->driver->set( $this->cache_key, $cache_content, $ttl );
-				khse_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
-				$this->log( $this->data_type, $this->cache_key, $cache_content );
+				try {
+					$written = $driver->set( $this->cache_key, $cache_content, $ttl );
+				} catch ( \Throwable $e ) {
+					$written = false;
+					error_log( '[KH Speed Engine] Could not write cache entry ' . $this->cache_key . ': ' . $e->getMessage() );
+				}
+
+				if ( $written ) {
+					khse_write_nginx_static_cache( $this->get_request_uri(), $cache_content );
+					$this->log( $this->data_type, $this->cache_key, $cache_content );
+				}
 			}
 		}
 

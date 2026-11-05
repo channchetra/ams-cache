@@ -13,6 +13,37 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 /**
+ * Find the first exclusion path matching a normalized request path.
+ *
+ * Matching is boundary-aware: `/news` matches `/news/2026/` but never
+ * `/newsletter/`. Both the runtime and the admin URL tester use this helper.
+ *
+ * @param string $path          Normalized request path.
+ * @param array  $excluded_list Exclusion entries.
+ *
+ * @return string Matched normalized entry, or '' when nothing matches.
+ */
+function khse_find_excluded_path( $path, $excluded_list ) {
+	$path = khse_normalize_cache_uri( $path );
+
+	foreach ( (array) $excluded_list as $entry ) {
+		$entry = is_string( $entry ) ? trim( $entry ) : '';
+
+		if ( '' === $entry ) {
+			continue;
+		}
+
+		$normalized = khse_normalize_cache_uri( $entry );
+
+		if ( '/' === $normalized || 0 === strpos( $path, $normalized ) ) {
+			return $normalized;
+		}
+	}
+
+	return '';
+}
+
+/**
  * Check whether the current request is excluded from the page cache.
  *
  * @param array $config Runtime config.
@@ -25,10 +56,8 @@ function khse_is_cache_request_excluded( $config ) {
 	if ( ! empty( $exclusion['enable'] ) ) {
 		$path = isset( $_SERVER['REQUEST_URI'] ) ? khse_normalize_cache_uri( $_SERVER['REQUEST_URI'] ) : '/';
 
-		foreach ( isset( $exclusion['excluded_list'] ) ? $exclusion['excluded_list'] : array() as $ignored_url ) {
-			if ( '' !== (string) $ignored_url && 0 === strpos( $path, $ignored_url ) ) {
-				return true;
-			}
+		if ( '' !== khse_find_excluded_path( $path, isset( $exclusion['excluded_list'] ) ? $exclusion['excluded_list'] : array() ) ) {
+			return true;
 		}
 
 		foreach ( array( 'get', 'post', 'cookie' ) as $type ) {

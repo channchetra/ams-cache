@@ -167,13 +167,33 @@ function khse_purge_cache_uri( $uri, $driver = null ) {
  * @return array|false Purge result, or false when the URL is invalid.
  */
 function khse_purge_permalink( $url, $driver = null ) {
-	if ( false === $url || null === $url || '' === trim( (string) $url ) ) {
+	if ( false === $url || null === $url ) {
 		return false;
 	}
 
-	$path = parse_url( (string) $url, PHP_URL_PATH );
+	$url = trim( (string) $url );
 
-	if ( false === $path ) {
+	if ( '' === $url || false !== strpos( $url, '#' ) ) {
+		return false;
+	}
+
+	$parts = wp_parse_url( $url );
+
+	if ( ! is_array( $parts ) ) {
+		return false;
+	}
+
+	$path  = isset( $parts['path'] ) ? (string) $parts['path'] : '';
+	$query = isset( $parts['query'] ) ? (string) $parts['query'] : '';
+
+	// Authority-form or malformed targets have no path to purge.
+	if ( '' === $path ) {
+		return false;
+	}
+
+	// A functional query such as ?p=123 is not cached, so purging its path
+	// would remove an unrelated page such as the homepage.
+	if ( '' !== $query && ! khse_is_cacheable_query_string( $query ) ) {
 		return false;
 	}
 

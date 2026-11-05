@@ -419,9 +419,6 @@ function khse_ajax_dashboard_apply_option_schema( $incoming, $schema ) {
 				$value = sanitize_key( (string) $value );
 				$value = in_array( $value, $rule['values'], true ) ? $value : $rule['fallback'];
 				break;
-
-			default:
-				$value = $value;
 		}
 
 		if ( isset( $rule['min'] ) ) {
@@ -587,10 +584,26 @@ function khse_ajax_dashboard_save_settings_callback() {
 		? __( 'Settings saved.', 'kh-speed-engine' )
 		: __( 'Settings saved, but the Expert Mode runtime file could not be written. Check the runtime directory permissions.', 'kh-speed-engine' );
 
+	$driver_warning = '';
+
+	if ( isset( $settings['cache']['driver'] ) ) {
+		$requested_driver = sanitize_key( (string) $settings['cache']['driver'] );
+		$stored_driver    = (string) get_option( 'khse_option_driver', 'file' );
+
+		if ( $requested_driver !== $stored_driver ) {
+			$driver_warning = sprintf(
+				/* translators: %s: cache driver key. */
+				__( 'The %s driver is unavailable, so the file driver was kept.', 'kh-speed-engine' ),
+				$requested_driver
+			);
+		}
+	}
+
 	wp_send_json_success(
 		array(
 			'message'       => $message,
 			'runtimeSynced' => (bool) $runtime_synced,
+			'driverWarning' => $driver_warning,
 			'status'        => khse_dashboard_get_status_data(),
 		)
 	);

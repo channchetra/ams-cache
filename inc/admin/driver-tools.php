@@ -163,18 +163,7 @@ function khse_dashboard_test_driver_connection( $type ) {
 		$type = get_option( 'khse_option_driver', 'file' );
 	}
 
-	$labels = array(
-		'file'      => __( 'File', 'kh-speed-engine' ),
-		'redis'     => __( 'Redis', 'kh-speed-engine' ),
-		'memcache'  => __( 'Memcache', 'kh-speed-engine' ),
-		'memcached' => __( 'Memcached', 'kh-speed-engine' ),
-		'apc'       => __( 'APC', 'kh-speed-engine' ),
-		'apcu'      => __( 'APCu', 'kh-speed-engine' ),
-		'wincache'  => __( 'WinCache', 'kh-speed-engine' ),
-		'mongo'     => __( 'MongoDB', 'kh-speed-engine' ),
-		'mysql'     => __( 'MySQL', 'kh-speed-engine' ),
-		'sqlite'    => __( 'SQLite', 'kh-speed-engine' ),
-	);
+	$labels = khse_get_driver_catalog();
 
 	if ( ! isset( $labels[ $type ] ) ) {
 		return array(

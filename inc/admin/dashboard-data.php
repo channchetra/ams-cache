@@ -347,18 +347,14 @@ function khse_dashboard_get_settings_data() {
 		$optimization[ $toggle_key ] = 'yes' === $optimization[ $toggle_key ] || true === $optimization[ $toggle_key ] || 'enable' === $optimization[ $toggle_key ];
 	}
 
-	$drivers = array(
-		array( 'value' => 'file', 'label' => __( 'File', 'kh-speed-engine' ) ),
-		array( 'value' => 'redis', 'label' => __( 'Redis', 'kh-speed-engine' ) ),
-		array( 'value' => 'memcache', 'label' => __( 'Memcache', 'kh-speed-engine' ) ),
-		array( 'value' => 'memcached', 'label' => __( 'Memcached', 'kh-speed-engine' ) ),
-		array( 'value' => 'apc', 'label' => __( 'APC', 'kh-speed-engine' ) ),
-		array( 'value' => 'apcu', 'label' => __( 'APCu', 'kh-speed-engine' ) ),
-		array( 'value' => 'wincache', 'label' => __( 'WinCache', 'kh-speed-engine' ) ),
-		array( 'value' => 'mongo', 'label' => __( 'MongoDB', 'kh-speed-engine' ) ),
-		array( 'value' => 'mysql', 'label' => __( 'MySQL', 'kh-speed-engine' ) ),
-		array( 'value' => 'sqlite', 'label' => __( 'SQLite', 'kh-speed-engine' ) ),
-	);
+	$drivers = array();
+
+	foreach ( khse_get_driver_catalog() as $value => $label ) {
+		$drivers[] = array(
+			'value' => $value,
+			'label' => $label,
+		);
+	}
 	$drivers      = array_map(
 		function ( $driver ) {
 			$driver['available'] = khse_dashboard_is_driver_available( $driver['value'] );
@@ -531,7 +527,9 @@ function khse_dashboard_get_status_data() {
 			'queueRemaining' => $queue_remaining,
 			'lastRun'        => khse_dashboard_format_time( (int) get_option( 'khse_last_preload_time', 0 ) ),
 			'lastPriority'   => khse_dashboard_format_time( (int) get_option( 'khse_last_homepage_priority_preload_time', 0 ) ),
-			'progress'       => $queue_total > 0 ? min( 100, round( ( $queue_processed / $queue_total ) * 100 ) ) : min( 100, round( ( max( $preload_count, $priority_count ) / $preload_limit ) * 100 ) ),
+			'progress'       => $queue_total > 0
+				? min( 100, round( ( ( $queue_processed + $queue_failed ) / $queue_total ) * 100 ) )
+				: min( 100, round( ( max( $preload_count, $priority_count ) / $preload_limit ) * 100 ) ),
 		),
 		'stats'       => khse_dashboard_get_stats_summary(),
 		'settings'    => khse_dashboard_get_settings_data(),
