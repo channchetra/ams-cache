@@ -179,7 +179,7 @@ function khse_purge_permalink( $url, $driver = null ) {
  * @return int
  */
 function khse_clear_all_cache( $sync = true ) {
-	if ( ! empty( $GLOBALS['khse_settings_batch'] ) ) {
+	if ( khse_settings_batch_active() ) {
 		return 0;
 	}
 

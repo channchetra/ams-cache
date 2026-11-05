@@ -68,12 +68,12 @@ class ConfigContractTest extends WP_UnitTestCase {
 	}
 
 	public function test_settings_batch_defers_clear_and_sync() {
-		$GLOBALS['khse_settings_batch'] = true;
+		khse_settings_batch_active( true );
 
 		$this->assertSame( 0, khse_clear_all_cache() );
 		$this->assertTrue( khse_sync_expert_mode_runtime() );
 
-		unset( $GLOBALS['khse_settings_batch'] );
+		khse_settings_batch_active( false );
 	}
 
 	public function test_config_write_reports_success() {

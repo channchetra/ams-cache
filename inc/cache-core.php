@@ -15,6 +15,26 @@ function khse_load_textdomain() {
 }
 
 /**
+ * Track whether a batched settings save is applying option values.
+ *
+ * Option hooks cannot receive a deferral flag, so the save entry point
+ * toggles this guard while it writes the payload.
+ *
+ * @param bool|null $active Pass a value to set the state; null to read it.
+ *
+ * @return bool
+ */
+function khse_settings_batch_active( $active = null ) {
+	static $is_active = false;
+
+	if ( null !== $active ) {
+		$is_active = (bool) $active;
+	}
+
+	return $is_active;
+}
+
+/**
  * Return the site directory hash.
  *
  * Pure: returns the persisted hash or a deterministic fallback without
@@ -747,7 +767,7 @@ function khse_update_config( $setting ) {
  * @return bool True when config (and the lock, if enabled) was written.
  */
 function khse_sync_expert_mode_runtime() {
-	if ( ! empty( $GLOBALS['khse_settings_batch'] ) ) {
+	if ( khse_settings_batch_active() ) {
 		return true;
 	}
 

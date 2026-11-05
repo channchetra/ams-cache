@@ -13,14 +13,14 @@ class AjaxEndpointsTest extends WP_Ajax_UnitTestCase {
 
 	public function set_up() {
 		parent::set_up();
-		unset( $GLOBALS['khse_settings_batch'] );
+		khse_settings_batch_active( false );
 
 		update_option( 'khse_option_caching_status', 'enable' );
 		update_option( 'khse_option_preload_cache', 'yes' );
 	}
 
 	public function tear_down() {
-		unset( $GLOBALS['khse_settings_batch'] );
+		khse_settings_batch_active( false );
 		delete_option( 'khse_option_ttl' );
 		delete_option( 'khse_option_caching_status' );
 		delete_option( 'khse_option_preload_cache' );

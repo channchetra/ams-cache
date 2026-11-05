@@ -71,7 +71,6 @@ function khse_boot_cache_runtime() {
 	}
 
 	$booted = true;
-	khse_maybe_migrate_legacy_brand();
 
 	$cache = new KHSE_Cache();
 	$cache->init();
@@ -82,16 +81,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 	// This section is for unit testing.
 	if ( defined( 'KHSE_PLUGIN_UNIT_TEST' ) ) {
-		$required_files = array(
-			'register',
-			'menu',
-			'update-setting',
-			'driver-tools',
-			'expert-mode-snippet',
-			'dashboard-data',
-			'ajax-action',
-		);
-
 		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
 		// Composer's autoloader prepends itself to the SPL stack, so it must be
 		// loaded first and the local library loader registered afterwards to win.
@@ -102,9 +91,8 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		require_once KHSE_PLUGIN_DIR . 'inc/admin-bar.php';
 		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
 
-		foreach ( $required_files as $file ) {
-			require_once KHSE_PLUGIN_DIR . 'inc/admin/' . $file . '.php';
-		}
+		khse_load_admin_modules();
+		require_once KHSE_PLUGIN_DIR . 'inc/admin/ajax-action.php';
 
 		register_activation_hook( __FILE__, 'khse_activation' );
 		register_deactivation_hook( __FILE__, 'khse_deactivation' );
@@ -132,19 +120,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			khse_load_textdomain();
 
 			if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-
-				$required_files = array(
-					'register',               // Event: activate and uninstall plugin.
-					'menu',                   // Display menu link and render setting page.
-					'update-setting',         // Event: update settings.
-					'driver-tools',           // Driver probing and connection tests.
-					'expert-mode-snippet',    // Expert Mode code generation.
-					'dashboard-data',         // Dashboard DTO and status payloads.
-				);
-
-				foreach ( $required_files as $file ) {
-					require_once KHSE_PLUGIN_DIR . 'inc/admin/' . $file . '.php';
-				}
+				khse_load_admin_modules();
 			} else {
 
 				require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
