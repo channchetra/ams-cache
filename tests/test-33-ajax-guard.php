@@ -105,3 +105,37 @@ class AjaxGuardTest extends WP_Ajax_UnitTestCase {
 		$this->assertArrayHasKey( 'enabled', $response['data'] );
 	}
 }
+
+class PurgeCurrentPagePrivacyTest extends WP_Ajax_UnitTestCase {
+
+	public function set_up() {
+		parent::set_up();
+		$this->set_permalink_structure( '/%postname%/' );
+	}
+
+	public function test_author_purge_response_does_not_expose_admin_status() {
+		$author_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		$post_id   = self::factory()->post->create(
+			array(
+				'post_author' => $author_id,
+				'post_status' => 'publish',
+			)
+		);
+
+		wp_set_current_user( $author_id );
+		$_POST['_wpnonce'] = wp_create_nonce( 'khse_purge_current_page_' . khse_get_dir_hash() );
+		$_POST['url']      = get_permalink( $post_id );
+
+		try {
+			$this->_handleAjax( 'khse_action_purge_current_page' );
+		} catch ( WPAjaxDieContinueException $e ) {
+			// Expected.
+		}
+
+		$response = json_decode( $this->_last_response, true );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertArrayNotHasKey( 'status', $response['data'] );
+		$this->assertArrayHasKey( 'removed', $response['data'] );
+	}
+}

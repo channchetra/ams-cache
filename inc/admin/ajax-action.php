@@ -208,7 +208,7 @@ function khse_ajax_purge_current_page_callback() {
 				__( 'Cache purged for current page: %s', 'kh-speed-engine' ),
 				$result['uri']
 			),
-			'status'  => khse_dashboard_get_status_data(),
+			'removed' => (int) $result['removed'],
 		)
 	);
 }
