@@ -306,7 +306,7 @@ smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $th
 
 $preload_source = file_get_contents( dirname( __DIR__ ) . '/inc/cache-preload.php' );
 smoke_assert( false !== strpos( $preload_source, "add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );" ), 'enabled preload reschedules after deployment' );
-$admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/functions.php' );
+$admin_source = file_get_contents( dirname( __DIR__ ) . '/inc/admin/expert-mode-snippet.php' );
 smoke_assert( false !== strpos( $admin_source, 'khse_expert_mode_snippet_matches( khse_get_wp_config_contents(), $upload_dir, $runtime_dir )' ), 'Expert Mode readiness checks private runtime path' );
 
 echo "KH Speed Engine smoke tests passed\n";

@@ -67,7 +67,9 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 			'register',
 			'menu',
 			'update-setting',
-			'functions',
+			'driver-tools',
+			'expert-mode-snippet',
+			'dashboard-data',
 			'ajax-action',
 		);
 
@@ -119,7 +121,9 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 					'register',               // Event: activate and uninstall plugin.
 					'menu',                   // Display menu link and render setting page.
 					'update-setting',         // Event: update settings.
-					'functions',              // Helper functions used in admin scope.
+					'driver-tools',           // Driver probing and connection tests.
+					'expert-mode-snippet',    // Expert Mode code generation.
+					'dashboard-data',         // Dashboard DTO and status payloads.
 				);
 
 				foreach ( $required_files as $file ) {

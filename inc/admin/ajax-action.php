@@ -11,7 +11,9 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
-require_once KHSE_PLUGIN_DIR . 'inc/admin/functions.php';
+require_once KHSE_PLUGIN_DIR . 'inc/admin/driver-tools.php';
+require_once KHSE_PLUGIN_DIR . 'inc/admin/expert-mode-snippet.php';
+require_once KHSE_PLUGIN_DIR . 'inc/admin/dashboard-data.php';
 require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
 
 add_action( 'wp_ajax_khse_action_clear_cache', 'khse_ajax_clear_cache_callback' );

@@ -25,6 +25,13 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/admin/option-schema.php' );
 	}
 
+	public function test_admin_support_modules_are_split() {
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/admin/dashboard-data.php' );
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/admin/driver-tools.php' );
+		$this->assertFileExists( KHSE_PLUGIN_DIR . 'inc/admin/expert-mode-snippet.php' );
+		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/admin/functions.php' );
+	}
+
 	public function test_runtime_config_helpers_live_in_core() {
 		foreach ( array( 'khse_get_runtime_exclusion_config', 'khse_update_config', 'khse_sync_expert_mode_runtime' ) as $function ) {
 			$reflection = new ReflectionFunction( $function );

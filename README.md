@@ -40,6 +40,8 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `optimizer/css.php` | CSS minify, conservative purge, local/external UCSS |
 | `optimizer/js.php` | JavaScript safety analysis and deferral |
 | `optimizer/pipeline.php` | Pipeline orchestration and requirement checks |
+
+The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), and `admin/expert-mode-snippet.php` (code generation and readiness checks). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
 | `cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
 | `brand-migration.php` | One-time legacy option and storage migration |
 | `cache-url-policy.php` | Cache eligibility checks for the admin URL tester |
