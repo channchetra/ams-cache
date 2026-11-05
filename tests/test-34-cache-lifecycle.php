@@ -97,6 +97,16 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		@unlink( $file );
 	}
 
+	public function test_purge_does_not_count_failed_driver_deletes() {
+		$result = khse_purge_cache_uri( '/failed-delete/', new class() {
+			public function delete( $key ) {
+				return false;
+			}
+		} );
+
+		$this->assertSame( 0, $result['removed'] );
+	}
+
 	public function test_purge_skips_non_document_paths() {
 		$result = khse_purge_cache_uri( '/assets/app.css', new class() {
 			public function delete( $key ) {

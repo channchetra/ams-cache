@@ -129,6 +129,8 @@ if ( 'yes' === $option_uninstall ) {
 	delete_option( 'khse_preload_queue_remaining' );
 	delete_option( 'khse_preload_queue_started_time' );
 	delete_option( 'khse_preload_queue_finished_time' );
+	delete_option( 'khse_preload_queue_lock' );
+	delete_option( 'khse_preload_bootstrap_version' );
 
 	$dirs = array(
 		WP_CONTENT_DIR . '/uploads/kh-speed-engine',

@@ -48,6 +48,22 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		update_option( 'khse_option_caching_status', 'enable' );
 	}
 
+	public function test_preload_lock_is_exclusive_and_reclaims_stale_locks() {
+		delete_option( 'khse_preload_queue_lock' );
+
+		$this->assertTrue( khse_acquire_preload_lock() );
+		$this->assertFalse( khse_acquire_preload_lock() );
+
+		khse_release_preload_lock();
+		$this->assertTrue( khse_acquire_preload_lock() );
+		khse_release_preload_lock();
+
+		update_option( 'khse_preload_queue_lock', time() - 400 );
+		$this->assertTrue( khse_acquire_preload_lock() );
+
+		khse_release_preload_lock();
+	}
+
 	public function test_missing_queue_transient_resets_remaining_when_enabled() {
 		delete_transient( 'khse_preload_queue' );
 		set_transient( 'khse_preload_queue', null, HOUR_IN_SECONDS );

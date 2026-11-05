@@ -79,6 +79,41 @@ function khse_schedule_preload_queue( $delay = 15 ) {
 }
 
 /**
+ * Acquire the preload queue lock.
+ *
+ * WordPress cron can overlap with an admin request that enqueues URLs.
+ * The lock is stored as an option so every PHP worker sees it.
+ *
+ * @param int $ttl Seconds before an abandoned lock can be reclaimed.
+ *
+ * @return bool
+ */
+function khse_acquire_preload_lock( $ttl = 300 ) {
+	if ( ! function_exists( 'add_option' ) || ! function_exists( 'delete_option' ) ) {
+		return true;
+	}
+
+	$lock = (int) get_option( 'khse_preload_queue_lock', 0 );
+
+	if ( $lock > 0 && ( time() - $lock ) > (int) $ttl ) {
+		delete_option( 'khse_preload_queue_lock' );
+	}
+
+	return (bool) add_option( 'khse_preload_queue_lock', time(), '', false );
+}
+
+/**
+ * Release the preload queue lock.
+ *
+ * @return void
+ */
+function khse_release_preload_lock() {
+	if ( function_exists( 'delete_option' ) ) {
+		delete_option( 'khse_preload_queue_lock' );
+	}
+}
+
+/**
  * Clear stale queue state when preload cannot run.
  *
  * @return void
@@ -857,16 +892,32 @@ function khse_queue_preload_urls( $urls ) {
 		return 0;
 	}
 
-	$queue = get_transient( 'khse_preload_queue' );
-	$queue = is_array( $queue ) ? $queue : array();
-	$before = count( $queue );
-	$queue = array_values( array_unique( array_merge( $queue, $urls ) ) );
+	$acquired = khse_acquire_preload_lock();
 
-	set_transient( 'khse_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
-	update_option( 'khse_preload_queue_remaining', count( $queue ) );
-	khse_schedule_preload_queue();
+	for ( $attempt = 0; ! $acquired && $attempt < 5; $attempt++ ) {
+		usleep( 20000 );
+		$acquired = khse_acquire_preload_lock();
+	}
 
-	return count( $queue ) - $before;
+	if ( ! $acquired ) {
+		error_log( '[KH Speed Engine] Preload queue is locked; could not enqueue URLs.' );
+		return 0;
+	}
+
+	try {
+		$queue  = get_transient( 'khse_preload_queue' );
+		$queue  = is_array( $queue ) ? $queue : array();
+		$before = count( $queue );
+		$queue  = array_values( array_unique( array_merge( $queue, $urls ) ) );
+
+		set_transient( 'khse_preload_queue', $queue, 12 * HOUR_IN_SECONDS );
+		update_option( 'khse_preload_queue_remaining', count( $queue ) );
+		khse_schedule_preload_queue();
+
+		return count( $queue ) - $before;
+	} finally {
+		khse_release_preload_lock();
+	}
 }
 
 /**
@@ -917,14 +968,33 @@ function khse_process_preload_queue() {
 		return 0;
 	}
 
-	$queue = get_transient( 'khse_preload_queue' );
-
-	if ( empty( $queue ) || ! is_array( $queue ) ) {
-		delete_transient( 'khse_preload_queue' );
-		update_option( 'khse_preload_queue_remaining', 0 );
+	if ( ! khse_acquire_preload_lock() ) {
 		return 0;
 	}
 
+	try {
+		$queue = get_transient( 'khse_preload_queue' );
+
+		if ( empty( $queue ) || ! is_array( $queue ) ) {
+			delete_transient( 'khse_preload_queue' );
+			update_option( 'khse_preload_queue_remaining', 0 );
+			return 0;
+		}
+
+		return khse_process_preload_batch( $queue );
+	} finally {
+		khse_release_preload_lock();
+	}
+}
+
+/**
+ * Process one batch of preload URLs. Caller must hold the queue lock.
+ *
+ * @param array $queue Queued URLs.
+ *
+ * @return int Number of dispatched URLs.
+ */
+function khse_process_preload_batch( $queue ) {
 	$queue      = array_values( array_unique( array_filter( $queue ) ) );
 	$batch_size = khse_get_preload_batch_size();
 	$batch      = array_slice( $queue, 0, $batch_size );

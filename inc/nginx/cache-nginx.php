@@ -130,9 +130,10 @@ function khse_write_nginx_static_cache( $uri, $content ) {
 		return false;
 	}
 
-	$result = file_put_contents( $file, $content, LOCK_EX );
+	$result = @file_put_contents( $file, $content, LOCK_EX );
 
 	if ( false === $result ) {
+		error_log( '[KH Speed Engine] Could not write Nginx static cache file: ' . $file );
 		return false;
 	}
 
@@ -155,7 +156,7 @@ function khse_delete_nginx_static_cache( $uri ) {
 		return false;
 	}
 
-	return unlink( $file );
+	return @unlink( $file );
 }
 
 /**
@@ -178,16 +179,16 @@ function khse_clear_nginx_static_cache() {
 
 	foreach ( $files as $file ) {
 		if ( $file->isDir() ) {
-			rmdir( $file->getPathname() );
+			@rmdir( $file->getPathname() );
 			continue;
 		}
 
-		if ( unlink( $file->getPathname() ) ) {
+		if ( @unlink( $file->getPathname() ) ) {
 			$removed++;
 		}
 	}
 
-	rmdir( $dir );
+	@rmdir( $dir );
 
 	return $removed;
 }

@@ -299,8 +299,9 @@ $plugin_source = file_get_contents( dirname( __DIR__ ) . '/kh-speed-engine.php' 
 smoke_assert( false !== strpos( $plugin_source, "require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';" ), 'post purge hooks load outside admin-only branch' );
 $post_hooks_source = file_get_contents( dirname( __DIR__ ) . '/inc/update-post.php' );
 smoke_assert( false !== strpos( $post_hooks_source, "add_action( 'wp_trash_post', 'khse_purge_post_before_trash', 10, 2 );" ), 'trash purge hook runs before status change' );
-smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post->ID );' ), 'status changes warm related post archives' );
-smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post_ID );' ), 'new and updated posts warm their own page' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_queue_critical_preload_urls( $post_id );' ), 'status changes warm related post archives' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_purge_post_cache_once( $post->ID, $post, $driver );' ), 'new and updated posts warm their own page' );
+smoke_assert( false !== strpos( $post_hooks_source, 'khse_post_cache_purge_guard' ), 'overlapping post hooks share one purge guard' );
 $cache_source = file_get_contents( dirname( __DIR__ ) . '/inc/class-khse-cache.php' );
 smoke_assert( false === strpos( $cache_source, 'if ( ! khse_is_homepage_uri( $this->get_request_uri() ) )' ), 'localized front pages can be cached by their own URI' );
 

@@ -7,6 +7,11 @@
 
 class PostInvalidationTest extends WP_UnitTestCase {
 
+	public function set_up() {
+		parent::set_up();
+		khse_reset_post_cache_purge_guard();
+	}
+
 	public function tear_down() {
 		delete_option( 'khse_option_post_archives' );
 		delete_option( 'khse_option_post_homepage' );
@@ -50,7 +55,7 @@ class PostInvalidationTest extends WP_UnitTestCase {
 		$post_id = self::factory()->post->create( array( 'post_status' => 'publish' ) );
 		delete_transient( 'khse_preload_queue' );
 		wp_clear_scheduled_hook( 'khse_preload_queue_event' );
-		unset( $GLOBALS['khse_recently_published_post_ids'][ $post_id ] );
+		khse_reset_post_cache_purge_guard();
 
 		khse_update_post( $post_id, get_post( $post_id ), true );
 
@@ -64,6 +69,34 @@ class PostInvalidationTest extends WP_UnitTestCase {
 		delete_transient( 'khse_preload_queue' );
 		wp_clear_scheduled_hook( 'khse_preload_queue_event' );
 		delete_option( 'khse_option_preload_cache' );
+	}
+
+	public function test_overlapping_post_hooks_purge_once_per_request() {
+		update_option( 'khse_option_caching_status', 'enable' );
+
+		$post_id = self::factory()->post->create( array( 'post_status' => 'publish' ) );
+		$post    = get_post( $post_id );
+		$driver  = new class() {
+			public $deletes = 0;
+
+			public function delete( $key ) {
+				$this->deletes++;
+				return true;
+			}
+		};
+
+		khse_reset_post_cache_purge_guard();
+
+		$this->assertTrue( khse_purge_post_cache_once( $post_id, $post, $driver ) );
+
+		$deletes = $driver->deletes;
+
+		$this->assertGreaterThan( 0, $deletes );
+		$this->assertFalse( khse_purge_post_cache_once( $post_id, $post, $driver ) );
+		$this->assertSame( $deletes, $driver->deletes );
+
+		delete_transient( 'khse_preload_queue' );
+		wp_clear_scheduled_hook( 'khse_preload_queue_event' );
 	}
 
 	public function test_purge_post_cache_urls_uses_the_driver_for_each_url() {

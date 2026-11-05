@@ -18,6 +18,67 @@ add_action( 'set_object_terms', 'khse_update_post_terms', 10, 6 );
 add_filter( 'post_updated_messages', 'khse_notice_after_update_post' );
 
 /**
+ * Track which posts have already been purged in this process.
+ *
+ * @param int  $post_id Post ID.
+ * @param bool $reset   Clear the guard instead of checking it.
+ *
+ * @return bool True when the post was already purged.
+ */
+function khse_post_cache_purge_guard( $post_id, $reset = false ) {
+	static $purged = array();
+
+	if ( $reset ) {
+		$purged = array();
+		return false;
+	}
+
+	if ( isset( $purged[ $post_id ] ) ) {
+		return true;
+	}
+
+	$purged[ $post_id ] = true;
+
+	return false;
+}
+
+/**
+ * Reset the post purge guard between logical requests.
+ *
+ * Long-running processes such as WP-CLI and the test suite can reuse post
+ * IDs across logical requests, so they must clear the guard explicitly.
+ *
+ * @return void
+ */
+function khse_reset_post_cache_purge_guard() {
+	khse_post_cache_purge_guard( 0, true );
+}
+
+/**
+ * Purge one post and queue its critical preload URLs once per request.
+ *
+ * Post updates fire several overlapping hooks (save_post, status
+ * transitions, term assignment, trash). Coalesce them by post ID so a
+ * single change cannot repeat the purge and preload work.
+ *
+ * @param int                            $post_id Post ID.
+ * @param WP_Post|null                   $post    Post object.
+ * @param \Shieldon\SimpleCache\Cache|null $driver  Optional cache driver.
+ *
+ * @return bool True when this call performed the purge.
+ */
+function khse_purge_post_cache_once( $post_id, $post, $driver = null ) {
+	if ( khse_post_cache_purge_guard( $post_id ) ) {
+		return false;
+	}
+
+	khse_purge_post_cache_urls( $post_id, $post, $driver );
+	khse_queue_critical_preload_urls( $post_id );
+
+	return true;
+}
+
+/**
  * Delete the cache of the post that is just updated.
  *
  * @return void
@@ -35,11 +96,6 @@ function khse_update_post( $post_ID, $post, $update ) {
 			return;
 		}
 
-		if ( ! empty( $GLOBALS['khse_recently_published_post_ids'][ $post_ID ] ) ) {
-			unset( $GLOBALS['khse_recently_published_post_ids'][ $post_ID ] );
-			return;
-		}
-
 		$post_type = get_post_type_object( $post->post_type );
 
 		if ( ! $post_type || ! $post_type->public ) {
@@ -53,8 +109,7 @@ function khse_update_post( $post_ID, $post, $update ) {
 			$driver = null;
 		}
 
-		khse_purge_post_cache_urls( $post_ID, $post, $driver );
-		khse_queue_critical_preload_urls( $post_ID );
+		khse_purge_post_cache_once( $post_ID, $post, $driver );
 	}
 }
 
@@ -89,8 +144,7 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 	}
 
 	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
-		khse_purge_post_cache_urls( $post->ID, $post, $driver );
-		khse_queue_critical_preload_urls( $post->ID );
+		khse_purge_post_cache_once( $post->ID, $post, $driver );
 		return;
 	}
 
@@ -98,10 +152,7 @@ function khse_update_post_status( $new_status, $old_status, $post ) {
 		return;
 	}
 
-	$GLOBALS['khse_recently_published_post_ids'][ $post->ID ] = true;
-
-	khse_purge_post_cache_urls( $post->ID, $post, $driver );
-	khse_queue_critical_preload_urls( $post->ID );
+	khse_purge_post_cache_once( $post->ID, $post, $driver );
 }
 
 /**
@@ -129,8 +180,7 @@ function khse_purge_post_before_trash( $post_ID, $previous_status = '' ) {
 		$driver = null;
 	}
 
-	khse_purge_post_cache_urls( $post_ID, $post, $driver );
-	khse_queue_critical_preload_urls( $post_ID );
+	khse_purge_post_cache_once( $post_ID, $post, $driver );
 }
 
 /**
@@ -166,8 +216,7 @@ function khse_delete_post( $post_ID, $post = null ) {
 		$driver = null;
 	}
 
-	khse_purge_post_cache_urls( $post_ID, $post, $driver );
-	khse_queue_critical_preload_urls( $post_ID );
+	khse_purge_post_cache_once( $post_ID, $post, $driver );
 }
 
 /**
@@ -208,8 +257,7 @@ function khse_update_post_terms( $object_id, $terms, $tt_ids, $taxonomy, $append
 		$driver = null;
 	}
 
-	khse_purge_post_cache_urls( $object_id, $post, $driver );
-	khse_queue_critical_preload_urls( $object_id );
+	khse_purge_post_cache_once( $object_id, $post, $driver );
 }
 
 /**
