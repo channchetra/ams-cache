@@ -338,30 +338,7 @@ function khse_dashboard_get_optimization_report_summary() {
  * @return bool
  */
 function khse_dashboard_is_driver_available( $driver ) {
-	switch ( $driver ) {
-		case 'file':
-			return true;
-		case 'redis':
-			return extension_loaded( 'redis' );
-		case 'memcache':
-			return extension_loaded( 'memcache' );
-		case 'memcached':
-			return extension_loaded( 'memcached' );
-		case 'apc':
-			return extension_loaded( 'apc' );
-		case 'apcu':
-			return extension_loaded( 'apcu' );
-		case 'wincache':
-			return extension_loaded( 'wincache' );
-		case 'mongo':
-			return extension_loaded( 'mongodb' );
-		case 'mysql':
-			return extension_loaded( 'mysqli' ) || extension_loaded( 'pdo_mysql' );
-		case 'sqlite':
-			return extension_loaded( 'sqlite3' ) || extension_loaded( 'pdo_sqlite' );
-		default:
-			return false;
-	}
+	return khse_is_driver_available( $driver );
 }
 
 /**

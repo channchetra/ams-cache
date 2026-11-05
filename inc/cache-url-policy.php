@@ -196,16 +196,7 @@ function khse_cache_policy_driver_check( $config ) {
 	$driver = isset( $config['cache_driver'] ) ? sanitize_key( (string) $config['cache_driver'] ) : '';
 	$driver = '' !== $driver ? $driver : sanitize_key( (string) get_option( 'khse_option_driver', 'file' ) );
 
-	if ( ! function_exists( 'khse_dashboard_is_driver_available' ) ) {
-		return khse_cache_policy_check(
-			'driver',
-			__( 'Cache driver', 'kh-speed-engine' ),
-			'note',
-			__( 'Driver availability cannot be checked in this context.', 'kh-speed-engine' )
-		);
-	}
-
-	$available = khse_dashboard_is_driver_available( $driver );
+	$available = khse_is_driver_available( $driver );
 
 	return khse_cache_policy_check(
 		'driver',
