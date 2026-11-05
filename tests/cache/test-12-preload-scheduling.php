@@ -18,6 +18,12 @@ class PreloadSchedulingTest extends WP_UnitTestCase {
 		delete_transient( 'khse_preload_queue' );
 	}
 
+	public function test_preload_private_network_detection() {
+		$this->assertTrue( khse_preload_host_is_private_network( '192.168.128.4' ) );
+		$this->assertTrue( khse_preload_host_is_private_network( '10.0.0.5' ) );
+		$this->assertFalse( khse_preload_host_is_private_network( '8.8.8.8' ) );
+	}
+
 	public function test_preload_sslverify_accepts_private_network_hosts() {
 		$this->assertFalse( khse_preload_should_verify_ssl( 'https://192.168.128.4/' ) );
 		$this->assertFalse( khse_preload_should_verify_ssl( 'https://10.0.0.5/' ) );

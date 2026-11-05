@@ -13,6 +13,22 @@ if ( ! defined( 'KHSE_INC' ) ) {
 }
 
 /**
+ * Check whether a hostname resolves to a private or reserved network.
+ *
+ * @param string $host Hostname or IP address.
+ *
+ * @return bool
+ */
+function khse_preload_host_is_private_network( $host ) {
+	$resolved = gethostbyname( (string) $host );
+
+	return (bool) (
+		filter_var( $resolved, FILTER_VALIDATE_IP ) &&
+		! filter_var( $resolved, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE )
+	);
+}
+
+/**
  * Check whether a hostname resolves only to the local machine.
  *
  * @param string $host Hostname or IP address.
@@ -70,17 +86,7 @@ function khse_preload_should_verify_ssl( $url ) {
 		return $verify;
 	}
 
-	if ( khse_preload_host_is_loopback( $url_parts['host'] ) ) {
-		return false;
-	}
-
-	// Internal container/proxy hostnames often use a self-signed certificate.
-	$resolved = gethostbyname( $url_parts['host'] );
-
-	if (
-		filter_var( $resolved, FILTER_VALIDATE_IP ) &&
-		! filter_var( $resolved, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE )
-	) {
+	if ( khse_preload_host_is_loopback( $url_parts['host'] ) || khse_preload_host_is_private_network( $url_parts['host'] ) ) {
 		return false;
 	}
 

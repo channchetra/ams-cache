@@ -11,7 +11,7 @@
 - Self-hosted the Google Sans variable font for the admin UI.
 - Removed the WooCommerce integration.
 - Preload now builds immediately when enabled or changed and drains through admin/AJAX shutdown plus an internal token endpoint, so it no longer depends on WP-Cron or front-end traffic.
-- Preload dispatch is non-blocking to avoid deadlocking single-worker FPM pools on loopback requests, and private-network hosts with self-signed certificates skip TLS verification.
+- Private-network and loopback preload targets dispatch non-blocking to avoid deadlocking FPM on loopback requests and skip internal self-signed TLS; public hosts keep blocking, certificate-verified preloading.
 - Post publish/edit/delete preload work drains on the same admin request.
 - Refresh status now updates data only: it no longer shows a "Settings saved" toast or overwrites unsaved edits.
 - Fixed fragment-only homepage links being queued as fake preload URLs.
