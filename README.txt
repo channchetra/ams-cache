@@ -144,7 +144,6 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 = 3.0.0 (5/23/2026) =
 
 * Add upload-only single image optimization retry queue so new uploads can convert automatically without touching the manual batch queue.
-* Convert upload metadata to the selected primary WebP format before offload plugins read the attachment.
 * Hand deferred upload retries back to Advanced Media Offloader and keep normal wp_update_attachment_metadata flow for WP Offload Media.
 * Add cache driver connection tests plus restored MongoDB user, password, database, and collection settings.
 * Move Performance reports back into the Overview tab with summary cards.
@@ -153,9 +152,7 @@ Japanese (ja_JP) by [Colocal](https://colocal.com).
 = 2.8.0 (5/21/2026) =
 
 * Add External UCSS Generation for same-site local stylesheet files with max-size guardrails, PurgeCSS safelist support, and fail-open behavior.
-* Add WebP Image Optimization settings, upload-time queueing, background batch processing, and safe attachment HTML rewriting.
 * Add Performance dashboard cards for External UCSS savings and image optimizer queue/status.
-* Add Queue Images action for the 200 newest JPEG/PNG/WebP attachments.
 * Restrict image writes to uploads, preserve originals, skip unsupported types, and keep remote/offloaded URL rewriting disabled unless explicitly enabled.
 
 = 2.7.0 (5/15/2026) =

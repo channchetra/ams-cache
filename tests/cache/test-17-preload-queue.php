@@ -48,6 +48,34 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		update_option( 'khse_option_caching_status', 'enable' );
 	}
 
+	public function test_homepage_discovery_crawls_and_caches_same_site_links() {
+		$home = home_url( '/' );
+
+		$response = static function ( $pre, $args, $url ) use ( $home ) {
+			if ( $url === $home ) {
+				return array(
+					'headers'  => array(),
+					'body'     => '<a href="/one/">One</a><a href="/two/">Two</a>',
+					'response' => array( 'code' => 200, 'message' => 'OK' ),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			}
+
+			return $pre;
+		};
+
+		delete_transient( 'khse_homepage_discovered_urls' );
+		add_filter( 'pre_http_request', $response, 20, 3 );
+		$urls = khse_crawl_homepage_discovered_urls( 10 );
+		remove_filter( 'pre_http_request', $response, 20 );
+
+		$this->assertContains( home_url( '/one/' ), $urls );
+		$this->assertContains( home_url( '/two/' ), $urls );
+
+		delete_transient( 'khse_homepage_discovered_urls' );
+	}
+
 	public function test_preload_batch_records_failed_urls_and_clears_the_queue() {
 		update_option( 'khse_option_preload_cache', 'yes' );
 		update_option( 'khse_option_caching_status', 'enable' );

@@ -31,7 +31,9 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `cache/cache-core.php` | Stable include aggregator; loads identity, settings, storage, and policy |
 | `cache/cache-identity.php` | Site directory hash and blog identity |
 | `cache/cache-settings.php` | Canonical option schema, defaults, and typed setting accessors |
-| `cache/cache-storage.php` | Upload/runtime/config/stats paths, driver configuration, config sync |
+| `cache/cache-storage.php` | Upload/runtime paths, config persistence, sync |
+| `cache/cache-stats.php` | Cache statistics index and cache-type catalog |
+| `cache/cache-driver-settings.php` | Driver defaults, advanced option mapping, connection types |
 | `cache/cache-policy.php` | URI normalization, cacheability/exclusion rules, cache keys, read path |
 | `cache/cache-driver.php` | Driver factory, availability checks, cache entry limits |
 | `cache/cache-view.php` | SVG icons, benchmark footer markup/JS |
@@ -45,11 +47,11 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 | `optimizer/css.php` | CSS minify, conservative purge, local/external UCSS |
 | `optimizer/js.php` | JavaScript safety analysis and deferral |
 | `optimizer/pipeline.php` | Pipeline orchestration and requirement checks |
-
-The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), `admin/expert-mode-snippet.php` (code generation and readiness checks), and `admin/url-policy.php` (cache eligibility checks for the URL tester). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
 | `preload/cache-preload.php` | Preload queue, homepage crawling, scheduled warming |
 | `cache/brand-migration.php` | One-time legacy option and storage migration |
 | `widgets.php` | Benchmark widget registration |
+
+The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), `admin/expert-mode-snippet.php` (code generation and readiness checks), and `admin/url-policy.php` (cache eligibility checks for the URL tester). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
 
 ## Nginx Direct Static Cache
 
