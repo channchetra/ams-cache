@@ -73,7 +73,6 @@ function khse_ajax_clear_cache_response() {
 	}
 
 	$rows = khse_clear_all_cache();
-	khse_schedule_preload_cache( true );
 
 	wp_send_json_success(
 		array(
@@ -331,33 +330,7 @@ function khse_ajax_dashboard_nginx_snippet_callback() {
 	);
 }
 
-/**
- * Save yes/no toggle map from React list.
- *
- * @param array  $items      Toggle items.
- * @param string $option_key Option key.
- *
- * @return void
- */
-function khse_ajax_dashboard_save_toggle_map( $items, $option_key ) {
-	if ( ! is_array( $items ) ) {
-		return;
-	}
 
-	$value = array();
-
-	foreach ( $items as $item ) {
-		if ( ! is_array( $item ) || empty( $item['value'] ) ) {
-			continue;
-		}
-
-		if ( 'yes' === khse_settings_yes_no( isset( $item['enabled'] ) ? $item['enabled'] : 'no' ) ) {
-			$value[ sanitize_key( $item['value'] ) ] = 'yes';
-		}
-	}
-
-	update_option( $option_key, $value );
-}
 
 /**
  * Save React dashboard settings.

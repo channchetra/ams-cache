@@ -64,7 +64,7 @@ One-command version bump and release:
 
 `bin/release.ps1` defaults to a patch bump. It syncs `kh-speed-engine.php`, `KHSE_PLUGIN_VERSION`, `README.txt` stable tag, `package.json`, and `CHANGELOG.md`; the About page reads the version from the localized payload, then calls `bin/build-release.ps1`. The release script runs Bun install/build and verifies the Vite manifest before packaging.
 
-The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, image optimizer status, and feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine.
+The Performance view records recent cache writes and shows what actually happened on each page: bytes before/after, total bytes saved, Local UCSS and External UCSS bytes removed, JS Analysis deferred/analyzed counts, feature-level states such as Applied, No change, Disabled, or Failed. Older reports created before the local engines existed may still show Pending engine.
 
 All settings forms save in place through authenticated WordPress AJAX requests with nonce and capability checks. The React console writes the same WordPress options used by the cache runtime, so existing option update hooks still run.
 

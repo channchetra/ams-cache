@@ -200,6 +200,12 @@ function khse_decode_config_json( $content ) {
  * @return array
  */
 function khse_get_config_data() {
+	$option_config = get_option( 'khse_config', array() );
+
+	if ( is_array( $option_config ) && ! empty( $option_config ) ) {
+		return khse_normalize_config( $option_config );
+	}
+
 	$file = khse_get_config_path();
 
 	if ( file_exists( $file ) ) {
@@ -211,12 +217,6 @@ function khse_get_config_data() {
 		}
 
 		error_log( '[KH Speed Engine] Ignoring unreadable runtime config: ' . $file );
-	}
-
-	$option_config = get_option( 'khse_config', array() );
-
-	if ( is_array( $option_config ) && ! empty( $option_config ) ) {
-		return khse_normalize_config( $option_config );
 	}
 
 	return khse_get_default_config();

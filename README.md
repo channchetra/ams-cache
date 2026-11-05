@@ -24,7 +24,7 @@ KH Speed Engine is an extremely lightweight, high-performance cache plugin that 
 
 ## Modular Architecture
 
-As of v3.0.8, the plugin's helper functions have been split from a single monolithic `helpers.php` (179 KB) into focused modules, each loaded via the `bootstrap.php` manifest:
+As of v3.0.8, the plugin's helper functions have been split from a single monolithic `helpers.php` (179 KB) into focused modules loaded through `bootstrap.php` and its cache aggregator:
 
 | Module | Purpose |
 |--------|---------|

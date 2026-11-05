@@ -40,8 +40,8 @@ function khse_apply_dashboard_settings( $settings ) {
 		$preload = $settings['preload'];
 
 		khse_apply_option_schema( $preload, khse_get_settings_section_schema( 'preload' ) );
-		khse_ajax_dashboard_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'khse_option_post_types' );
-		khse_ajax_dashboard_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'khse_option_post_archives' );
+		khse_save_toggle_map( isset( $preload['postTypes'] ) ? $preload['postTypes'] : array(), 'khse_option_post_types' );
+		khse_save_toggle_map( isset( $preload['archives'] ) ? $preload['archives'] : array(), 'khse_option_post_archives' );
 	}
 
 	if ( isset( $settings['performance'] ) && is_array( $settings['performance'] ) ) {
@@ -86,4 +86,32 @@ function khse_apply_dashboard_settings( $settings ) {
 	} finally {
 		khse_settings_batch_active( false );
 	}
+}
+
+/**
+ * Save yes/no toggle map from React list.
+ *
+ * @param array  $items      Toggle items.
+ * @param string $option_key Option key.
+ *
+ * @return void
+ */
+function khse_save_toggle_map( $items, $option_key ) {
+	if ( ! is_array( $items ) ) {
+		return;
+	}
+
+	$value = array();
+
+	foreach ( $items as $item ) {
+		if ( ! is_array( $item ) || empty( $item['value'] ) ) {
+			continue;
+		}
+
+		if ( 'yes' === khse_settings_yes_no( isset( $item['enabled'] ) ? $item['enabled'] : 'no' ) ) {
+			$value[ sanitize_key( $item['value'] ) ] = 'yes';
+		}
+	}
+
+	update_option( $option_key, $value );
 }
