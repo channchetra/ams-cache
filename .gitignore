@@ -31,3 +31,5 @@ scorecard.png
 .fdx/
 .playwright-mcp/
 CLAUDE.md
+test-results/
+playwright-report/
