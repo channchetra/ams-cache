@@ -56,6 +56,13 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertNotFalse( has_action( 'template_redirect', array( $cache, 'ob_start' ) ) );
 	}
 
+	public function test_expert_mode_config_decoder_is_available_after_bootstrap() {
+		$this->assertTrue( function_exists( 'khse_decode_config_json' ) );
+		delete_option( 'khse_dir_hash' );
+		$decoded = khse_decode_config_json( '{"cache_enabled":true,"cache_driver":"file"}' );
+		$this->assertTrue( $decoded['cache_enabled'] );
+	}
+
 	public function test_cache_foundation_modules_own_their_functions() {
 		$expected = array(
 			'khse_get_setting'                  => 'inc/cache/cache-settings.php',
