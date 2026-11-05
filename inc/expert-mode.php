@@ -74,10 +74,11 @@ function khse_run_expert_mode( $args ) {
 	}
 
 	// Read configuration data.
-	$content = file_get_contents( $config_file );
-	$config  = json_decode( $content, true );
+	$content = @file_get_contents( $config_file );
+	$config  = json_decode( (string) $content, true );
 
 	if ( ! is_array( $config ) ) {
+		error_log( '[KH Speed Engine] Ignoring unreadable Expert Mode config: ' . $config_file );
 		return;
 	}
 

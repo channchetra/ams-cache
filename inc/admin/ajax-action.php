@@ -61,6 +61,16 @@ function khse_ajax_dashboard_guard( $nonce_action = 'khse_dashboard', $capabilit
  * @return void
  */
 function khse_ajax_clear_cache_response() {
+	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+
+	if ( ! $driver || is_wp_error( $driver ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'The cache driver is unavailable; nothing was cleared.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
 	$rows = khse_clear_all_cache();
 	khse_schedule_preload_cache( true );
 
@@ -639,7 +649,17 @@ function khse_ajax_dashboard_clear_cache_type_callback() {
 		);
 	}
 
-	$rows = khse_clear_cache_type( $cache_type );
+	$driver = khse_driver_factory( get_option( 'khse_option_driver', 'file' ) );
+
+	if ( ! $driver || is_wp_error( $driver ) ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'The cache driver is unavailable; nothing was cleared.', 'kh-speed-engine' ),
+			)
+		);
+	}
+
+	$rows  = khse_clear_cache_type( $cache_type );
 	$label = wp_strip_all_tags( $labels[ $cache_type ] );
 
 	wp_send_json_success(

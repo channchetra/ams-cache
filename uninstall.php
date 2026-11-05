@@ -94,6 +94,7 @@ if ( 'yes' === $option_uninstall ) {
 	delete_option( 'khse_last_reset_time' );
 	delete_option( 'khse_version' );
 	delete_option( 'khse_brand_migrated' );
+	delete_option( 'khse_brand_migration_retry_after' );
 	delete_option( 'khse_dir_hash' );
 	delete_option( 'khse_blog_id' );
 	delete_option( 'khse_last_preload_time' );

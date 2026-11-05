@@ -137,7 +137,7 @@ function khse_purge_cache_uri( $uri, $driver = null ) {
 	// Remove stale entries written under an older cache key prefix too.
 	$stats_root = khse_get_stats_root();
 
-	if ( is_dir( $stats_root ) ) {
+	if ( is_dir( $stats_root ) && is_readable( $stats_root ) ) {
 		foreach ( new DirectoryIterator( $stats_root ) as $type_dir ) {
 			if ( ! $type_dir->isDir() || $type_dir->isDot() ) {
 				continue;
@@ -284,7 +284,7 @@ function khse_clear_cache_type( $cache_type ) {
 	$rows = 0;
 	$dir  = khse_get_stats_dir( $cache_type );
 
-	if ( is_dir( $dir ) ) {
+	if ( is_dir( $dir ) && is_readable( $dir ) ) {
 		foreach ( new DirectoryIterator( $dir ) as $file ) {
 			if ( $file->isFile() && $file->getExtension() === 'json' ) {
 				$filename = $file->getFilename();

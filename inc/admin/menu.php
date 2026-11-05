@@ -228,9 +228,10 @@ function khse_get_admin_build_asset_entry() {
 		return $entry;
 	}
 
-	$manifest = json_decode( file_get_contents( $manifest_path ), true );
+	$manifest = json_decode( (string) @file_get_contents( $manifest_path ), true );
 
 	if ( ! is_array( $manifest ) ) {
+		error_log( '[KH Speed Engine] Ignoring unreadable admin asset manifest: ' . $manifest_path );
 		return $entry;
 	}
 

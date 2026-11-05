@@ -64,7 +64,7 @@ function khse_dashboard_get_stats_for_type( $type ) {
 	$size = 0;
 	$seen = array();
 
-	if ( is_dir( $dir ) ) {
+	if ( is_dir( $dir ) && is_readable( $dir ) ) {
 		foreach ( new DirectoryIterator( $dir ) as $file ) {
 			if ( ! $file->isFile() || 'json' !== $file->getExtension() ) {
 				continue;
@@ -424,10 +424,11 @@ function khse_dashboard_get_status_data() {
 	$preload_count     = (int) get_option( 'khse_last_preload_count', 0 );
 	$priority_count    = (int) get_option( 'khse_last_preload_priority_count', 0 );
 	$critical_count    = (int) get_option( 'khse_last_critical_preload_count', 0 );
-	$queue_total       = (int) get_option( 'khse_preload_queue_total', 0 );
-	$queue_processed   = (int) get_option( 'khse_preload_queue_processed', 0 );
-	$queue_failed      = (int) get_option( 'khse_preload_queue_failed', 0 );
-	$queue_remaining   = (int) get_option( 'khse_preload_queue_remaining', 0 );
+	$queue_status      = khse_get_preload_queue_status();
+	$queue_total       = (int) $queue_status['total'];
+	$queue_processed   = (int) $queue_status['processed'];
+	$queue_failed      = (int) $queue_status['failed'];
+	$queue_remaining   = (int) $queue_status['remaining'];
 	$planned_priority  = 0;
 
 	if ( khse_is_preload_enabled() ) {
@@ -478,14 +479,6 @@ function khse_dashboard_get_status_data() {
 	);
 
 	$cache_ready = count( array_filter( $cache_checks ) );
-
-	if ( $queue_remaining > 0 && ! is_array( get_transient( 'khse_preload_queue' ) ) ) {
-		khse_reset_preload_queue_state();
-		$queue_total     = 0;
-		$queue_processed = 0;
-		$queue_failed    = 0;
-		$queue_remaining = 0;
-	}
 
 	return array(
 		'generatedAt' => current_time( 'mysql' ),

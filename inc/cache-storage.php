@@ -190,12 +190,14 @@ function khse_get_config_data() {
 	$file = khse_get_config_path();
 
 	if ( file_exists( $file ) ) {
-		$content = file_get_contents( $file );
-		$config = json_decode( $content, true );
+		$content = @file_get_contents( $file );
+		$config  = json_decode( (string) $content, true );
 
 		if ( is_array( $config ) ) {
 			return khse_normalize_config( $config );
 		}
+
+		error_log( '[KH Speed Engine] Ignoring unreadable runtime config: ' . $file );
 	}
 
 	$option_config = get_option( 'khse_config', array() );

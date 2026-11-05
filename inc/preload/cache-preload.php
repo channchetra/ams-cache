@@ -127,6 +127,42 @@ function khse_reset_preload_queue_state() {
 }
 
 /**
+ * Return the current preload queue counters.
+ *
+ * Keeps the stale-state cleanup and the denominator rule inside the preload
+ * subsystem so the dashboard does not own queue state.
+ *
+ * @return array{total:int,processed:int,failed:int,remaining:int}
+ */
+function khse_get_preload_queue_status() {
+	$queue     = get_transient( 'khse_preload_queue' );
+	$remaining = is_array( $queue ) ? count( $queue ) : 0;
+	$total     = (int) get_option( 'khse_preload_queue_total', 0 );
+	$processed = (int) get_option( 'khse_preload_queue_processed', 0 );
+	$failed    = (int) get_option( 'khse_preload_queue_failed', 0 );
+
+	if ( ! is_array( $queue ) ) {
+		if ( $total > 0 || $processed > 0 || $failed > 0 || (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
+		}
+
+		return array(
+			'total'     => 0,
+			'processed' => 0,
+			'failed'    => 0,
+			'remaining' => 0,
+		);
+	}
+
+	return array(
+		'total'     => $processed + $failed + $remaining,
+		'processed' => $processed,
+		'failed'    => $failed,
+		'remaining' => $remaining,
+	);
+}
+
+/**
  * Bootstrap preload once after a plugin deployment.
  *
  * @return void

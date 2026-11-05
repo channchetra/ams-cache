@@ -29,7 +29,7 @@ function khse_enforce_cache_entry_limit( $driver = null ) {
 
 	$stats_root = khse_get_stats_root();
 
-	if ( ! is_dir( $stats_root ) ) {
+	if ( ! is_dir( $stats_root ) || ! is_readable( $stats_root ) ) {
 		return 0;
 	}
 

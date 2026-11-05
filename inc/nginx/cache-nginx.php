@@ -167,7 +167,7 @@ function khse_delete_nginx_static_cache( $uri ) {
 function khse_clear_nginx_static_cache() {
 	$dir = khse_get_nginx_static_cache_dir();
 
-	if ( ! is_dir( $dir ) ) {
+	if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
 		return 0;
 	}
 

@@ -273,7 +273,7 @@ function khse_prune_page_optimization_reports( $limit = 200 ) {
 	$deleted = 0;
 	$limit   = max( 20, min( 1000, (int) apply_filters( 'khse_page_optimization_report_limit', $limit ) ) );
 
-	if ( ! is_dir( $dir ) ) {
+	if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
 		return 0;
 	}
 
@@ -322,7 +322,7 @@ function khse_get_page_optimization_reports( $limit = 20, $offset = 0 ) {
 	$limit   = max( 1, min( 100, (int) $limit ) );
 	$offset  = max( 0, (int) $offset );
 
-	if ( ! is_dir( $dir ) ) {
+	if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
 		return $reports;
 	}
 
@@ -331,9 +331,10 @@ function khse_get_page_optimization_reports( $limit = 20, $offset = 0 ) {
 			continue;
 		}
 
-		$data = json_decode( file_get_contents( $file->getPathname() ), true );
+		$data = json_decode( (string) @file_get_contents( $file->getPathname() ), true );
 
 		if ( ! is_array( $data ) ) {
+			error_log( '[KH Speed Engine] Ignoring unreadable optimization report: ' . $file->getPathname() );
 			continue;
 		}
 
@@ -360,7 +361,7 @@ function khse_count_page_optimization_reports() {
 	$dir   = khse_get_page_optimization_report_dir();
 	$count = 0;
 
-	if ( ! is_dir( $dir ) ) {
+	if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
 		return 0;
 	}
 

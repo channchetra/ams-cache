@@ -26,6 +26,10 @@ function khse_maybe_migrate_legacy_brand() {
 		return;
 	}
 
+	if ( (int) get_option( 'khse_brand_migration_retry_after', 0 ) > time() ) {
+		return;
+	}
+
 	global $wpdb;
 
 	$missing    = new \stdClass();
@@ -57,6 +61,11 @@ function khse_maybe_migrate_legacy_brand() {
 
 	foreach ( $migrated as $legacy_name ) {
 		delete_option( $legacy_name );
+
+		if ( $missing !== get_option( $legacy_name, $missing ) ) {
+			$incomplete = true;
+			error_log( '[KH Speed Engine] Could not remove legacy option: ' . $legacy_name );
+		}
 	}
 
 	if ( ! empty( $migrated ) ) {
@@ -70,6 +79,7 @@ function khse_maybe_migrate_legacy_brand() {
 	foreach ( $legacy_dirs as $legacy_dir ) {
 		if ( ! is_dir( $new_upload ) && is_dir( $legacy_dir ) ) {
 			if ( ! @rename( $legacy_dir, $new_upload ) ) {
+				$incomplete = true;
 				error_log( '[KH Speed Engine] Could not move legacy cache directory: ' . $legacy_dir );
 			}
 			break;
@@ -85,6 +95,7 @@ function khse_maybe_migrate_legacy_brand() {
 
 	if ( ! is_dir( $new_runtime ) && is_dir( $old_runtime ) ) {
 		if ( ! @rename( $old_runtime, $new_runtime ) ) {
+			$incomplete = true;
 			error_log( '[KH Speed Engine] Could not move legacy runtime directory: ' . $old_runtime );
 		}
 	}
@@ -107,11 +118,17 @@ function khse_maybe_migrate_legacy_brand() {
 	update_option( 'khse_version', KHSE_PLUGIN_VERSION );
 
 	if ( $incomplete ) {
-		error_log( '[KH Speed Engine] Brand migration is incomplete; it will retry on the next request.' );
+		update_option( 'khse_brand_migration_retry_after', time() + ( defined( 'HOUR_IN_SECONDS' ) ? HOUR_IN_SECONDS : 3600 ) );
+		error_log( '[KH Speed Engine] Brand migration is incomplete; it will retry later.' );
 		return;
 	}
 
+	delete_option( 'khse_brand_migration_retry_after' );
 	update_option( 'khse_brand_migrated', 1 );
+
+	if ( 1 !== (int) get_option( 'khse_brand_migrated', 0 ) ) {
+		error_log( '[KH Speed Engine] Could not persist the brand migration marker.' );
+	}
 
 	if ( 'enable' === get_option( 'khse_option_expert_mode_status' ) ) {
 		if ( function_exists( 'khse_sync_expert_mode_runtime' ) && ! khse_sync_expert_mode_runtime() ) {
