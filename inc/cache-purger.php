@@ -174,10 +174,18 @@ function khse_purge_permalink( $url, $driver = null ) {
 /**
  * Clear all cache.
  *
+ * @param bool $sync Whether to refresh the Expert Mode runtime config first.
+ *
  * @return int
  */
-function khse_clear_all_cache() {
-	khse_sync_expert_mode_runtime();
+function khse_clear_all_cache( $sync = true ) {
+	if ( ! empty( $GLOBALS['khse_settings_batch'] ) ) {
+		return 0;
+	}
+
+	if ( $sync ) {
+		khse_sync_expert_mode_runtime();
+	}
 
 	$driver_type = get_option( 'khse_option_driver' );
 	$driver      = khse_driver_factory( $driver_type );

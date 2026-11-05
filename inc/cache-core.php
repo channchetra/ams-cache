@@ -747,6 +747,10 @@ function khse_update_config( $setting ) {
  * @return bool True when config (and the lock, if enabled) was written.
  */
 function khse_sync_expert_mode_runtime() {
+	if ( ! empty( $GLOBALS['khse_settings_batch'] ) ) {
+		return true;
+	}
+
 	$driver_type      = khse_get_setting( 'cache', 'driver' );
 	$connection_type  = khse_get_driver_connection_type( $driver_type );
 	$advanced_setting = khse_normalize_driver_settings(

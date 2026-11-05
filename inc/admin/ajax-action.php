@@ -455,6 +455,8 @@ function khse_ajax_dashboard_save_settings_callback() {
 		);
 	}
 
+	$GLOBALS['khse_settings_batch'] = true;
+
 	if ( isset( $settings['cache'] ) && is_array( $settings['cache'] ) ) {
 		$cache = $settings['cache'];
 
@@ -577,8 +579,9 @@ function khse_ajax_dashboard_save_settings_callback() {
 	}
 
 	khse_ensure_permalink_structure();
+	$GLOBALS['khse_settings_batch'] = false;
 	$runtime_synced = khse_sync_expert_mode_runtime();
-	khse_clear_all_cache();
+	khse_clear_all_cache( false );
 
 	$message = $runtime_synced
 		? __( 'Settings saved.', 'kh-speed-engine' )

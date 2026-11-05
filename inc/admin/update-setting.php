@@ -42,9 +42,18 @@ $register_clear_cache_action = array(
 	'khse_option_page_optimization',
 );
 
+/**
+ * Clear cache from an option hook without forwarding old/new values.
+ *
+ * @return void
+ */
+function khse_clear_all_cache_from_option() {
+	khse_clear_all_cache();
+}
+
 foreach ( $register_clear_cache_action as $option ) {
 	// `khse_clear_all_cache` is defined in cache-purger.php
-	add_action( 'update_option_' . $option, 'khse_clear_all_cache' );
+	add_action( 'update_option_' . $option, 'khse_clear_all_cache_from_option' );
 }
 
 // Update exclusion settings.

@@ -67,6 +67,15 @@ class ConfigContractTest extends WP_UnitTestCase {
 		$this->assertSame( array(), $cm->config['exclusion']['excluded_list'] );
 	}
 
+	public function test_settings_batch_defers_clear_and_sync() {
+		$GLOBALS['khse_settings_batch'] = true;
+
+		$this->assertSame( 0, khse_clear_all_cache() );
+		$this->assertTrue( khse_sync_expert_mode_runtime() );
+
+		unset( $GLOBALS['khse_settings_batch'] );
+	}
+
 	public function test_config_write_reports_success() {
 		@unlink( khse_get_config_path() );
 
