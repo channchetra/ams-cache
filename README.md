@@ -53,6 +53,16 @@ As of v3.0.8, the plugin's helper functions have been split from a single monoli
 
 The wp-admin support layer is split into `admin/dashboard-data.php` (DTO/status payloads), `admin/driver-tools.php` (driver probing and connection tests), `admin/expert-mode-snippet.php` (code generation and readiness checks), and `admin/url-policy.php` (cache eligibility checks for the URL tester). Menu, AJAX, lifecycle, and settings hooks remain in `admin/`.
 
+## Testing
+
+```bash
+composer test                 # PHPUnit
+bun run test:js               # Vitest
+bun run test:e2e              # Playwright front-end and (credential-gated) admin checks
+```
+
+Playwright uses the local Chrome channel and ignores self-signed certificates. Admin console specs run when `WP_ADMIN_USER` and `WP_ADMIN_PASS` are set; REST checks run when `WP_APP_PASSWORD` is set.
+
 ## Nginx Direct Static Cache
 
 When using the File driver, KH Speed Engine can write a raw HTML mirror that Nginx may serve before PHP or WordPress runs. Enable it in the Performance workspace, review the requirement checks, copy the generated snippet into your Nginx `server` block, run `nginx -t`, then reload Nginx. The generated rule serves the same cached page for Facebook/Meta and UTM tracking variables (`fbclid`, `mibextid`, `rdid`, `shbid`, `shbv`, and standard UTM keys) while bypassing functional or unknown query variables.
