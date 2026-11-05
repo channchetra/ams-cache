@@ -182,6 +182,19 @@ function khse_normalize_config( $config ) {
 }
 
 /**
+ * Decode and normalize a runtime config JSON payload.
+ *
+ * @param string $content Raw JSON.
+ *
+ * @return array Normalized config, or an empty array when unreadable.
+ */
+function khse_decode_config_json( $content ) {
+	$data = json_decode( (string) $content, true );
+
+	return is_array( $data ) ? khse_normalize_config( $data ) : array();
+}
+
+/**
  * Get configuration data.
  *
  * @return array
