@@ -83,3 +83,7 @@ function khse_maybe_migrate_legacy_brand() {
 		khse_sync_expert_mode_runtime();
 	}
 }
+
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'plugins_loaded', 'khse_maybe_migrate_legacy_brand', 5 );
+}

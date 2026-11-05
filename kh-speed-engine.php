@@ -58,6 +58,25 @@ define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
  * Start KH Speed Engine cores.
  */
 
+/**
+ * Boot the front-end cache runtime after WordPress and pluggable functions load.
+ *
+ * @return void
+ */
+function khse_boot_cache_runtime() {
+	static $booted = false;
+
+	if ( $booted || ! class_exists( 'KHSE_Cache' ) ) {
+		return;
+	}
+
+	$booted = true;
+	khse_maybe_migrate_legacy_brand();
+
+	$cache = new KHSE_Cache();
+	$cache->init();
+}
+
 // The minimum supported version of PHP.
 if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
@@ -74,7 +93,6 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		);
 
 		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
-		khse_maybe_migrate_legacy_brand();
 		// Composer's autoloader prepends itself to the SPL stack, so it must be
 		// loaded first and the local library loader registered afterwards to win.
 		require_once KHSE_PLUGIN_DIR . 'vendor/autoload.php';
@@ -93,13 +111,11 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 		khse_load_textdomain();
 
-		$cm = new KHSE_Cache();
-		$cm->init();
+		add_action( 'plugins_loaded', 'khse_boot_cache_runtime' );
 
 	} else {
 
 		require_once KHSE_PLUGIN_DIR . 'inc/bootstrap.php';
-		khse_maybe_migrate_legacy_brand();
 		require_once KHSE_PLUGIN_DIR . 'inc/lib/autoload.php';
 		// Post mutations can run through AJAX, REST, or frontend requests.
 		require_once KHSE_PLUGIN_DIR . 'inc/update-post.php';
@@ -133,8 +149,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 
 				require_once KHSE_PLUGIN_DIR . 'inc/class-khse-cache.php';
 
-				$cm = new KHSE_Cache();
-				$cm->init();
+				add_action( 'plugins_loaded', 'khse_boot_cache_runtime' );
 			}
 		} else {
 			if ( is_admin() ) {

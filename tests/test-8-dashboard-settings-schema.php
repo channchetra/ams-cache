@@ -33,18 +33,19 @@ class DashboardSettingsSchemaTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fields absent from the incoming payload fall back to their declared default.
+	 * Fields absent from a partial payload retain their stored values.
 	 *
 	 * @return void
 	 */
-	public function test_schema_uses_defaults_for_missing_fields() {
+	public function test_schema_preserves_missing_fields() {
 		$schema = array(
 			'enabled' => array( 'option' => 'khse_test_schema_enabled2', 'sanitize' => 'yes_no', 'default' => 'yes', 'fallback' => 'no' ),
 		);
 
+		update_option( 'khse_test_schema_enabled2', 'no' );
 		khse_ajax_dashboard_apply_option_schema( array(), $schema );
 
-		$this->assertSame( 'yes', get_option( 'khse_test_schema_enabled2' ) );
+		$this->assertSame( 'no', get_option( 'khse_test_schema_enabled2' ) );
 	}
 
 	/**

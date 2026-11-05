@@ -26,6 +26,6 @@ require_once __DIR__ . '/optimizer/pipeline.php';
 require_once __DIR__ . '/preload/cache-preload.php';
 
 // Migrate legacy brand data before the cache runtime creates its storage tree.
-if ( function_exists( 'khse_maybe_migrate_legacy_brand' ) && function_exists( 'get_option' ) && function_exists( 'update_option' ) ) {
+if ( function_exists( 'khse_maybe_migrate_legacy_brand' ) && function_exists( 'get_option' ) && function_exists( 'update_option' ) && function_exists( 'wp_hash' ) ) {
 	khse_maybe_migrate_legacy_brand();
 }
