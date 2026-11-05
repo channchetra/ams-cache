@@ -51,7 +51,6 @@ define( 'KHSE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'KHSE_PLUGIN_PATH', __FILE__ );
 define( 'KHSE_PLUGIN_LANGUAGE_PACK', dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 define( 'KHSE_PLUGIN_VERSION', '4.0.0' );
-define( 'KHSE_CORE_VERSION', '1.3.4' );
 define( 'KHSE_PLUGIN_TEXT_DOMAIN', 'kh-speed-engine' );
 
 /**
@@ -111,7 +110,7 @@ if ( version_compare( phpversion(), '7.1.0', '>=' ) ) {
 		// Benchmark widget registration must run on front-end and admin requests.
 		require_once KHSE_PLUGIN_DIR . 'inc/widgets.php';
 
-		// Full runtime is not needed during AJAX calls, but upload/offload hooks are.
+		// AJAX requests load the shared runtime plus the smaller AJAX admin subset.
 		if ( ! wp_doing_ajax() ) {
 
 			register_activation_hook( __FILE__, 'khse_activation' );

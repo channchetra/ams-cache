@@ -40,6 +40,10 @@ class BootLayoutTest extends WP_UnitTestCase {
 		$this->assertFileDoesNotExist( KHSE_PLUGIN_DIR . 'inc/cache-nginx.php' );
 	}
 
+	public function test_widget_registration_runs_before_widgets_init() {
+		$this->assertNotFalse( has_action( 'plugins_loaded', 'khse_add_benchmark_widget' ) );
+	}
+
 	public function test_cache_buffer_attaches_to_a_hook_after_runtime_boot() {
 		$this->assertNotFalse( has_action( 'plugins_loaded', 'khse_boot_cache_runtime' ) );
 

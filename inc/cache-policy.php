@@ -367,10 +367,8 @@ function khse_is_cacheable_query_string( $query ) {
 function khse_is_cacheable_document_path( $path ) {
 	$path = khse_normalize_cache_uri( $path );
 
-	foreach ( khse_get_cache_bypass_paths() as $bypass_path ) {
-		if ( preg_match( '#(?:^|/)' . preg_quote( $bypass_path, '#' ) . '(?:/|$)#i', $path ) ) {
-			return false;
-		}
+	if ( '' !== khse_find_bypass_path( $path ) ) {
+		return false;
 	}
 
 	if ( preg_match( '#\.(?:css|js|map|json|xml|txt|ico|png|jpe?g|gif|webp|svg|woff2?|ttf|eot|otf|mp4|webm|mp3|m4a|pdf|zip)$#i', $path ) ) {
@@ -378,6 +376,28 @@ function khse_is_cacheable_document_path( $path ) {
 	}
 
 	return true;
+}
+
+/**
+ * Find the first bypass path matching a normalized request path.
+ *
+ * Bypass entries match as path segments anywhere in the request path, so
+ * `/blog/wp-admin/` is rejected just like `/wp-admin/`.
+ *
+ * @param string $path Normalized request path.
+ *
+ * @return string Matched bypass entry, or '' when nothing matches.
+ */
+function khse_find_bypass_path( $path ) {
+	$path = khse_normalize_cache_uri( $path );
+
+	foreach ( khse_get_cache_bypass_paths() as $bypass_path ) {
+		if ( preg_match( '#(?:^|/)' . preg_quote( (string) $bypass_path, '#' ) . '(?:/|$)#i', $path ) ) {
+			return (string) $bypass_path;
+		}
+	}
+
+	return '';
 }
 
 /**

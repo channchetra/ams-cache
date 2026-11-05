@@ -142,7 +142,13 @@ function khse_driver_factory( $type ) {
 			}
 		} else {
 
-			error_log( sprintf( '[KH Speed Engine] Driver %s is not supported, fallback to use File driver.', $type ) );
+			error_log(
+				sprintf(
+					'[KH Speed Engine] Driver %s failed (%s); falling back to the File driver.',
+					$type,
+					$e->getMessage()
+				)
+			);
 
 			try {
 				$driver = new \Shieldon\SimpleCache\Cache(

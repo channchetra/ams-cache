@@ -107,6 +107,13 @@ class CacheLifecycleTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $result['removed'] );
 	}
 
+	public function test_purge_rejects_unparseable_uris() {
+		$result = khse_purge_cache_uri( '//?p=1' );
+
+		$this->assertSame( '', $result['key'] );
+		$this->assertSame( 0, $result['removed'] );
+	}
+
 	public function test_purge_skips_non_document_paths() {
 		$result = khse_purge_cache_uri( '/assets/app.css', new class() {
 			public function delete( $key ) {

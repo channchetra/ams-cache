@@ -10,7 +10,7 @@ if ( ! defined( 'KHSE_INC' ) ) {
 	die;
 }
 
-add_action( 'init', 'khse_add_benchmark_widget' );
+add_action( 'plugins_loaded', 'khse_add_benchmark_widget' );
 
 /**
  * Initialize banchmark widget.

@@ -94,4 +94,17 @@ class PageOptimizerTransformsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '@font-face', $result );
 		$this->assertStringNotContainsString( '.unused', $result );
 	}
+
+	public function test_css_minifier_preserves_calc_spacing_and_descendant_pseudos() {
+		$result = khse_minify_css( '.menu :hover { width: calc(100% + 10px); }' );
+
+		$this->assertStringContainsString( 'calc(100% + 10px)', $result );
+		$this->assertStringContainsString( '.menu :hover', $result );
+	}
+
+	public function test_selector_list_is_kept_when_any_selector_is_used() {
+		$html = '<div class="present"></div>';
+
+		$this->assertTrue( khse_css_selector_is_used( '.present, .missing', $html, array() ) );
+	}
 }

@@ -253,16 +253,7 @@ function khse_cache_policy_driver_check( $config ) {
  * @return array
  */
 function khse_cache_policy_bypass_check( $path ) {
-	$match = '';
-
-	foreach ( khse_get_cache_bypass_paths() as $bypass_path ) {
-		$prefix = '/' . trim( (string) $bypass_path, '/' );
-
-		if ( $path === $prefix || 0 === strpos( $path, $prefix . '/' ) ) {
-			$match = $prefix;
-			break;
-		}
-	}
+	$match = khse_find_bypass_path( $path );
 
 	if ( '' === $match ) {
 		return khse_cache_policy_check(
@@ -280,7 +271,7 @@ function khse_cache_policy_bypass_check( $path ) {
 		sprintf(
 			/* translators: %s is the bypass path. */
 			__( 'This path matches the bypass rule "%s".', 'kh-speed-engine' ),
-			$match
+			'/' . trim( $match, '/' )
 		)
 	);
 }

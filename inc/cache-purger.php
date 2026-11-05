@@ -73,7 +73,7 @@ function khse_delete_duplicate_stats_for_uri( $type, $uri, $current_key = '', $d
 function khse_delete_cache_stats_by_key( $key ) {
 	$stats_root = khse_get_stats_root();
 
-	if ( empty( $key ) || ! is_dir( $stats_root ) ) {
+	if ( empty( $key ) || ! is_dir( $stats_root ) || ! is_readable( $stats_root ) ) {
 		return 0;
 	}
 
@@ -101,7 +101,17 @@ function khse_delete_cache_stats_by_key( $key ) {
  * @return array
  */
 function khse_purge_cache_uri( $uri, $driver = null ) {
-	$uri = khse_normalize_cache_uri( $uri );
+	$raw = trim( (string) $uri );
+
+	if ( '' === $raw || false !== strpos( $raw, '#' ) || ! is_array( wp_parse_url( $raw ) ) ) {
+		return array(
+			'key'     => '',
+			'uri'     => '',
+			'removed' => 0,
+		);
+	}
+
+	$uri = khse_normalize_cache_uri( $raw );
 
 	if ( ! khse_is_cacheable_document_path( $uri ) ) {
 		return array(
@@ -240,7 +250,7 @@ function khse_clear_all_cache( $sync = true ) {
 	foreach ( $list as $cache_type ) {
 		$dir = khse_get_stats_dir( $cache_type );
 
-		if ( is_dir( $dir ) ) {
+		if ( is_dir( $dir ) && is_readable( $dir ) ) {
 			foreach ( new DirectoryIterator( $dir ) as $file ) {
 				if ( $file->isFile() && $file->getExtension() === 'json' ) {
 					$filename = $file->getFilename();

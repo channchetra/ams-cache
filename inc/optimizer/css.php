@@ -20,7 +20,10 @@ if ( ! defined( 'KHSE_INC' ) ) {
 function khse_minify_css( $css ) {
 	$css = preg_replace( '#/\*.*?\*/#s', '', $css );
 	$css = preg_replace( '/\s+/', ' ', $css );
-	$css = preg_replace( '/\s*([{}:;,>+~])\s*/', '$1', $css );
+	// Never strip spaces around `+` or `-`: calc() requires them, and a space
+	// before `:` can be a descendant selector (`.a :hover`).
+	$css = preg_replace( '/\s*([{};,>~])\s*/', '$1', $css );
+	$css = preg_replace( '/:\s+/', ':', $css );
 	$css = str_replace( ';}', '}', $css );
 
 	return trim( $css );
@@ -58,6 +61,19 @@ function khse_css_selector_is_used( $selector, $html, $safelist ) {
 		if ( false !== strpos( $selector, $dynamic_character ) ) {
 			return true;
 		}
+	}
+
+	// A selector list is safe to keep when any one selector is used.
+	$selector_parts = array_filter( array_map( 'trim', explode( ',', $selector ) ) );
+
+	if ( count( $selector_parts ) > 1 ) {
+		foreach ( $selector_parts as $selector_part ) {
+			if ( khse_css_selector_is_used( $selector_part, $html, $safelist ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	$class_names = array();

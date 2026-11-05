@@ -1,0 +1,12 @@
+[     159ms] [LOG] JQMIGRATE: Migrate is installed, version 3.4.1 @ https://local-dev.local/wp-admin/load-scripts.php?c=0&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=7.1.4:4
+[     322ms] ReferenceError: useEffect is not defined
+    at Fp (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:19:105215)
+    at bo (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:47541)
+    at pc (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:70069)
+    at Ac (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:80347)
+    at Nu (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:115795)
+    at Au (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:114874)
+    at ku (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:114711)
+    at _u (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:111575)
+    at ld (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:8:123111)
+    at MessagePort.E (https://local-dev.local/wp-content/plugins/kh-speed-engine/inc/assets/build/admin.js?ver=1793813049:1:9561)

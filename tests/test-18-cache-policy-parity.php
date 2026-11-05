@@ -28,6 +28,24 @@ class CachePolicyParityTest extends WP_UnitTestCase {
 	 */
 	private $original_request_method = null;
 
+	/**
+	 * Read one policy check by key.
+	 *
+	 * @param array  $result Policy result.
+	 * @param string $key    Check key.
+	 *
+	 * @return array
+	 */
+	private function policy_check( $result, $key ) {
+		foreach ( $result['checks'] as $check ) {
+			if ( $key === $check['key'] ) {
+				return $check;
+			}
+		}
+
+		$this->fail( 'Missing policy check: ' . $key );
+	}
+
 	public function set_up() {
 		parent::set_up();
 
@@ -79,6 +97,15 @@ class CachePolicyParityTest extends WP_UnitTestCase {
 
 		$this->assertTrue( khse_is_cache_request_excluded( $config ) );
 		$this->assertSame( '/news/', khse_cache_policy_find_excluded_path( '/news/2026/', array( 'excluded_list' => array( '/news' ) ) ) );
+	}
+
+	public function test_runtime_and_admin_bypass_paths_agree_on_nested_paths() {
+		$config = array( 'exclusion' => array( 'enable' => false ) );
+		$path   = '/blog/wp-admin/';
+
+		$this->assertFalse( khse_is_cacheable_document_path( $path ) );
+		$this->assertSame( 'wp-admin', khse_find_bypass_path( $path ) );
+		$this->assertSame( 'fail', $this->policy_check( khse_evaluate_cache_url_policy( $path, $config ), 'bypass_path' )['status'] );
 	}
 
 	public function test_bypass_paths_are_rejected() {

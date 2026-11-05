@@ -51,13 +51,15 @@ function khse_ensure_upload_dir() {
 
 	foreach ( $legacy_dirs as $legacy_dir ) {
 		if ( ! is_dir( $base_dir ) && is_dir( $legacy_dir ) ) {
-			@rename( $legacy_dir, $base_dir );
+			if ( ! @rename( $legacy_dir, $base_dir ) ) {
+				error_log( '[KH Speed Engine] Could not move legacy upload directory: ' . $legacy_dir );
+			}
 			break;
 		}
 	}
 
-	if ( ! is_dir( $base_dir ) ) {
-		wp_mkdir_p( $base_dir );
+	if ( ! is_dir( $base_dir ) && ! wp_mkdir_p( $base_dir ) ) {
+		error_log( '[KH Speed Engine] Could not create the cache upload directory: ' . $base_dir );
 	}
 
 	return khse_get_upload_dir();
