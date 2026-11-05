@@ -479,6 +479,14 @@ function khse_dashboard_get_status_data() {
 
 	$cache_ready = count( array_filter( $cache_checks ) );
 
+	if ( $queue_remaining > 0 && ! is_array( get_transient( 'khse_preload_queue' ) ) ) {
+		khse_reset_preload_queue_state();
+		$queue_total     = 0;
+		$queue_processed = 0;
+		$queue_failed    = 0;
+		$queue_remaining = 0;
+	}
+
 	return array(
 		'generatedAt' => current_time( 'mysql' ),
 		'cache'       => array(

@@ -116,6 +116,8 @@ function khse_maybe_schedule_preload_cache() {
 
 		if ( ! empty( $queue ) && is_array( $queue ) ) {
 			khse_schedule_preload_queue();
+		} elseif ( (int) get_option( 'khse_preload_queue_remaining', 0 ) > 0 ) {
+			khse_reset_preload_queue_state();
 		}
 	}
 

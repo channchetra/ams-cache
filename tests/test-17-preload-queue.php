@@ -48,6 +48,28 @@ class PreloadQueueTest extends WP_UnitTestCase {
 		update_option( 'khse_option_caching_status', 'enable' );
 	}
 
+	public function test_missing_queue_transient_resets_remaining_when_enabled() {
+		delete_transient( 'khse_preload_queue' );
+		set_transient( 'khse_preload_queue', null, HOUR_IN_SECONDS );
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_remaining', 7 );
+
+		khse_maybe_schedule_preload_cache();
+
+		$this->assertSame( 0, (int) get_option( 'khse_preload_queue_remaining' ) );
+	}
+
+	public function test_dashboard_reports_zero_when_the_queue_transient_is_missing() {
+		delete_transient( 'khse_preload_queue' );
+		update_option( 'khse_preload_queue_total', 7 );
+		update_option( 'khse_preload_queue_remaining', 7 );
+
+		$status = khse_dashboard_get_status_data();
+
+		$this->assertSame( 0, (int) $status['preload']['queueRemaining'] );
+		$this->assertSame( 0, (int) $status['preload']['queueTotal'] );
+	}
+
 	public function test_critical_helper_queues_the_post_permalink() {
 		$post_id = self::factory()->post->create( array( 'post_status' => 'publish' ) );
 
