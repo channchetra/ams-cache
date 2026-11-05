@@ -356,12 +356,5 @@ if ( function_exists( 'add_action' ) ) {
 	// Cache clears ask preload to warm the site again without purger knowing
 	// anything about the preload subsystem.
 	add_action( 'khse_cache_cleared', 'khse_schedule_preload_cache' );
-	add_action( 'khse_preload_cache_event', 'khse_preload_cache' );
-	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
-}
-
-if ( function_exists( 'add_action' ) ) {
-	add_action( 'init', 'khse_maybe_schedule_preload_cache', 20 );
-	add_action( 'khse_cache_cleared', 'khse_schedule_preload_cache' );
 	add_action( 'khse_preload_queue_event', 'khse_process_preload_queue' );
 }

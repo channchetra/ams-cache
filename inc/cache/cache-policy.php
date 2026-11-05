@@ -195,7 +195,13 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 		return null;
 	}
 
-	if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
+	$is_logged_in = function_exists( 'is_user_logged_in' ) && is_user_logged_in();
+
+	if ( $is_logged_in && 'yes' !== get_option( 'khse_option_visibility_login_user', 'no' ) ) {
+		return null;
+	}
+
+	if ( ! $is_logged_in && 'yes' !== get_option( 'khse_option_visibility_guest', 'yes' ) ) {
 		return null;
 	}
 
@@ -210,7 +216,12 @@ function khse_serve_cached_response( $config, $driver = null, $storage_base = ''
 	}
 
 	$path = khse_normalize_cache_uri( $request_uri );
-	$key  = khse_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
+
+	if ( khse_is_homepage_uri( $path ) && 'yes' !== get_option( 'khse_option_post_homepage', 'yes' ) ) {
+		return null;
+	}
+
+	$key = khse_build_cache_key( isset( $config['cache_key_prefix'] ) ? $config['cache_key_prefix'] : '', $path );
 
 	$driver_type = isset( $config['cache_driver'] ) ? $config['cache_driver'] : 'file';
 
