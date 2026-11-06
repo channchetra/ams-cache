@@ -451,9 +451,7 @@ function khse_process_preload_batch( $queue ) {
 	foreach ( $batch as $url ) {
 		// Private/loopback targets can deadlock FPM when the request blocks on
 		// itself. Public hosting keeps the previous blocking, validated path.
-		$host     = (string) wp_parse_url( $url, PHP_URL_HOST );
-		$local    = khse_preload_host_is_loopback( $host ) || khse_preload_host_is_private_network( $host );
-		$blocking = (bool) apply_filters( 'khse_preload_blocking', ! $local, $url );
+		$blocking = khse_preload_should_block( $url );
 		$response = khse_preload_url( $url, $blocking, $blocking ? 8 : 2 );
 
 		if ( is_wp_error( $response ) ) {

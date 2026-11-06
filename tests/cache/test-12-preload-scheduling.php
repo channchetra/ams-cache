@@ -24,11 +24,30 @@ class PreloadSchedulingTest extends WP_UnitTestCase {
 		$this->assertFalse( khse_preload_host_is_private_network( '8.8.8.8' ) );
 	}
 
+	public function test_preload_blocking_is_scoped_to_public_hosts() {
+		$this->assertTrue( khse_preload_should_block( 'https://example.com/' ) );
+		$this->assertFalse( khse_preload_should_block( 'https://192.168.128.4/' ) );
+
+		add_filter( 'khse_preload_treat_private_as_local', '__return_false' );
+		$this->assertTrue( khse_preload_should_block( 'https://192.168.128.4/' ) );
+		remove_filter( 'khse_preload_treat_private_as_local', '__return_false' );
+
+		add_filter( 'khse_preload_blocking', '__return_false' );
+		$this->assertFalse( khse_preload_should_block( 'https://example.com/' ) );
+		remove_filter( 'khse_preload_blocking', '__return_false' );
+	}
+
 	public function test_preload_sslverify_accepts_private_network_hosts() {
 		$this->assertFalse( khse_preload_should_verify_ssl( 'https://192.168.128.4/' ) );
 		$this->assertFalse( khse_preload_should_verify_ssl( 'https://10.0.0.5/' ) );
 		$this->assertFalse( khse_preload_should_verify_ssl( 'https://127.0.0.1/' ) );
 		$this->assertTrue( khse_preload_should_verify_ssl( 'https://example.com/' ) );
+	}
+
+	public function test_private_tls_can_be_re_enabled_with_a_filter() {
+		add_filter( 'khse_preload_skip_private_tls', '__return_false' );
+		$this->assertTrue( khse_preload_should_verify_ssl( 'https://192.168.128.4/' ) );
+		remove_filter( 'khse_preload_skip_private_tls', '__return_false' );
 	}
 
 	public function test_preload_cache_queues_and_schedules_without_running_a_batch() {

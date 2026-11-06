@@ -12,6 +12,7 @@
 - Removed the WooCommerce integration.
 - Preload now builds immediately when enabled or changed and drains through admin/AJAX shutdown plus an internal token endpoint, so it no longer depends on WP-Cron or front-end traffic.
 - Private-network and loopback preload targets dispatch non-blocking to avoid deadlocking FPM on loopback requests and skip internal self-signed TLS; public hosts keep blocking, certificate-verified preloading.
+- Added `khse_preload_blocking`, `khse_preload_treat_private_as_local`, and `khse_preload_skip_private_tls` filters so each hosting topology can override the preload transport and TLS policy without code changes.
 - Post publish/edit/delete preload work drains on the same admin request.
 - Refresh status now updates data only: it no longer shows a "Settings saved" toast or overwrites unsaved edits.
 - Fixed fragment-only homepage links being queued as fake preload URLs.

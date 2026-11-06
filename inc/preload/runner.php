@@ -86,11 +86,32 @@ function khse_preload_should_verify_ssl( $url ) {
 		return $verify;
 	}
 
-	if ( khse_preload_host_is_loopback( $url_parts['host'] ) || khse_preload_host_is_private_network( $url_parts['host'] ) ) {
+	$skip_private_tls = (bool) apply_filters( 'khse_preload_skip_private_tls', true, $url );
+
+	if ( $skip_private_tls && ( khse_preload_host_is_loopback( $url_parts['host'] ) || khse_preload_host_is_private_network( $url_parts['host'] ) ) ) {
 		return false;
 	}
 
 	return true;
+}
+
+/**
+ * Decide whether a preload request should wait for the page response.
+ *
+ * Public hosting keeps blocking validation. Private/loopback targets use
+ * non-blocking dispatch by default so a single FPM worker cannot deadlock.
+ *
+ * @param string $url Same-site preload URL.
+ *
+ * @return bool
+ */
+function khse_preload_should_block( $url ) {
+	$host  = (string) wp_parse_url( $url, PHP_URL_HOST );
+	$local = khse_preload_host_is_loopback( $host ) || khse_preload_host_is_private_network( $host );
+
+	$local = (bool) apply_filters( 'khse_preload_treat_private_as_local', $local, $url );
+
+	return (bool) apply_filters( 'khse_preload_blocking', ! $local, $url );
 }
 
 /**
